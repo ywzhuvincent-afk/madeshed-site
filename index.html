@@ -15,7 +15,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);font-si
 .view{display:none}
 .view.active{display:block;animation:fadeIn .3s ease-out}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.hide{display:none!important}
+.hide{display:none!important}.pillars,.m-pillars,.result-pillars{display:flex;align-items:center;justify-content:center;gap:20px}.pillars .p,.m-pillars .p,.result-pillars .p{display:inline-flex;flex-direction:column;align-items:center;line-height:1.05}.pillars .p>span,.m-pillars .p>span,.result-pillars .p>span{display:block}.pillars .sep,.m-pillars .sep,.result-pillars .sep{align-self:center}.pillars,.m-pillars,.result-pillars{display:flex;align-items:center;justify-content:center;gap:20px}.pillars .p,.m-pillars .p,.result-pillars .p{display:inline-flex;flex-direction:column;align-items:center;line-height:1.05}.pillars .p>span,.m-pillars .p>span,.result-pillars .p>span{display:block}.pillars .sep,.m-pillars .sep,.result-pillars .sep{align-self:center}
 
 /* NAV */
 .nav{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;position:sticky;top:0;z-index:100;background:rgba(14,17,23,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
@@ -393,7 +393,7 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
     </div>
   </div>
   <div><div class="mockup"><div class="m-card">
-    <div class="m-pillars">乙丑<span class="sep">·</span>壬午<span class="sep">·</span>戊辰<span class="sep">·</span>丁巳</div>
+    <div class="m-pillars"><span class="p"><span>乙</span><span>丑</span></span><span class="sep">·</span><span class="p"><span>壬</span><span>午</span></span><span class="sep">·</span><span class="p"><span>戊</span><span>辰</span></span><span class="sep">·</span><span class="p"><span>丁</span><span>巳</span></span></div>
     <div class="m-row">
       <div class="m-score-box"><div class="m-score-label">今日评分</div><div class="m-score-num">78</div><div class="m-score-tag">仓位 80%</div></div>
       <div class="m-chart-box"><div class="m-chart-title">2026 流月走势</div><div class="m-chart">
@@ -464,7 +464,7 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 <div id="result-view" class="result-view">
 <div class="hero-h"><h1>你的命盘已生成</h1><p>这是基于扶抑用神 + 调候双轨判定的初步分析</p></div>
 <div class="result-chart">
-<div class="result-pillars"><span>乙丑</span><span class="sep">·</span><span>壬午</span><span class="sep">·</span><span>戊辰</span><span class="sep">·</span><span>丁巳</span></div>
+<div class="result-pillars"><span class="p"><span>乙</span><span>丑</span></span><span class="sep">·</span><span class="p"><span>壬</span><span>午</span></span><span class="sep">·</span><span class="p"><span>戊</span><span>辰</span></span><span class="sep">·</span><span class="p"><span>丁</span><span>巳</span></span></div>
 <div class="result-labels"><span>年柱</span><span>月柱</span><span>日柱</span><span>时柱</span></div>
 <div class="result-meta">
   <div class="meta-item"><div class="k">日元 / Day Master</div><div class="v"><span class="cn">戊</span> · 土</div></div>
@@ -497,7 +497,7 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 <div class="container">
 <div class="dash-hero">
 <div>
-  <div class="pillars">乙丑<span class="sep">·</span>壬午<span class="sep">·</span>戊辰<span class="sep">·</span>丁巳</div>
+  <div class="pillars"><span class="p"><span>乙</span><span>丑</span></span><span class="sep">·</span><span class="p"><span>壬</span><span>午</span></span><span class="sep">·</span><span class="p"><span>戊</span><span>辰</span></span><span class="sep">·</span><span class="p"><span>丁</span><span>巳</span></span></div>
   <div class="dash-meta" style="margin-top:8px;">
     <div><span class="k">日元</span><span class="v">戊 · 土</span></div>
     <div><span class="k">强弱</span><span class="v strong">偏强 72.4 / 100</span></div>
