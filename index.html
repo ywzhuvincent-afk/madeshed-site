@@ -754,5 +754,74 @@ window.SUPA_KEY='sb_publishable_EPfFhpn8fsVMadj0YLytsw_IZ72Ks7q';
   document.head.appendChild(s);
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.13/lunar.min.js"></script>
+<script>
+(function(){
+// === Madeshed Bazi Engine v0.1.1 ===
+const STORAGE='madeshed_profile_v1';
+const STEM_EL={甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'};
+const BRANCH_EL={寅:'木',卯:'木',巳:'火',午:'火',辰:'土',戌:'土',丑:'土',未:'土',申:'金',酉:'金',亥:'水',子:'水'};
+const SHENG={木:'火',火:'土',土:'金',金:'水',水:'木'};
+const KE={木:'土',土:'水',水:'火',火:'金',金:'木'};
+function relation(s,t){if(s===t)return s+'比和';if(SHENG[s]===t)return s+t+'相生';if(SHENG[t]===s)return t+s+'相生';if(KE[s]===t)return s+'克'+t;if(KE[t]===s)return t+'克'+s;return s+t;}
+function assess(pillars,dayEl){const c={木:0,火:0,土:0,金:0,水:0};pillars.forEach(p=>{c[STEM_EL[p.stem]]++;c[BRANCH_EL[p.branch]]++;});const pr=Object.keys(SHENG).find(k=>SHENG[k]===dayEl);const sup=c[dayEl]+(c[pr]||0);const pct=sup/8;let cat,sc;if(pct>=0.625){cat='偏强';sc=Math.round(60+pct*30);}else if(pct>=0.4){cat='中和';sc=Math.round(45+pct*25);}else{cat='偏弱';sc=Math.round(20+pct*50);}return{category:cat,score:sc,counts:c};}
+function calcBazi(ymd,hm,gender,timeKnown){if(typeof Solar==='undefined')return null;const[Y,M,D]=ymd.split('-').map(Number);const ut=timeKnown&&hm?hm:'12:00';const[h,m]=ut.split(':').map(Number);const ec=Solar.fromYmdHms(Y,M,D,h,m,0).getLunar().getEightChar();const y=ec.getYear(),mo=ec.getMonth(),d=ec.getDay(),t=ec.getTime();const pillars=[y,mo,d,t].map(s=>({stem:s[0],branch:s[1]}));const dayEl=STEM_EL[pillars[2].stem];const monthBr=pillars[1].branch;const monthEl=BRANCH_EL[monthBr];const strength=assess(pillars,dayEl);let daYun=[],cIdx=-1;try{const yun=ec.getYun(gender==='M'?1:0);const list=yun.getDaYun();const age=(new Date()-new Date(Y,M-1,D))/31557600000;for(let i=0;i<list.length&&daYun.length<7;i++){const dy=list[i];const gz=dy.getGanZhi?dy.getGanZhi():'';if(!gz||gz.length<2)continue;const sa=dy.getStartAge(),ea=dy.getEndAge?dy.getEndAge():sa+10;daYun.push({pillar:gz,startAge:sa,endAge:ea,range:sa+'-'+ea});if(age>=sa&&age<ea)cIdx=daYun.length-1;}}catch(e){console.warn('dayun',e);}return{birth:ymd,time:ut,timeKnown:!!timeKnown,gender,pillars,pillarsStr:{year:y,month:mo,day:d,hour:t},dayStem:pillars[2].stem,dayElement:dayEl,monthBranch:monthBr,monthElement:monthEl,monthRelation:relation(monthEl,dayEl),strength,daYun,currentDayunIdx:cIdx};}
+function getTodayGZ(){if(typeof Solar==='undefined')return null;const n=new Date();const l=Solar.fromYmdHms(n.getFullYear(),n.getMonth()+1,n.getDate(),12,0,0).getLunar();return{year:l.getYearInGanZhi(),month:l.getMonthInGanZhi(),day:l.getDayInGanZhi()};}
+function saveProfile(p){try{localStorage.setItem(STORAGE,JSON.stringify(p));}catch(e){}}
+function loadProfile(){try{return JSON.parse(localStorage.getItem(STORAGE)||'null');}catch(e){return null;}}
+function renderPillars(el,pillars){if(!el)return;let h='';pillars.forEach((p,i)=>{h+='<span class="p"><span>'+p.stem+'</span><span>'+p.branch+'</span></span>';if(i<3)h+='<span class="sep">·</span>';});el.innerHTML=h;}
+function applyProfile(profile,today){
+  if(!profile)return;
+  document.querySelectorAll('.pillars').forEach(el=>renderPillars(el,profile.pillars));
+  document.querySelectorAll('.result-pillars').forEach(el=>renderPillars(el,profile.pillars));
+  const dm=document.querySelector('.dash-meta');
+  if(dm){const vs=dm.querySelectorAll('.v');
+    if(vs[0])vs[0].textContent=profile.dayStem+' · '+profile.dayElement;
+    if(vs[1])vs[1].textContent=profile.strength.category+' '+profile.strength.score+' / 100';
+    if(vs[2])vs[2].textContent=profile.monthBranch+' · '+profile.monthRelation;
+    if(vs[3]){if(profile.currentDayunIdx>=0&&profile.daYun[profile.currentDayunIdx]){const c=profile.daYun[profile.currentDayunIdx];vs[3].textContent=c.pillar+' · 第 '+(profile.currentDayunIdx+1)+' 柱';}else vs[3].textContent='尚未起运';}
+  }
+  const rm=document.querySelector('.result-meta');
+  if(rm){const items=rm.querySelectorAll('.meta-item');
+    if(items[0]){const v=items[0].querySelector('.v');if(v)v.innerHTML='<span class="cn">'+profile.dayStem+'</span> · '+profile.dayElement;}
+    if(items[1]){const v=items[1].querySelector('.v');if(v)v.textContent=profile.strength.category+' '+profile.strength.score;}
+    if(items[2]){const v=items[2].querySelector('.v');if(v)v.textContent=profile.monthBranch+' · '+profile.monthRelation;}
+    if(items[3]){const v=items[3].querySelector('.v');const c=(profile.currentDayunIdx>=0&&profile.daYun[profile.currentDayunIdx])?profile.daYun[profile.currentDayunIdx]:null;if(v)v.innerHTML=c?'<span class="cn">'+c.pillar+'</span> · 第 '+(profile.currentDayunIdx+1)+' 柱':'尚未起运';}
+  }
+  const dyList=document.querySelector('.dy-list');
+  if(dyList&&profile.daYun.length){const cells=dyList.querySelectorAll('.dy');cells.forEach((cell,i)=>{const dy=profile.daYun[i];if(!dy)return;const isC=i===profile.currentDayunIdx;cell.className='dy'+(isC?' current':'');cell.innerHTML='<div class="gz">'+dy.pillar+'</div><div class="age">'+dy.range+(isC?' ▲':'')+'</div>';});}
+  if(today){
+    const sd=document.querySelector('.score-d');
+    if(sd){const rows=sd.querySelectorAll('.row');if(rows[0]){const v=rows[0].querySelector('.v');if(v)v.textContent=today.day;}}
+    const pl=document.querySelector('.pillars-line');
+    if(pl)pl.innerHTML='流年 <span class="cn">'+today.year+'</span><span class="sep">·</span> 流月 <span class="cn">'+today.month+'</span><span class="sep">·</span> 流日 <span class="cn">'+today.day+'</span>';
+  }
+}
+function handleSubmit(){
+  const v=document.querySelectorAll('.view'),onb=v[1];if(!onb)return;
+  const di=onb.querySelector('input[name="birth-date"]'),ti=onb.querySelector('input[name="birth-time"]'),ui=onb.querySelector('input[name="time-unknown"]');
+  if(!di||!di.value){alert('请填出生日期');return;}
+  const gt=onb.querySelector('.gender-toggle')||onb;
+  const gb=Array.from(gt.querySelectorAll('button')).filter(b=>/^[男女]$/.test(b.textContent.trim()));
+  const ag=gb.find(b=>b.classList.contains('active'));
+  const gender=(ag&&ag.textContent.trim()==='男')?'M':'F';
+  const profile=calcBazi(di.value,ti&&ti.value||'12:00',gender,!(ui&&ui.checked));
+  if(!profile){alert('八字计算引擎还未加载，请稍后再试');return;}
+  saveProfile(profile);
+  const fc=onb.querySelector('.form-card'),rv=onb.querySelector('.result-view');
+  if(fc)fc.classList.add('hide');
+  if(rv)rv.classList.remove('hide');
+  applyProfile(profile,getTodayGZ());
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function bindForm(){const v=document.querySelectorAll('.view'),onb=v[1];if(!onb)return;const sb=onb.querySelector('button[name="submit-btn"], button.submit');if(!sb||sb.dataset.madeshedBound)return;sb.dataset.madeshedBound='1';sb.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();handleSubmit();},true);}
+function refresh(){const p=loadProfile(),t=getTodayGZ();if(p)applyProfile(p,t);else if(t){const pl=document.querySelector('.pillars-line');if(pl)pl.innerHTML='流年 <span class="cn">'+t.year+'</span><span class="sep">·</span> 流月 <span class="cn">'+t.month+'</span><span class="sep">·</span> 流日 <span class="cn">'+t.day+'</span>';const sd=document.querySelector('.score-d');if(sd){const rows=sd.querySelectorAll('.row');if(rows[0]){const v=rows[0].querySelector('.v');if(v)v.textContent=t.day;}}}}
+function init(){bindForm();refresh();window.addEventListener('hashchange',function(){setTimeout(refresh,50);});}
+function waitForLunar(cb){if(typeof Solar!=='undefined')return cb();let n=0;const t=setInterval(function(){if(typeof Solar!=='undefined'||n++>50){clearInterval(t);if(typeof Solar!=='undefined')cb();}},200);}
+function start(){waitForLunar(init);}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+window.madeshed={calcBazi,loadProfile,saveProfile,applyProfile,getTodayGZ,refresh};
+})();
+</script>
 </body>
 </html>
