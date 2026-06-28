@@ -810,7 +810,7 @@ function handleSubmit(){
   saveProfile(profile);
   const fc=onb.querySelector('.form-card'),rv=onb.querySelector('.result-view');
   if(fc)fc.classList.add('hide');
-  if(rv)rv.classList.remove('hide');
+  if(rv)rv.classList.remove('hide');rv.classList.add('show');
   applyProfile(profile,getTodayGZ());
   window.scrollTo({top:0,behavior:'smooth'});
 }
