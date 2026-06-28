@@ -720,5 +720,39 @@ document.querySelectorAll('.outcome-btn').forEach(b=>{b.addEventListener('click'
 
 function showRecordedSummary(o,m){const card=document.getElementById('checkin-card');card.classList.add('recorded');const labels={win:'赚',loss:'亏',flat:'平',notrade:'未交易'};const icons={win:'🟢',loss:'🔴',flat:'⚪',notrade:'🚫'};const cls=o==='win'?'win':o==='loss'?'loss':'';card.innerHTML=`<div class="checkin-h"><div class="checkin-t">今日已记录 · DONE</div><div class="checkin-time">刚刚 · 2 秒</div></div><div class="recorded-summary"><div class="left"><div class="icon">${icons[o]}</div><div class="info"><div class="label">2026-06-27 · 浅绿日</div><div class="value ${cls}">${labels[o]}${m?' · '+m:''}</div></div></div><button class="edit-link">修改</button></div>`;}
 </script>
+<script>
+window.SUPA_URL='https://tkltasrbhjqwurybcyxo.supabase.co';
+window.SUPA_KEY='sb_publishable_EPfFhpn8fsVMadj0YLytsw_IZ72Ks7q';
+(function(){
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+  s.onload=function(){
+    window.supa=window.supabase.createClient(window.SUPA_URL,window.SUPA_KEY);
+    window.signIn=async function(){
+      const email=prompt('输入邮箱注册/登录(我们会发登录链接到你邮箱):');
+      if(!email||!email.includes('@'))return;
+      const r=await window.supa.auth.signInWithOtp({email,options:{emailRedirectTo:'https://madeshed.com/#/dashboard'}});
+      if(r.error)alert('出错: '+r.error.message);
+      else alert('✅ 已发送登录链接到 '+email+'\n请查收邮件,点击链接完成登录');
+    };
+    document.addEventListener('click',function(e){
+      const t=e.target.closest('.btn-signin,[data-provider="email"]');
+      if(t){e.preventDefault();window.signIn();}
+    });
+    function showLoggedIn(email){
+      const btn=document.querySelector('.btn-signin');
+      if(btn)btn.textContent='✓ '+email.split('@')[0];
+      document.body.dataset.user=email;
+    }
+    window.supa.auth.getSession().then(function(r){
+      if(r.data.session)showLoggedIn(r.data.session.user.email);
+    });
+    window.supa.auth.onAuthStateChange(function(event,session){
+      if(event==='SIGNED_IN'&&session)showLoggedIn(session.user.email);
+    });
+  };
+  document.head.appendChild(s);
+})();
+</script>
 </body>
 </html>
