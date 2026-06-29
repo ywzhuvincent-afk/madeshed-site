@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Madeshed · 国学投资助手</title>
 <meta name="description" content="把八字流日评分、个人交易回测、行为科学干预,整合进一个决策仪表盘。">
+<link rel="canonical" href="https://madeshed.com/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://madeshed.com/">
+<meta property="og:title" content="Madeshed · 国学投资助手">
+<meta property="og:description" content="把八字流日评分、个人交易回测、行为科学干预,整合进一个决策仪表盘。">
+<meta property="og:site_name" content="Madeshed">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Madeshed · 国学投资助手">
+<meta name="twitter:description" content="八字流日评分、个人交易回测与行为科学干预的决策仪表盘。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230E1117'/%3E%3Ccircle cx='48' cy='16' r='5' fill='%2300BCD4'/%3E%3Ctext x='13' y='42' font-family='Georgia,serif' font-size='28' font-weight='700' fill='%23D9D9D9'%3EM%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif+SC:wght@500;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -18,14 +28,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);font-si
 .hide{display:none!important}.pillars,.m-pillars,.result-pillars{display:flex;align-items:center;justify-content:center;gap:20px}.pillars .p,.m-pillars .p,.result-pillars .p{display:inline-flex;flex-direction:column;align-items:center;line-height:1.05}.pillars .p>span,.m-pillars .p>span,.result-pillars .p>span{display:block}.pillars .sep,.m-pillars .sep,.result-pillars .sep{align-self:center}.pillars,.m-pillars,.result-pillars{display:flex;align-items:center;justify-content:center;gap:20px}.pillars .p,.m-pillars .p,.result-pillars .p{display:inline-flex;flex-direction:column;align-items:center;line-height:1.05}.pillars .p>span,.m-pillars .p>span,.result-pillars .p>span{display:block}.pillars .sep,.m-pillars .sep,.result-pillars .sep{align-self:center}
 
 /* NAV */
-.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;position:sticky;top:0;z-index:100;background:rgba(14,17,23,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;position:sticky;top:0;z-index:100;background:rgba(14,17,23,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
 .nav-left{display:flex;align-items:center;gap:32px}
-.logo{font-family:var(--font-cn);font-weight:700;font-size:18px;letter-spacing:.5px;cursor:pointer}
+.logo{font-family:var(--font-cn);font-weight:700;font-size:18px;letter-spacing:.5px;cursor:pointer;background:transparent;border:none;color:var(--text);padding:4px 0}
 .logo .dot{color:var(--accent)}
-.nav-links{display:flex;gap:24px}
-.nav-links a{color:var(--text-2);text-decoration:none;font-size:14px;font-weight:500;padding:4px 0;border-bottom:2px solid transparent;cursor:pointer}
+.nav-links{display:flex;align-items:center;gap:24px}
+.nav-links a,.nav-disabled{color:var(--text-2);text-decoration:none;font-size:14px;font-weight:500;padding:4px 0;border-bottom:2px solid transparent;cursor:pointer}
 .nav-links a:hover{color:var(--text)}
 .nav-links a.active{color:var(--text);border-bottom-color:var(--accent)}
+.nav-disabled{cursor:not-allowed;opacity:.45}
 .nav-right{display:flex;align-items:center;gap:16px}
 .lang{display:flex;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:2px;font-size:12px}
 .lang button{background:transparent;border:none;color:var(--text-2);padding:4px 10px;cursor:pointer;border-radius:4px;font-weight:500;font-family:inherit}
@@ -34,6 +45,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);font-si
 .btn-signin:hover{border-color:var(--accent)}
 .pro{background:linear-gradient(135deg,#00BCD4,#0097A7);color:var(--bg);font-size:11px;font-weight:700;padding:4px 8px;border-radius:4px;letter-spacing:.5px}
 .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#4FC3F7);display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--bg);cursor:pointer}
+.mobile-menu-toggle{display:none;align-items:center;justify-content:center;width:38px;height:38px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);cursor:pointer;font-family:var(--font-mono);font-size:18px}
+.mobile-menu{display:none;position:absolute;left:0;right:0;top:100%;background:rgba(14,17,23,.98);border-bottom:1px solid var(--border);padding:10px 16px 16px;box-shadow:0 18px 36px rgba(0,0,0,.35)}
+.mobile-menu.open{display:grid;gap:4px}
+.mobile-menu a,.mobile-menu .nav-disabled{display:flex;align-items:center;justify-content:space-between;color:var(--text);text-decoration:none;padding:12px 4px;border-bottom:1px solid rgba(45,51,59,.65);font-weight:600}
+.mobile-menu .nav-disabled{color:var(--text-3)}
+.mobile-menu .mobile-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px}
+.mobile-menu .btn-signin{flex:1;text-align:center}
+@media (max-width:760px){html,body{width:100%;overflow-x:hidden}.nav{left:0;right:0;width:100%;padding:10px 16px}.nav-left{gap:12px;min-width:0}.nav-links,.nav-right{display:none}.mobile-menu-toggle{display:inline-flex;flex:0 0 38px;margin-left:auto}main{padding:0 24px}.hero{padding:40px 0}.hero h1{font-size:38px;line-height:1.18}.hero-sub{max-width:100%;font-size:16px;overflow-wrap:anywhere}.hero-stats{gap:24px}.mockup{max-width:100%;margin:0;overflow:hidden}.m-card{min-width:0}.ob-main{padding:36px 20px 72px}.hero-h h1{font-size:30px;line-height:1.25}.hero-h p{font-size:14px}.form-card{padding:24px 20px}.signup-card{padding:24px 18px}}
 
 main{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:0 32px}
 .container{max-width:1280px;margin:0 auto;padding:24px}
@@ -184,6 +203,7 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 .signup-buttons{display:grid;gap:8px;max-width:320px;margin:0 auto}
 .signup-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--bg-input);border:1px solid var(--border);color:var(--text);padding:12px 16px;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;transition:border-color .15s}
 .signup-btn:hover{border-color:var(--accent)}
+.signup-btn[disabled]{opacity:.45;cursor:not-allowed}
 .signup-btn .icon{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-weight:700}
 .signup-btn.email{background:var(--accent);color:var(--bg);border-color:var(--accent)}
 .signup-btn.wechat{opacity:.5;cursor:not-allowed;position:relative}
@@ -354,26 +374,40 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 .cta-soft .text{font-size:13px}
 .cta-soft .text strong{color:var(--accent)}
 .cta-soft button{background:var(--accent);color:var(--bg);border:none;padding:8px 16px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
 
 <nav class="nav">
   <div class="nav-left">
-    <div class="logo" data-route="/">Madeshed<span class="dot">·</span></div>
+    <button class="logo" data-route="/" aria-label="返回首页">Madeshed<span class="dot">·</span></button>
     <div class="nav-links" id="nav-links">
-      <a data-route="/daily">每日 Daily</a>
-      <a data-route="/dashboard">命盘 Chart</a>
+      <a href="#/daily" data-route="/daily">每日 Daily</a>
+      <a href="#/dashboard" data-route="/dashboard">命盘 Chart</a>
       <a href="/chart-full.html">流年大运 Forecast</a>
-      <a data-route="#">月报 Report</a>
-      <a data-route="#">设置 Account</a>
+      <span class="nav-disabled" aria-disabled="true">月报 Report</span>
+      <span class="nav-disabled" aria-disabled="true">设置 Account</span>
     </div>
   </div>
   <div class="nav-right">
-    <div class="lang"><button class="active">中</button><button>EN</button></div>
+    <div class="lang" aria-label="语言"><button class="active" type="button" aria-pressed="true">中</button><button type="button" aria-pressed="false">EN</button></div>
     <button class="btn-signin" id="btn-signin" data-route="/onboarding">登录</button>
     <span class="pro hide" id="nav-pro">PRO</span>
     <div class="avatar hide" id="nav-avatar">V</div>
+  </div>
+  <button class="mobile-menu-toggle" id="mobile-menu-toggle" type="button" aria-label="打开导航菜单" aria-controls="mobile-menu" aria-expanded="false">☰</button>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="#/daily" data-route="/daily">每日 Daily</a>
+    <a href="#/dashboard" data-route="/dashboard">命盘 Chart</a>
+    <a href="/chart-full.html">流年大运 Forecast</a>
+    <span class="nav-disabled" aria-disabled="true">月报 Report · Coming soon</span>
+    <span class="nav-disabled" aria-disabled="true">设置 Account · Coming soon</span>
+    <div class="mobile-actions">
+      <div class="lang" aria-label="语言"><button class="active" type="button" aria-pressed="true">中</button><button type="button" aria-pressed="false">EN</button></div>
+      <button class="btn-signin" type="button" data-route="/onboarding">登录</button>
+    </div>
   </div>
 </nav>
 
@@ -437,7 +471,7 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 
 <footer><div class="footer-content"><div>© 2026 Madeshed · <span style="font-family:var(--font-cn);">命盘 × 数据</span></div>
 <div class="footer-links"><a>关于</a><a>隐私政策</a><a>服务条款</a><a>联系我们</a></div></div>
-<div class="footer-disclaim"><strong>风险提示:</strong> Madeshed 提供的所有评分、回测、警示均为<strong>决策辅助工具</strong>,不构成任何投资建议。任何基于本工具产生的交易决策与盈亏责任,均由用户自行承担。投资有风险,入市需谨慎。</div></footer>
+<div class="footer-disclaim risk-note"><strong>风险提示:</strong> Madeshed 提供的所有评分、回测、警示均为<strong>决策辅助工具</strong>,不构成任何投资建议。任何基于本工具产生的交易决策与盈亏责任,均由用户自行承担。投资有风险,入市需谨慎。</div></footer>
 </main>
 </section>
 
@@ -450,13 +484,13 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 <div class="hero-h"><h1>1 分钟生成你的命盘</h1><p>所有计算在你的浏览器本地完成 · 数据不会上传到任何服务器</p><div class="privacy-pill">隐私保护 · 离线计算</div></div>
 
 <div class="form-card">
-<div class="calendar-toggle"><button class="active">公历 Solar</button><button>农历 Lunar</button></div>
+<div class="calendar-toggle" role="group" aria-label="选择历法"><button class="active" type="button" aria-pressed="true">公历 Solar</button><button type="button" aria-pressed="false">农历 Lunar</button></div>
 <div class="field-row">
-  <div class="field"><div class="label">出生日期 <span class="helper">必填</span></div><input type="date" id="birth-date" value="1985-06-15" max="2026-12-31"></div>
-  <div class="field"><div class="label">出生时间 <span class="helper">24 小时制</span></div><input type="time" id="birth-time" value="10:30"><label class="time-uncertain"><input type="checkbox" id="time-unknown"><span>我不知道准确时辰 (默认午时 12:00)</span></label></div>
+  <div class="field"><label class="label" for="birth-date">出生日期 <span class="helper">必填</span></label><input type="date" id="birth-date" value="1985-06-15" max="2026-12-31"></div>
+  <div class="field"><label class="label" for="birth-time">出生时间 <span class="helper">24 小时制</span></label><input type="time" id="birth-time" value="10:30"><label class="time-uncertain"><input type="checkbox" id="time-unknown"><span>我不知道准确时辰 (默认午时 12:00)</span></label></div>
 </div>
-<div class="field"><div class="label">性别</div><div class="gender-toggle"><button class="active">女</button><button>男</button></div></div>
-<div class="field"><div class="label">出生地 <span class="helper">用于精确计算真太阳时</span></div><div class="city-wrap"><input type="text" id="city-input" placeholder="搜索城市 (北京 / Beijing / 纽约 / SF...)" autocomplete="off" value="北京"><div class="city-suggestions" id="city-suggestions"></div></div><div id="city-meta" style="font-size:11px;color:var(--text-3);margin-top:6px;font-family:var(--font-mono);">已选: 北京 · 经度 116.41° E · 时区 UTC+8</div></div>
+<div class="field"><div class="label" id="gender-label">性别</div><div class="gender-toggle" role="group" aria-labelledby="gender-label"><button class="active" type="button" aria-pressed="true">女</button><button type="button" aria-pressed="false">男</button></div></div>
+<div class="field"><label class="label" for="city-input">出生地 <span class="helper">用于精确计算真太阳时</span></label><div class="city-wrap"><input type="text" id="city-input" placeholder="搜索城市 (北京 / Beijing / 纽约 / SF...)" autocomplete="off" value="北京" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="city-suggestions"><div class="city-suggestions" id="city-suggestions" role="listbox"></div></div><div id="city-meta" style="font-size:11px;color:var(--text-3);margin-top:6px;font-family:var(--font-mono);">已选: 北京 · 经度 116.41° E · 时区 UTC+8</div></div>
 <button class="submit" id="submit-btn">生成命盘 →</button>
 <div class="submit-fine">免费 · 无需注册 · 看完命盘再决定是否保存</div>
 </div>
@@ -481,15 +515,15 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 </div>
 <a href="/chart-full.html" style="display:block;text-align:center;margin:4px 0 22px;padding:14px;border:1px solid var(--accent,#c6b6f5);border-radius:12px;color:var(--accent,#c6b6f5);text-decoration:none;font-weight:600">完整排盘 · 流年大运全景 →</a>
 <div class="signup-card">
-<div class="badge">下一步</div><h2>保存命盘,解锁完整功能</h2><p>免费试用 7 天 · 全部功能可用 · 无需信用卡</p>
+<div class="badge">下一步</div><h2>保存命盘,继续体验演示</h2><p>当前为内测演示流程 · 真实账号登录即将开放 · 无需信用卡</p>
 <div class="signup-features"><div>每日评分 + 流月走势曲线</div><div>2026 流年完整规划</div><div>交易记录 + 个人胜率回测</div><div>红灯日实时干预弹窗</div><div>大运 + 喜用神深度解读</div><div>跨设备数据同步</div></div>
 <div class="signup-buttons">
-  <button class="signup-btn email" data-route="/daily"><span class="icon">✉</span><span>使用邮箱注册</span></button>
-  <button class="signup-btn" data-route="/daily"><span class="icon">G</span><span>使用 Google 登录</span></button>
-  <button class="signup-btn" data-route="/daily"><span class="icon"></span><span>使用 Apple 登录</span></button>
-  <button class="signup-btn wechat"><span class="icon">💬</span><span>使用微信登录</span><span class="soon">v0.4 推出</span></button>
+  <button class="signup-btn email" data-route="/daily"><span class="icon">↗</span><span>进入演示仪表盘</span></button>
+  <button class="signup-btn" type="button" disabled><span class="icon">✉</span><span>邮箱保存即将开放</span></button>
+  <button class="signup-btn" type="button" disabled><span class="icon">G</span><span>Google 登录即将开放</span></button>
+  <button class="signup-btn wechat" type="button" disabled><span class="icon">💬</span><span>微信登录</span><span class="soon">v0.4 推出</span></button>
 </div>
-<div class="privacy-note">点击注册即表示同意 <a>服务条款</a> 与 <a>隐私政策</a><br>Madeshed 提供决策辅助工具,不构成投资建议</div>
+<div class="privacy-note risk-note">演示数据仅用于体验产品流程；Madeshed 提供决策辅助工具,不构成投资建议。真实账号登录即将开放。<br><a href="#terms">服务条款</a> · <a href="#privacy">隐私政策</a></div>
 </div>
 </div>
 </div>
@@ -632,8 +666,11 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 // ========== ROUTER ==========
 const VIEWS = ['landing','onboarding','dashboard','daily'];
 const HASH_TO_VIEW = {'':'landing','/':'landing','/onboarding':'onboarding','/dashboard':'dashboard','/daily':'daily'};
+const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+const mobileMenu = document.getElementById('mobile-menu');
 
 function go(route){location.hash = route;}
+function setMobileMenu(open){if(!mobileMenu||!mobileMenuToggle)return;mobileMenu.classList.toggle('open',open);mobileMenuToggle.setAttribute('aria-expanded',open?'true':'false');mobileMenuToggle.setAttribute('aria-label',open?'关闭导航菜单':'打开导航菜单');}
 
 function router(){
   const hash = (location.hash || '#/').slice(1);
@@ -645,12 +682,14 @@ function router(){
   document.getElementById('btn-signin').classList.toggle('hide', !isLanding);
   document.getElementById('nav-pro').classList.toggle('hide', isLanding);
   document.getElementById('nav-avatar').classList.toggle('hide', isLanding);
-  document.querySelectorAll('#nav-links a').forEach(a => {
+  document.querySelectorAll('#nav-links a,#mobile-menu a[data-route]').forEach(a => {
     a.classList.toggle('active', a.dataset.route === '/' + view || (view === 'landing' && a.dataset.route === '/'));
   });
+  setMobileMenu(false);
   window.scrollTo(0, 0);
 }
 
+if(mobileMenuToggle){mobileMenuToggle.addEventListener('click',()=>setMobileMenu(!mobileMenu.classList.contains('open')));}
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-route]');
   if (!t) return;
@@ -658,6 +697,7 @@ document.addEventListener('click', e => {
   if (r === '#') return;
   e.preventDefault();
   go(r);
+  setMobileMenu(false);
 });
 window.addEventListener('hashchange', router);
 router();
@@ -671,13 +711,15 @@ const cityInput = document.getElementById('city-input');
 const citySuggestions = document.getElementById('city-suggestions');
 const cityMeta = document.getElementById('city-meta');
 function updateCityMeta(c){const dir=c.lng>=0?'E':'W';const tz=c.tz>=0?`+${c.tz}`:c.tz;cityMeta.textContent=`已选: ${c.name} · 经度 ${Math.abs(c.lng).toFixed(2)}° ${dir} · 时区 UTC${tz}`;}
-function renderSuggestions(q){const ql=q.toLowerCase().trim();if(!ql){citySuggestions.classList.remove('show');return;}const m=CITIES.filter(c=>c.name.toLowerCase().includes(ql)||c.en.toLowerCase().includes(ql)||c.country.toLowerCase().includes(ql)).slice(0,8);if(m.length===0){citySuggestions.innerHTML='<div class="city-item" style="color:var(--text-3);cursor:default;">未找到匹配城市</div>';citySuggestions.classList.add('show');return;}citySuggestions.innerHTML=m.map(c=>{const d=c.lng>=0?'E':'W';return `<div class="city-item" data-idx="${CITIES.indexOf(c)}"><div><span class="c-name">${c.name}</span><span class="c-en">${c.en}, ${c.country}</span></div><div class="c-meta">${Math.abs(c.lng).toFixed(2)}°${d}</div></div>`;}).join('');citySuggestions.classList.add('show');citySuggestions.querySelectorAll('.city-item[data-idx]').forEach(el=>{el.addEventListener('click',()=>{const c=CITIES[parseInt(el.dataset.idx)];cityInput.value=c.name;updateCityMeta(c);citySuggestions.classList.remove('show');});});}
+function setSuggestionsVisible(show){citySuggestions.classList.toggle('show',show);cityInput.setAttribute('aria-expanded',show?'true':'false');}
+function renderSuggestions(q){const ql=q.toLowerCase().trim();if(!ql){setSuggestionsVisible(false);return;}const m=CITIES.filter(c=>c.name.toLowerCase().includes(ql)||c.en.toLowerCase().includes(ql)||c.country.toLowerCase().includes(ql)).slice(0,8);if(m.length===0){citySuggestions.innerHTML='<div class="city-item" role="option" aria-disabled="true" style="color:var(--text-3);cursor:default;">未找到匹配城市</div>';setSuggestionsVisible(true);return;}citySuggestions.innerHTML=m.map(c=>{const d=c.lng>=0?'E':'W';return `<div class="city-item" role="option" data-idx="${CITIES.indexOf(c)}"><div><span class="c-name">${c.name}</span><span class="c-en">${c.en}, ${c.country}</span></div><div class="c-meta">${Math.abs(c.lng).toFixed(2)}°${d}</div></div>`;}).join('');setSuggestionsVisible(true);citySuggestions.querySelectorAll('.city-item[data-idx]').forEach(el=>{el.addEventListener('click',()=>{const c=CITIES[parseInt(el.dataset.idx)];cityInput.value=c.name;updateCityMeta(c);setSuggestionsVisible(false);});});}
 cityInput.addEventListener('input',e=>renderSuggestions(e.target.value));
 cityInput.addEventListener('focus',e=>{if(e.target.value)renderSuggestions(e.target.value);});
-document.addEventListener('click',e=>{if(!e.target.closest('.city-wrap'))citySuggestions.classList.remove('show');});
+cityInput.addEventListener('keydown',e=>{if(e.key==='Escape')setSuggestionsVisible(false);});
+document.addEventListener('click',e=>{if(!e.target.closest('.city-wrap'))setSuggestionsVisible(false);});
 
-document.querySelectorAll('.gender-toggle button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.gender-toggle button').forEach(x=>x.classList.remove('active'));b.classList.add('active');}));
-document.querySelectorAll('.calendar-toggle button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.calendar-toggle button').forEach(x=>x.classList.remove('active'));b.classList.add('active');}));
+document.querySelectorAll('.gender-toggle button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.gender-toggle button').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-pressed','false');});b.classList.add('active');b.setAttribute('aria-pressed','true');}));
+document.querySelectorAll('.calendar-toggle button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.calendar-toggle button').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-pressed','false');});b.classList.add('active');b.setAttribute('aria-pressed','true');}));
 const timeUnk=document.getElementById('time-unknown');const timeInp=document.getElementById('birth-time');
 timeUnk.addEventListener('change',e=>{if(e.target.checked){timeInp.value='12:00';timeInp.disabled=true;}else{timeInp.disabled=false;}});
 

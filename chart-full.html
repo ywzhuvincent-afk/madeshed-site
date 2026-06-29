@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>完整排盘 · 流年大运全景 · Madeshed</title>
+<meta name="description" content="Madeshed 完整排盘页，展示四柱、十神、藏干、神煞、大运、流年、流月与流日全景时间轴。">
+<link rel="canonical" href="https://madeshed.com/chart-full.html">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://madeshed.com/chart-full.html">
+<meta property="og:title" content="完整排盘 · 流年大运全景 · Madeshed">
+<meta property="og:description" content="四柱、十神、藏干、神煞、大运、流年、流月与流日全景时间轴。">
+<meta property="og:site_name" content="Madeshed">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="完整排盘 · 流年大运全景 · Madeshed">
+<meta name="twitter:description" content="Madeshed 完整排盘与流年大运全景时间轴。">
 <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.13/lunar.min.js"></script>
 <style>
   :root{
@@ -37,6 +47,7 @@
   .btn{background:var(--accent);color:#1a1430;border:none;border-radius:9px;padding:10px 22px;font-size:14px;
        font-weight:600;cursor:pointer;transition:filter .15s}
   .btn:hover{filter:brightness(1.08)}
+  a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
   .hint{color:var(--text-3);font-size:11px;margin-left:auto;align-self:center;max-width:200px;text-align:right}
 
   /* ---------- section ---------- */
@@ -113,11 +124,17 @@
   footer{color:var(--text-3);font-size:11px;line-height:1.7;border-top:1px solid var(--line);
          padding-top:16px;margin-top:30px}
   footer b{color:var(--text-2)}
+  .risk-note{margin-top:12px;color:var(--text-2)}
   @media(max-width:640px){
+    .inbar{display:grid;grid-template-columns:1fr;align-items:stretch}
+    .field input,.field select{min-width:0;width:100%}
+    .btn{width:100%}
+    .lead{max-width:100%}
     .yong{grid-template-columns:1fr} .gan,.zhi{font-size:27px}
     h1{font-size:20px} .sz .rowlab{width:46px;font-size:10px;padding-left:8px}
     .hint{display:none}
   }
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
@@ -131,15 +148,15 @@
 
   <div class="inbar">
     <div class="field">
-      <label>公历出生日期</label>
+      <label for="in-date">公历出生日期</label>
       <input type="date" id="in-date" value="1965-06-29" min="1901-01-01" max="2100-12-31">
     </div>
     <div class="field">
-      <label>出生时间</label>
+      <label for="in-time">出生时间</label>
       <input type="time" id="in-time" value="08:29">
     </div>
     <div class="field">
-      <label>性别</label>
+      <label for="in-gender">性别</label>
       <select id="in-gender"><option value="1">男</option><option value="0">女</option></select>
     </div>
     <button class="btn" id="go">排盘</button>
@@ -175,6 +192,7 @@
     <b>关于算法：</b>四柱、十神、藏干、纳音、空亡、大运、流年、流月均由排盘引擎精确计算（与传统排盘一致）。起运/交运时间因流派精度不同可能相差一两天。<br>
     <b>神煞</b>仅展示规则明确的核心一组（天乙贵人、文昌、禄神、羊刃、将星、华盖、驿马、桃花、劫煞、亡神），由年支、日支与日干推导，非全集。<br>
     <b>喜忌用神</b>为「扶抑 + 调候」自动判定的近似结果，供参考；命局复杂时（从格、专旺、调候争用等）需人工复核。年龄按「公历年份 − 出生年份」计（与主流排盘网站一致）。
+    <div class="risk-note"><b>风险提示：</b>Madeshed 的排盘、评分与时间轴仅用于自我观察和决策辅助，不构成投资建议。任何交易决策与盈亏责任由用户自行承担。</div>
   </footer>
 
 </div>
