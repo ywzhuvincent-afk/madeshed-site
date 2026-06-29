@@ -276,7 +276,7 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 .checkin-t{font-size:12px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px}
 .checkin-time{font-size:11px;color:var(--text-3);font-family:var(--font-mono)}
 .checkin-prompt{font-size:15px;color:var(--text);margin-bottom:16px}
-.outcomes{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.outcomes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
 @media (max-width:500px){.outcomes{grid-template-columns:repeat(2,1fr)}}
 .outcome-btn{background:var(--bg-input);border:1px solid var(--border);color:var(--text);padding:18px 12px;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px;font-family:inherit;transition:all .15s;text-align:center}
 .outcome-btn:hover{border-color:var(--accent);transform:translateY(-1px)}
@@ -469,14 +469,16 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 <div class="result-meta">
   <div class="meta-item"><div class="k">日元 / Day Master</div><div class="v"><span class="cn">戊</span> · 土</div></div>
   <div class="meta-item"><div class="k">强弱 / Strength</div><div class="v up">偏强 · 72.4 / 100</div></div>
-  <div class="meta-item"><div class="k">月令 / Month</div><div class="v fav cn">水, 金</div></div>
-  <div class="meta-item"><div class="k">大运 / DaYun</div><div class="v" style="color:var(--red);"><span class="cn">火, 土</span></div></div>
+  <div class="meta-item" style="grid-column:1/-1"><div class="k">用神 / Yong Shen</div><div class="v fav cn">水</div></div>
+  <div class="meta-item"><div class="k">喜 / Favorable</div><div class="v fav cn">水, 金</div></div>
+  <div class="meta-item"><div class="k">忌 / Unfavorable</div><div class="v" style="color:var(--red);"><span class="cn">火, 土</span></div></div>
 </div>
 <div class="today-strip">
   <div class="today-strip-left"><div class="k">今日评分预览 (2026.06.27)</div><div class="v">浅绿 · 仓位 80% · 按计划交易</div></div>
   <div class="today-strip-right"><div class="num">78</div><div class="max">/100</div></div>
 </div>
 </div>
+<a href="/chart-full.html" style="display:block;text-align:center;margin:4px 0 22px;padding:14px;border:1px solid var(--accent,#c6b6f5);border-radius:12px;color:var(--accent,#c6b6f5);text-decoration:none;font-weight:600">完整排盘 · 流年大运全景 →</a>
 <div class="signup-card">
 <div class="badge">下一步</div><h2>保存命盘,解锁完整功能</h2><p>免费试用 7 天 · 全部功能可用 · 无需信用卡</p>
 <div class="signup-features"><div>每日评分 + 流月走势曲线</div><div>2026 流年完整规划</div><div>交易记录 + 个人胜率回测</div><div>红灯日实时干预弹窗</div><div>大运 + 喜用神深度解读</div><div>跨设备数据同步</div></div>
@@ -593,14 +595,12 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 <div class="checkin-h"><div class="checkin-t">今日记录 · CHECK-IN</div><div class="checkin-time">10 秒搞定</div></div>
 <div class="checkin-prompt">今天的交易结果?</div>
 <div class="outcomes">
-  <button class="outcome-btn" data-outcome="win"><span class="emoji">🟢</span>赚</button>
+  <button class="outcome-btn" data-outcome="big_loss"><span class="emoji">📉</span>大亏</button>
   <button class="outcome-btn" data-outcome="loss"><span class="emoji">🔴</span>亏</button>
   <button class="outcome-btn" data-outcome="flat"><span class="emoji">⚪</span>平</button>
+  <button class="outcome-btn" data-outcome="win"><span class="emoji">🟢</span>赚</button>
+  <button class="outcome-btn" data-outcome="big_win"><span class="emoji">📈</span>大赚</button>
   <button class="outcome-btn" data-outcome="notrade"><span class="emoji">🚫</span>没交易</button>
-</div>
-<div class="magnitude-row" id="mag-row">
-<div class="magnitude-label">幅度区间? <span style="color:var(--text-3);">(占当日总资金)</span></div>
-<div class="magnitude-btns" id="mag-btns"></div>
 </div>
 </div>
 
@@ -715,8 +715,7 @@ function renderInsights(entries){const traded=entries.filter(e=>e.outcome==='win
 
 const entries=genEntries(42);renderColorStats(entries);renderHeatmap(entries);renderInsights(entries);
 
-const magBtns=document.getElementById('mag-btns');const magRow=document.getElementById('mag-row');let currentOutcome=null;
-document.querySelectorAll('.outcome-btn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.outcome-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');currentOutcome=b.dataset.outcome;if(currentOutcome==='win'||currentOutcome==='loss'){const buckets=currentOutcome==='win'?['<+1%','+1~+3%','+3~+5%','+5~+10%','>+10%']:['<-1%','-1~-3%','-3~-5%','-5~-10%','<-10%'];magBtns.innerHTML=buckets.map(bk=>`<button class="mag-btn">${bk}</button>`).join('');magRow.classList.add('show');magBtns.querySelectorAll('.mag-btn').forEach(btn=>{btn.addEventListener('click',()=>{magBtns.querySelectorAll('.mag-btn').forEach(x=>x.classList.remove('selected'));btn.classList.add('selected');setTimeout(()=>showRecordedSummary(currentOutcome,btn.textContent),300);});});}else{magRow.classList.remove('show');setTimeout(()=>showRecordedSummary(currentOutcome,null),300);}});});
+document.querySelectorAll('.outcome-btn').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.outcome-btn').forEach(function(x){x.classList.remove('selected');});b.classList.add('selected');var OC={big_win:['win','大赚'],win:['win',null],flat:['flat',null],loss:['loss',null],big_loss:['loss','大亏'],notrade:['notrade',null]};var o=OC[b.dataset.outcome]||[b.dataset.outcome,null];setTimeout(function(){showRecordedSummary(o[0],o[1]);},250);});});
 
 function showRecordedSummary(o,m){const card=document.getElementById('checkin-card');card.classList.add('recorded');const labels={win:'赚',loss:'亏',flat:'平',notrade:'未交易'};const icons={win:'🟢',loss:'🔴',flat:'⚪',notrade:'🚫'};const cls=o==='win'?'win':o==='loss'?'loss':'';card.innerHTML=`<div class="checkin-h"><div class="checkin-t">今日已记录 · DONE</div><div class="checkin-time">刚刚 · 2 秒</div></div><div class="recorded-summary"><div class="left"><div class="icon">${icons[o]}</div><div class="info"><div class="label">2026-06-27 · 浅绿日</div><div class="value ${cls}">${labels[o]}${m?' · '+m:''}</div></div></div><button class="edit-link">修改</button></div>`;}
 </script>
