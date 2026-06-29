@@ -152,8 +152,13 @@
   </section>
 
   <section>
-    <div class="s-head"><h2>喜忌用神</h2><span class="en">Favorable / Unfavorable</span></div>
+    <div class="s-head"><h2>命格喜忌用神</h2><span class="en">Natal · Favorable / Unfavorable</span></div>
     <div class="yong" id="yong"></div>
+  </section>
+
+  <section>
+    <div class="s-head"><h2>投资财运</h2><span class="en">Wealth / Investment</span></div>
+    <div class="yong" id="wealth"></div>
   </section>
 
   <section>
@@ -282,6 +287,35 @@
     return {xi:uniq(xi), ji:uniq(ji), main:main, note:note};
   }
 
+  /* ===== 财运 / 投资喜忌（财星 + 身强弱 + 偏财） ===== */
+  function calcWealth(dgStem, strengthPct){
+    var D=STEM_EL[dgStem];
+    var YANG={甲:1,丙:1,戊:1,庚:1,壬:1};
+    var isYang=!!YANG[dgStem];
+    var gen=genOf(D), child=GEN_NEXT[D], wealth=CTRL_NEXT[D];
+    var ES={wood:['甲','乙'],fire:['丙','丁'],earth:['戊','己'],metal:['庚','辛'],water:['壬','癸']};
+    var pian=ES[wealth][isYang?0:1], zheng=ES[wealth][isYang?1:0];
+    function uq(a){var r=[];a.forEach(function(x){if(r.indexOf(x)<0&&x)r.push(x);});return r;}
+    var xi, ji, note, alert, band, color, canCarry;
+    if(strengthPct>=58){
+      band='身强 · 担得起财'; color='#4ade80'; canCarry=true;
+      xi=[wealth, child]; ji=[D, gen];
+      note='日主偏旺、担得起财——行财星（'+EL_CN[wealth]+'）、食伤（'+EL_CN[child]+'）之运，财气流通、宜主动获利；偏财（'+pian+'）利投机波段，正财（'+zheng+'）主稳定进项。';
+      alert='防破财：逢比劫（'+EL_CN[D]+'）旺易劫财争财、冲动加仓或被分润；印（'+EL_CN[gen]+'）过旺则偏保守、错失机会。';
+    }else if(strengthPct<=42){
+      band='身弱 · 财多身弱'; color='#f87171'; canCarry=false;
+      xi=[D, gen]; ji=[wealth, child];
+      note='日主偏弱、担财吃力——行比劫（'+EL_CN[D]+'）、印（'+EL_CN[gen]+'）之运得帮扶，宜稳健轻仓、长线为主，此时反而不易冲动。偏财为'+pian+'、正财为'+zheng+'。';
+      alert='防破财：逢财星（'+EL_CN[wealth]+'）旺即「财多身弱」，看得到赚不到，最忌追高与加杠杆；偏财（'+pian+'）投机尤须克制。';
+    }else{
+      band='中和 · 财可担、宜节制'; color='#fbbf24'; canCarry=true;
+      xi=[wealth, child]; ji=[D];
+      note='日主中和、财可担——行财星（'+EL_CN[wealth]+'）、食伤（'+EL_CN[child]+'）之运可顺势获利，但不宜重仓豪赌、见好就收。偏财（'+pian+'）主投机、正财（'+zheng+'）主稳进。';
+      alert='防破财：逢比劫（'+EL_CN[D]+'）旺仍防劫财争财——别与人合伙重仓、别情绪化加码。';
+    }
+    return {wealth:wealth, pian:pian, zheng:zheng, xi:uq(xi), ji:uq(ji), note:note, alert:alert, band:band, color:color, canCarry:canCarry};
+  }
+
   /* ===== 渲染 ===== */
   var state={ec:null, yun:null, daYun:[], birthYear:0, selDy:-1, selYear:0,
              nowDy:'', nowYear:0, nowMonthGz:'', nowDayGz:''};
@@ -316,6 +350,7 @@
 
     renderBasic();
     renderYong();
+    renderWealth();
     renderSizhu();
     // 默认选中含今年的大运 + 今年流年
     var defIdx=0;
@@ -361,9 +396,24 @@
         '<div class="strength-bar"><i style="width:'+st.pct+'%"></i></div>'+
         '<div class="note">'+ys.note+'</div></div>'+
       '<div class="box xi"><div class="lab">喜神</div><div class="els">'+elPills(ys.xi)+'</div>'+
-        '<div class="note">流日五行落在喜神 → 顺势、可按计划交易。</div></div>'+
+        '<div class="note">本命所喜：大运 / 流年 / 流月行此五行最为有利，整体顺遂、判断清晰。</div></div>'+
       '<div class="box ji"><div class="lab">忌神</div><div class="els">'+elPills(ys.ji)+'</div>'+
-        '<div class="note">流日五行落在忌神 → 谨慎、减仓或观望。</div></div>';
+        '<div class="note">本命所忌：逢此五行之运势，易受抑制、需留意。</div></div>';
+  }
+
+  function renderWealth(){
+    var st=state.strength, dm=state.ec.getDay().charAt(0);
+    var w=calcWealth(dm, st.pct);
+    state.wealth=w;
+    document.getElementById('wealth').innerHTML=
+      '<div class="box use"><div class="lab">财星 · 投资属性</div>'+
+        '<div class="els"><span class="el-pill el-'+w.wealth+'">'+EL_CN[w.wealth]+'</span>'+
+        '<span style="font-size:13px;color:'+w.color+';margin-left:6px">'+w.band+'</span></div>'+
+        '<div class="note">你的财星为「'+EL_CN[w.wealth]+'」。偏财 '+w.pian+'（投机 / 波动获利）｜正财 '+w.zheng+'（稳定收入）。炒股交易本质更近偏财。</div></div>'+
+      '<div class="box xi"><div class="lab">投资喜神</div><div class="els">'+elPills(w.xi)+'</div>'+
+        '<div class="note">'+w.note+'</div></div>'+
+      '<div class="box ji"><div class="lab">投资忌神 · 破财预警</div><div class="els">'+elPills(w.ji)+'</div>'+
+        '<div class="note">'+w.alert+'</div></div>';
   }
 
   function renderSizhu(){
