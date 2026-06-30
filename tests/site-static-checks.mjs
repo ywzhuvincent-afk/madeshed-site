@@ -549,17 +549,20 @@ includesAll(supabaseSchema, [
   'create table if not exists public.checkins',
   'create table if not exists public.report_entitlements',
   'create table if not exists public.memberships',
+  'create table if not exists public.membership_events',
   'create table if not exists public.generated_reports',
   'alter table public.profiles enable row level security',
   'alter table public.checkins enable row level security',
   'alter table public.report_entitlements enable row level security',
   'alter table public.memberships enable row level security',
+  'alter table public.membership_events enable row level security',
   'alter table public.generated_reports enable row level security',
   'auth.uid() = user_id',
   'profiles_select_own',
   'checkins_select_own',
   'report_entitlements_select_own',
   'memberships_select_own',
+  'membership_events_select_own',
   'generated_reports_select_own',
   'unique (user_id, checkin_date)',
   'unique (user_id, report_key)',
@@ -648,6 +651,9 @@ includesAll(supabaseSchema, [
   'api/master-question.js',
   'api/master-history.js',
   'api/create-credit-checkout-session.js',
+  'api/create-membership-checkout-session.js',
+  'api/create-report-checkout-session.js',
+  'api/create-customer-portal-session.js',
   'api/stripe-webhook.js',
 ].forEach((file) => assert.ok(existsSync(file), `${file} should exist`));
 
@@ -655,6 +661,9 @@ const fortuneReportApi = readFileSync('api/fortune-report.js', utf8);
 const masterQuestionApi = readFileSync('api/master-question.js', utf8);
 const masterHistoryApi = readFileSync('api/master-history.js', utf8);
 const creditCheckoutApi = readFileSync('api/create-credit-checkout-session.js', utf8);
+const membershipCheckoutApi = readFileSync('api/create-membership-checkout-session.js', utf8);
+const reportCheckoutApi = readFileSync('api/create-report-checkout-session.js', utf8);
+const customerPortalApi = readFileSync('api/create-customer-portal-session.js', utf8);
 const stripeWebhookApi = readFileSync('api/stripe-webhook.js', utf8);
 
 includesAll(fortuneReportApi, [
@@ -692,12 +701,39 @@ includesAll(creditCheckoutApi, [
   'STRIPE_CREDIT_PRICE_ID',
 ], 'credit checkout API');
 
+includesAll(membershipCheckoutApi, [
+  'checkout/sessions',
+  "mode', 'subscription'",
+  'STRIPE_ULTIMATE_PRICE_ID',
+  'STRIPE_MEMBERSHIP_PRICE_ID',
+  'metadata[user_id]',
+  'subscription_data[metadata][tier]',
+], 'membership checkout API');
+
+includesAll(reportCheckoutApi, [
+  'checkout/sessions',
+  'STRIPE_REPORT_30_PRICE_ID',
+  'STRIPE_FORTUNE_FULL_PRICE_ID',
+  'metadata[product]',
+  'fortune_report',
+], 'report checkout API');
+
+includesAll(customerPortalApi, [
+  'billing_portal/sessions',
+  'stripe_customer_id',
+  'membership_not_found',
+], 'customer portal API');
+
 includesAll(stripeWebhookApi, [
   'STRIPE_WEBHOOK_SECRET',
   'checkout.session.completed',
+  'customer.subscription.updated',
+  'invoice.paid',
   'credit_ledger',
   'memberships',
+  'membership_events',
   'report_entitlements',
+  'fortune_reports',
 ], 'stripe webhook API');
 
 assert.ok(!index.includes('LLM_API_KEY'), 'frontend must not expose LLM_API_KEY');

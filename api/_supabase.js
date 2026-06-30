@@ -59,3 +59,16 @@ export async function supabaseInsert(table, rows, options = {}) {
   if (!response.ok) throw new Error(data && data.message ? data.message : `insert ${table} failed`);
   return Array.isArray(data) ? data : [];
 }
+
+export async function supabaseUpdate(table, query, row) {
+  if (!hasSupabaseService()) throw new Error('supabase_service_not_configured');
+  if (!query) throw new Error('missing_update_query');
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
+    method: 'PATCH',
+    headers: serviceHeaders({ Prefer: 'return=representation' }),
+    body: JSON.stringify(row || {})
+  });
+  const data = await response.json().catch(() => []);
+  if (!response.ok) throw new Error(data && data.message ? data.message : `update ${table} failed`);
+  return Array.isArray(data) ? data : [];
+}

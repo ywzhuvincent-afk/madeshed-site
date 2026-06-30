@@ -104,7 +104,7 @@ async function creditBalance(userId) {
 async function maybeGrantUltimateCredits(userId) {
   const memberships = await supabaseSelect('memberships', `user_id=eq.${encodeURIComponent(userId)}&select=tier,status&limit=1`);
   const membership = memberships[0];
-  const activeUltimate = membership && (membership.tier === 'ultimate' || membership.tier === 'highest') && membership.status !== 'canceled';
+  const activeUltimate = membership && (membership.tier === 'ultimate' || membership.tier === 'highest') && (membership.status === 'active' || membership.status === 'trialing');
   if (!activeUltimate) return;
   const referenceId = currentGrantMonth();
   const grants = await supabaseSelect('credit_ledger', `user_id=eq.${encodeURIComponent(userId)}&entry_type=eq.membership_grant&reference_id=eq.${encodeURIComponent(referenceId)}&select=id&limit=1`);

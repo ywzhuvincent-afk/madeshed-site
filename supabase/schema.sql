@@ -52,6 +52,15 @@ create table if not exists public.memberships (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.membership_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete set null,
+  stripe_event_id text unique,
+  event_type text not null,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.report_entitlements (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -172,6 +181,7 @@ alter table public.profiles enable row level security;
 alter table public.checkins enable row level security;
 alter table public.report_entitlements enable row level security;
 alter table public.memberships enable row level security;
+alter table public.membership_events enable row level security;
 alter table public.generated_reports enable row level security;
 alter table public.credit_ledger enable row level security;
 alter table public.fortune_reports enable row level security;
@@ -230,6 +240,12 @@ using (auth.uid() = user_id);
 drop policy if exists memberships_select_own on public.memberships;
 create policy memberships_select_own
 on public.memberships for select
+to authenticated
+using (auth.uid() = user_id);
+
+drop policy if exists membership_events_select_own on public.membership_events;
+create policy membership_events_select_own
+on public.membership_events for select
 to authenticated
 using (auth.uid() = user_id);
 
@@ -304,6 +320,7 @@ with check (auth.uid() = user_id);
 grant select, insert, update, delete on public.profiles to authenticated;
 grant select, insert, update, delete on public.checkins to authenticated;
 grant select on public.memberships to authenticated;
+grant select on public.membership_events to authenticated;
 grant select on public.report_entitlements to authenticated;
 grant select, insert, update, delete on public.generated_reports to authenticated;
 grant select on public.credit_ledger to authenticated;
