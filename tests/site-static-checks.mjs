@@ -4,6 +4,10 @@ import { existsSync, readFileSync } from 'node:fs';
 const utf8 = 'utf8';
 const index = readFileSync('index.html', utf8);
 const chart = readFileSync('chart-full.html', utf8);
+const supabaseSchemaPath = 'supabase/schema.sql';
+const supabaseSchema = existsSync(supabaseSchemaPath)
+  ? readFileSync(supabaseSchemaPath, utf8)
+  : '';
 
 function includesAll(source, values, label) {
   for (const value of values) {
@@ -137,5 +141,33 @@ includesAll(index, [
   'function renderReport()',
   'function renderAccount()',
 ], 'local persistence shell');
+
+assert.ok(existsSync(supabaseSchemaPath), 'supabase/schema.sql should exist');
+
+includesAll(supabaseSchema, [
+  'create table if not exists public.profiles',
+  'create table if not exists public.checkins',
+  'alter table public.profiles enable row level security',
+  'alter table public.checkins enable row level security',
+  'auth.uid() = user_id',
+  'profiles_select_own',
+  'checkins_select_own',
+  'unique (user_id, checkin_date)',
+], 'Supabase schema and RLS');
+
+includesAll(index, [
+  "const CLOUD_PROFILE_TABLE='profiles'",
+  "const CLOUD_CHECKINS_TABLE='checkins'",
+  'function syncProfileToCloud(profile)',
+  'function syncCheckinsToCloud()',
+  'function syncCloudToLocal()',
+  'function bootstrapCloudSync(session)',
+  'window.syncProfileToCloud=syncProfileToCloud',
+  'window.syncCheckinsToCloud=syncCheckinsToCloud',
+  'if(window.syncProfileToCloud)window.syncProfileToCloud(profile)',
+  'if(window.syncCheckinsToCloud)window.syncCheckinsToCloud()',
+  'data-auth-action="signin"',
+  'function signOut()',
+], 'Supabase auth and sync shell');
 
 console.log('Static site checks passed');

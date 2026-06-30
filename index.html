@@ -414,7 +414,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   </div>
   <div class="nav-right">
     <div class="lang" aria-label="语言"><button class="active" type="button" aria-pressed="true">中</button><button type="button" aria-pressed="false">EN</button></div>
-    <button class="btn-signin" id="btn-signin" data-route="/onboarding">登录</button>
+    <button class="btn-signin" id="btn-signin" data-auth-action="signin">登录</button>
     <span class="pro hide" id="nav-pro">PRO</span>
     <div class="avatar hide" id="nav-avatar">V</div>
   </div>
@@ -427,7 +427,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <a href="#/account" data-route="/account">设置 Account</a>
     <div class="mobile-actions">
       <div class="lang" aria-label="语言"><button class="active" type="button" aria-pressed="true">中</button><button type="button" aria-pressed="false">EN</button></div>
-      <button class="btn-signin" type="button" data-route="/onboarding">登录</button>
+      <button class="btn-signin" type="button" data-auth-action="signin">登录</button>
     </div>
   </div>
 </nav>
@@ -702,7 +702,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   <div class="metric"><div class="k">当前命盘</div><div class="account-list" id="account-profile"></div></div>
   <div class="metric"><div class="k">本地数据</div><div class="account-list" id="account-storage"></div></div>
 </div>
-<div class="legal-block" style="margin-top:14px"><h2>正式版状态</h2><p>账号登录、云端同步、订阅权限和发票会在下一阶段接入 Supabase 与支付服务；当前所有体验数据仍保存在你的浏览器本地。</p></div>
+<div class="legal-block" style="margin-top:14px"><h2>正式版状态</h2><p id="cloud-sync-note">账号登录和云端同步正在接入 Supabase；如果你已登录，命盘和每日记录会自动尝试同步。</p><button class="btn-signin" id="btn-signout" type="button">退出登录</button></div>
 </div>
 </section>
 
@@ -717,9 +717,9 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 <!-- PRIVACY -->
 <section class="view" data-view="privacy">
 <div class="container page">
-<div class="page-head"><div><div class="page-kicker">Privacy</div><h1>隐私政策</h1><p>当前内测版本优先在浏览器本地保存数据。接入云端账号前，我们会明确展示数据用途和删除方式。</p></div></div>
-<div class="legal-block"><h2>当前收集范围</h2><ul><li>出生日期、时间、性别等命盘输入保存在本机 localStorage。</li><li>每日交易结果记录保存在本机 localStorage。</li><li>未接入云端同步前，刷新浏览器配置或清除站点数据会删除这些记录。</li></ul></div>
-<div class="legal-block"><h2>后续云端版</h2><p>云端版会使用账号系统保存命盘和交易记录，并提供导出、删除账号和删除数据的入口。</p></div>
+<div class="page-head"><div><div class="page-kicker">Privacy</div><h1>隐私政策</h1><p>未登录时，数据只保存在当前浏览器；登录后，命盘和每日记录会尝试同步到 Supabase 云端。</p></div></div>
+<div class="legal-block"><h2>当前收集范围</h2><ul><li>出生日期、时间、性别等命盘输入会先保存在本机 localStorage。</li><li>每日交易结果记录会先保存在本机 localStorage。</li><li>登录后，命盘会同步到 Supabase `profiles` 表，每日记录会同步到 `checkins` 表。</li></ul></div>
+<div class="legal-block"><h2>数据控制</h2><p>当前阶段已具备账号级 RLS 隔离；后续会继续加入前台导出、删除账号和删除云端数据入口。</p></div>
 </div>
 </section>
 
@@ -831,10 +831,10 @@ const CHECKINS='madeshed_checkins_v1';
 function loadCheckins(){try{return JSON.parse(localStorage.getItem(CHECKINS)||'[]');}catch(e){return[];}}
 function saveCheckins(items){try{localStorage.setItem(CHECKINS,JSON.stringify(items));}catch(e){}}
 function currentCheckinKey(){const st=window.__todayState||{};return st.compactDate||new Date().toISOString().slice(0,10);}
-function recordCheckin(o,m){const st=window.__todayState||{};const key=currentCheckinKey();const items=loadCheckins().filter(x=>x.date!==key);items.push({date:key,outcome:o,mag:m||null,label:st.label||null,score:st.score||null,day:st.day||null,createdAt:new Date().toISOString()});saveCheckins(items);showRecordedSummary(o,m);renderReport();renderAccount();}
+function recordCheckin(o,m){const st=window.__todayState||{};const key=currentCheckinKey();const items=loadCheckins().filter(x=>x.date!==key);items.push({date:key,outcome:o,mag:m||null,label:st.label||null,score:st.score||null,day:st.day||null,createdAt:new Date().toISOString()});saveCheckins(items);if(window.syncCheckinsToCloud)window.syncCheckinsToCloud();showRecordedSummary(o,m);renderReport();renderAccount();}
 function renderStoredCheckin(){const item=loadCheckins().find(x=>x.date===currentCheckinKey());if(item)showRecordedSummary(item.outcome,item.mag);}
 function renderReport(){const box=document.getElementById('report-summary'),note=document.getElementById('report-insight');if(!box)return;const items=loadCheckins();const traded=items.filter(x=>x.outcome==='win'||x.outcome==='loss'||x.outcome==='flat');const wins=traded.filter(x=>x.outcome==='win').length;const rate=traded.length?Math.round(wins/traded.length*100)+'%':'—';let profile=null;try{profile=JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');}catch(e){}const chart=profile&&profile.pillarsStr?Object.values(profile.pillarsStr).join(' · '):'未生成';box.innerHTML='<div class="metric"><div class="k">本地记录</div><div class="v">'+items.length+'</div><div class="d">保存在当前浏览器。</div></div><div class="metric"><div class="k">胜率</div><div class="v">'+rate+'</div><div class="d">'+(traded.length?('交易样本 '+traded.length+' 条'):'至少 5 条交易后更有参考价值')+'</div></div><div class="metric"><div class="k">当前命盘</div><div class="v" style="font-size:18px;line-height:1.6">'+chart+'</div><div class="d">与 Dashboard / Daily 共用同一份本地命盘。</div></div>';if(note)note.textContent=items.length?'已开始积累你的个人记录。下一阶段会把这些记录同步到云端，并生成完整月报。':'还没有足够记录。每天收盘后点一次结果，系统会逐步生成个人胜率、红灯日规避、亏损后追单等模式。';}
-function renderAccount(){const prof=document.getElementById('account-profile'),store=document.getElementById('account-storage');if(!prof||!store)return;let p=null;try{p=JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');}catch(e){}const rows=p?[['出生日期',p.birth],['出生时间',p.time],['性别',p.gender==='M'?'男':'女'],['四柱',p.pillarsStr?Object.values(p.pillarsStr).join(' · '):'已保存']]:[['命盘','尚未生成']];prof.innerHTML=rows.map(r=>'<div class="account-row"><span>'+r[0]+'</span><strong>'+r[1]+'</strong></div>').join('');const checkins=loadCheckins();store.innerHTML='<div class="account-row"><span>每日记录</span><strong>'+checkins.length+' 条</strong></div><div class="account-row"><span>数据位置</span><strong>当前浏览器</strong></div><div class="account-row"><span>云端同步</span><strong>下一阶段接入</strong></div>';}
+function renderAccount(){const prof=document.getElementById('account-profile'),store=document.getElementById('account-storage'),note=document.getElementById('cloud-sync-note');if(!prof||!store)return;let p=null;try{p=JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');}catch(e){}const rows=p?[['出生日期',p.birth],['出生时间',p.time],['性别',p.gender==='M'?'男':'女'],['四柱',p.pillarsStr?Object.values(p.pillarsStr).join(' · '):'已保存']]:[['命盘','尚未生成']];prof.innerHTML=rows.map(r=>'<div class="account-row"><span>'+r[0]+'</span><strong>'+r[1]+'</strong></div>').join('');const checkins=loadCheckins(),cloud=window.__cloudUser?window.__cloudUser.email:'未登录',status=window.__cloudStatus&&window.__cloudStatus.text?window.__cloudStatus.text:'未登录，当前为本机数据';store.innerHTML='<div class="account-row"><span>每日记录</span><strong>'+checkins.length+' 条</strong></div><div class="account-row"><span>数据位置</span><strong>当前浏览器 + Supabase</strong></div><div class="account-row"><span>云端账号</span><strong>'+cloud+'</strong></div><div class="account-row"><span>云端同步</span><strong>'+status+'</strong></div>';if(note)note.textContent=status;}
 
 document.querySelectorAll('.outcome-btn').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.outcome-btn').forEach(function(x){x.classList.remove('selected');});b.classList.add('selected');var OC={big_win:['win','大赚'],win:['win',null],flat:['flat',null],loss:['loss',null],big_loss:['loss','大亏'],notrade:['notrade',null]};var o=OC[b.dataset.outcome]||[b.dataset.outcome,null];setTimeout(function(){recordCheckin(o[0],o[1]);},250);});});
 
@@ -843,32 +843,56 @@ function showRecordedSummary(o,m){const card=document.getElementById('checkin-ca
 <script>
 window.SUPA_URL='https://tkltasrbhjqwurybcyxo.supabase.co';
 window.SUPA_KEY='sb_publishable_EPfFhpn8fsVMadj0YLytsw_IZ72Ks7q';
+const CLOUD_PROFILE_TABLE='profiles';
+const CLOUD_CHECKINS_TABLE='checkins';
+const CLOUD_SYNC_STATE='madeshed_cloud_sync_v1';
 (function(){
   const s=document.createElement('script');
   s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
   s.onload=function(){
     window.supa=window.supabase.createClient(window.SUPA_URL,window.SUPA_KEY);
+    function getLocalProfile(){try{return JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');}catch(e){return null;}}
+    function setCloudStatus(text,kind){window.__cloudStatus={text:text,kind:kind||'info',at:new Date().toISOString()};try{localStorage.setItem(CLOUD_SYNC_STATE,JSON.stringify(window.__cloudStatus));}catch(e){}if(typeof renderAccount==='function')renderAccount();}
+    function withMadeshed(cb){if(window.madeshed)return cb(window.madeshed);let n=0,t=setInterval(function(){if(window.madeshed||n++>30){clearInterval(t);if(window.madeshed)cb(window.madeshed);}},200);}
+    function remoteCheckin(row){return{date:row.checkin_date,outcome:row.outcome,mag:row.magnitude||null,label:row.label||null,score:row.score||null,day:row.day_ganzhi||null,createdAt:row.created_at,updatedAt:row.updated_at};}
+    function mergeCheckins(local,remote){const map={};(local||[]).concat(remote||[]).forEach(function(x){if(!x||!x.date)return;const prev=map[x.date];const px=prev?Date.parse(prev.updatedAt||prev.createdAt||0):0;const nx=Date.parse(x.updatedAt||x.createdAt||0);if(!prev||nx>=px)map[x.date]=x;});return Object.values(map).sort(function(a,b){return String(a.date).localeCompare(String(b.date));});}
+    async function syncProfileToCloud(profile){const user=window.__cloudUser;if(!window.supa||!user||!profile)return{skipped:true};const payload={user_id:user.id,birth:profile.birth||null,birth_time:profile.time||null,time_known:profile.timeKnown!==false,gender:profile.gender||null,pillars:profile.pillarsStr||{},profile:profile};const r=await window.supa.from(CLOUD_PROFILE_TABLE).upsert(payload,{onConflict:'user_id'});if(r.error){setCloudStatus('命盘云端同步失败: '+r.error.message,'error');return{ok:false,error:r.error};}setCloudStatus('命盘已同步到云端','ok');return{ok:true};}
+    async function syncCheckinsToCloud(){const user=window.__cloudUser;if(!window.supa||!user)return{skipped:true};const items=typeof loadCheckins==='function'?loadCheckins():[];if(!items.length)return{ok:true};const payload=items.map(function(x){return{user_id:user.id,checkin_date:x.date,outcome:x.outcome,magnitude:x.mag||null,label:x.label||null,score:Number.isFinite(x.score)?x.score:null,day_ganzhi:x.day||null,payload:x,created_at:x.createdAt||new Date().toISOString()};});const r=await window.supa.from(CLOUD_CHECKINS_TABLE).upsert(payload,{onConflict:'user_id,checkin_date'});if(r.error){setCloudStatus('记录云端同步失败: '+r.error.message,'error');return{ok:false,error:r.error};}setCloudStatus('每日记录已同步到云端','ok');return{ok:true};}
+    async function syncCloudToLocal(){const user=window.__cloudUser;if(!window.supa||!user)return{skipped:true};let ok=true;const localProfile=getLocalProfile();const pr=await window.supa.from(CLOUD_PROFILE_TABLE).select('profile,updated_at').eq('user_id',user.id).maybeSingle();if(pr.error){setCloudStatus('读取云端命盘失败: '+pr.error.message,'error');ok=false;}else if(pr.data&&pr.data.profile&&!localProfile){localStorage.setItem('madeshed_profile_v1',JSON.stringify(pr.data.profile));withMadeshed(function(m){m.refresh();});}const cr=await window.supa.from(CLOUD_CHECKINS_TABLE).select('*').eq('user_id',user.id);if(cr.error){setCloudStatus('读取云端记录失败: '+cr.error.message,'error');ok=false;}else if(Array.isArray(cr.data)&&typeof saveCheckins==='function'){saveCheckins(mergeCheckins(loadCheckins(),cr.data.map(remoteCheckin)));renderReport();renderAccount();renderStoredCheckin();}return{ok:ok};}
+    async function bootstrapCloudSync(session){if(!session||!session.user)return;showLoggedIn(session.user.email,session.user);setCloudStatus('正在同步云端数据...','syncing');const results=[];results.push(await syncCloudToLocal());const profile=getLocalProfile();if(profile)results.push(await syncProfileToCloud(profile));results.push(await syncCheckinsToCloud());if(results.every(function(x){return x.ok||x.skipped;}))setCloudStatus('云端同步完成','ok');}
+    async function signOut(){if(!window.supa)return;await window.supa.auth.signOut();window.__cloudUser=null;delete document.body.dataset.user;document.querySelectorAll('[data-auth-action="signin"]').forEach(function(btn){btn.textContent='登录';});setCloudStatus('已退出登录，本机数据仍保留','info');}
+    window.syncProfileToCloud=syncProfileToCloud;
+    window.syncCheckinsToCloud=syncCheckinsToCloud;
+    window.syncCloudToLocal=syncCloudToLocal;
+    window.bootstrapCloudSync=bootstrapCloudSync;
+    window.signOut=signOut;
     window.signIn=async function(){
       const email=prompt('输入邮箱注册/登录(我们会发登录链接到你邮箱):');
       if(!email||!email.includes('@'))return;
+      setCloudStatus('正在发送登录链接...','syncing');
       const r=await window.supa.auth.signInWithOtp({email,options:{emailRedirectTo:'https://madeshed.com/#/dashboard'}});
-      if(r.error)alert('出错: '+r.error.message);
-      else alert('✅ 已发送登录链接到 '+email+'\n请查收邮件,点击链接完成登录');
+      if(r.error){setCloudStatus('登录链接发送失败: '+r.error.message,'error');alert('出错: '+r.error.message);}
+      else{setCloudStatus('登录链接已发送，请查收邮箱','ok');alert('✅ 已发送登录链接到 '+email+'\n请查收邮件,点击链接完成登录');}
     };
     document.addEventListener('click',function(e){
-      const t=e.target.closest('.btn-signin,[data-provider="email"]');
+      const out=e.target.closest('#btn-signout');
+      if(out){e.preventDefault();window.signOut();return;}
+      const t=e.target.closest('[data-auth-action="signin"],[data-provider="email"]');
       if(t){e.preventDefault();window.signIn();}
     });
-    function showLoggedIn(email){
-      const btn=document.querySelector('.btn-signin');
-      if(btn)btn.textContent='✓ '+email.split('@')[0];
+    function showLoggedIn(email,user){
+      window.__cloudUser=user||window.__cloudUser;
+      document.querySelectorAll('[data-auth-action="signin"]').forEach(function(btn){btn.textContent='✓ '+email.split('@')[0];});
       document.body.dataset.user=email;
+      if(typeof renderAccount==='function')renderAccount();
     }
     window.supa.auth.getSession().then(function(r){
-      if(r.data.session)showLoggedIn(r.data.session.user.email);
+      if(r.data.session)bootstrapCloudSync(r.data.session);
+      else setCloudStatus('未登录，当前为本机数据','info');
     });
     window.supa.auth.onAuthStateChange(function(event,session){
-      if(event==='SIGNED_IN'&&session)showLoggedIn(session.user.email);
+      if(event==='SIGNED_IN'&&session)bootstrapCloudSync(session);
+      if(event==='SIGNED_OUT'){window.__cloudUser=null;delete document.body.dataset.user;document.querySelectorAll('[data-auth-action="signin"]').forEach(function(btn){btn.textContent='登录';});setCloudStatus('已退出登录，本机数据仍保留','info');}
     });
   };
   document.head.appendChild(s);
@@ -973,6 +997,7 @@ function handleSubmit(){
   const profile=calcBazi(di.value,ti&&ti.value||'12:00',gender,!(ui&&ui.checked));
   if(!profile){alert('八字计算引擎还未加载，请稍后再试');return;}
   saveProfile(profile);
+  if(window.syncProfileToCloud)window.syncProfileToCloud(profile);
   const fc=onb.querySelector('.form-card'),rv=onb.querySelector('.result-view');
   if(fc)fc.classList.add('hide');
   if(rv)rv.classList.remove('hide');rv.classList.add('show');
