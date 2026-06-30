@@ -264,10 +264,18 @@ includesAll(index, [
 
 includesAll(index, [
   'function compactDateForTrend(date)',
-  "labels=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']",
-  "mark=(now.getMonth()+1)+'月 本月'",
-  "st.textContent='今日 '+compactDateForTrend(now)+' · 均值 '",
-], 'monthly trend date labels');
+  'id="trend-title"',
+  'id="trend-scroll"',
+  'function daysInMonth(year,month)',
+  'function buildMonthTrend(profile,now)',
+  'function buildDayTrend(profile,now)',
+  'function buildHourTrend(profile,now)',
+  'function scrollTrendToCurrent(curIdx,count,width)',
+  'data-m="day"',
+  'window.__trendMode=mode',
+  "renderTrend(window.__trendMode||'day')",
+  "svg.setAttribute('viewBox','0 0 '+width+' 280')",
+], 'trend month day hour scroll modes');
 
 includesAll(index, [
   'id="stats-range-controls"',
