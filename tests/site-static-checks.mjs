@@ -200,6 +200,25 @@ includesAll(index, [
   '颜色=命理状态',
 ], 'heatmap visible dates and legend meanings');
 
+includesAll(index, [
+  'id="color-meaning"',
+  'function renderColorMeaning',
+  'COLOR_MEANING_DESC',
+  '命理状态',
+  '适合按计划推进',
+], 'color meaning explainer');
+
+includesAll(index, [
+  'const SAMPLE_ENTRIES=genEntries(42)',
+  'function normalizeDateKey',
+  'function scoreToColor',
+  'function checkinToEntry',
+  'function mergeActualEntries',
+  'function renderDailyStats',
+  'renderDailyStats();renderReport();renderAccount();',
+  "if(typeof renderDailyStats==='function')renderDailyStats();",
+], 'daily checkins refresh stats charts');
+
 assert.ok(existsSync(supabaseSchemaPath), 'supabase/schema.sql should exist');
 
 includesAll(supabaseSchema, [
