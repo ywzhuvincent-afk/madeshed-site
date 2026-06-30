@@ -270,12 +270,15 @@ includesAll(index, [
   'function foundationRead(profile,today)',
   'function actionRead(profile,today,dr,foundation)',
   'function trendActionScore(profile,dt)',
+  'function monthActionScore(profile,dt)',
+  'function hourActionScore(profile,dt,h)',
   'function daysInMonth(year,month)',
   'function buildMonthTrend(profile,now)',
   'function buildDayTrend(profile,now)',
   'function buildHourTrend(profile,now)',
   'function scrollTrendToCurrent(curIdx,count,width)',
   'data-m="day"',
+  "e.target.closest('.trend-toggle [data-m]')",
   'window.__trendMode=mode',
   "renderTrend(window.__trendMode||'day')",
   "svg.setAttribute('viewBox','0 0 '+width+' 280')",
@@ -285,9 +288,34 @@ includesAll(index, [
   "data.push(trendActionScore(profile,dt))",
   "title:y+'年'+m+'月 每日行动指数 · DAILY ACTION TREND'",
   "mark:now.getDate()+'号 行动指数'",
-  '60+(dr.zScore-60)*0.75+(dr.cScore-55)*0.35+(foundation.score-60)*0.25-riskPenalty',
+  'Math.round(dr.zScore*0.65+chartScore(profile,today.day)*0.35)',
+  '60+(triggerScore-60)*0.75+(dr.cScore-55)*0.35+(foundation.score-60)*0.25-riskPenalty',
   'if(foundation.score<=45)cap=64;else if(foundation.score<=55)cap=72;else if(foundation.score<=66)cap=84;else cap=92;',
 ], 'daily trend uses action score');
+includesAll(index, [
+  'data.push(monthActionScore(profile,dt))',
+  'MONTHLY BASELINE',
+  '55+(base-55)*0.75+(monthScore-60)*0.55',
+], 'monthly trend uses monthly action baseline');
+assert.ok(
+  !/function buildMonthTrend\(profile,now\)[\s\S]{0,360}data\.push\(chartScore\(profile,gzMonth/.test(index),
+  'monthly trend should not use month single score',
+);
+
+includesAll(index, [
+  'data.push(hourActionScore(profile,new Date(y,m-1,d),h))',
+  'HOURLY ACTION TREND',
+  '55+(dayAction.score-55)*0.55+(hourScore-60)*0.75-riskPenalty',
+  'var sc=hourActionScore(profile,now,(i*2)%24)',
+], 'hourly trend uses intraday action score');
+assert.ok(
+  !/function buildHourTrend\(profile,now\)[\s\S]{0,360}data\.push\(chartScore\(profile,gz\)\)/.test(index),
+  'hourly trend should not use hour single score',
+);
+assert.ok(
+  !index.includes('onclick="window.__setTrend'),
+  'trend mode buttons should use delegated click handling',
+);
 assert.ok(
   !index.includes("function buildDayTrend(profile,now){var y=now.getFullYear(),m=now.getMonth()+1,days=daysInMonth(y,m),labels=[],subs=[],data=[];for(var d=1;d<=days;d++){var dt=new Date(y,m-1,d),gz=gzDayD(dt);labels.push(d+'号');subs.push(gz);data.push(chartScore(profile,gz));}"),
   'daily trend should not use flow-day single score',
@@ -315,6 +343,7 @@ includesAll(index, [
 includesAll(index, [
   '今日行动指数 · TODAY',
   'window.__todayState={dateText,compactDate,day:today.day,label:action.label,score:action.score',
+  'flow:action.flowScore',
   "document.querySelectorAll('.m-score-label').forEach(el=>{el.textContent='今日行动指数';});",
   "document.querySelectorAll('.score-n').forEach(el=>{el.textContent=action.score;});",
   "document.querySelectorAll('.score-l').forEach(el=>{el.textContent=action.label+' · 财运 '+dr.cScore+' · 底盘 '+action.foundation.score;});",
