@@ -122,6 +122,21 @@ includesAll(index, [
   'flex:1 1 0;min-width:72px',
 ], 'shared user profile rendering');
 
+includesAll(index, [
+  'const PROFILE_SCHEMA_VERSION',
+  'function stampProfile(profile,source)',
+  'profileSchemaVersion',
+  'updatedAt',
+  "source||'local'",
+  'function getProfileUpdatedAt(profile,rowUpdatedAt)',
+  'function writeLocalProfile(profile,rowUpdatedAt)',
+  'function resolveProfileSync(localProfile,remoteProfile,remoteUpdatedAt)',
+  'remoteTime>localTime',
+  "localStorage.setItem('madeshed_profile_v1',JSON.stringify(next))",
+  "if(chosen&&chosen.source==='cloud')",
+  'withMadeshed(function(m){m.refresh();})',
+], 'single bazi profile source');
+
 includesAll(baziEngine, [
   'function convertLunarToSolarYmd',
   'function calcTrueSolarOffsetMinutes',
@@ -278,7 +293,7 @@ includesAll(index, [
   'function bootstrapCloudSync(session)',
   'window.syncProfileToCloud=syncProfileToCloud',
   'window.syncCheckinsToCloud=syncCheckinsToCloud',
-  'if(window.syncProfileToCloud)window.syncProfileToCloud(profile)',
+  'if(window.syncProfileToCloud)window.syncProfileToCloud(stamped)',
   'if(window.syncCheckinsToCloud)window.syncCheckinsToCloud()',
   'data-auth-action="signin"',
   'function signOut()',
