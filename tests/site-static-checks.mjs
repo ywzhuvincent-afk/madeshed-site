@@ -315,6 +315,34 @@ includesAll(index, [
   "mode==='day'",
   "mode==='hour'",
 ], 'steady but responsive trend calibration layer');
+includesAll(index, [
+  'function roleForElement(dayEl,el)',
+  'function hiddenStemElements(branch)',
+  'function flowElementProfile(profile,gz)',
+  'function branchInteraction(profile,gz)',
+  'function enhanceScoreDetails(profile,today,dr,action)',
+  'enhanceScoreDetails(profile,today,dr,action)',
+  'BAZI.HIDDEN_STEMS',
+  'branchRole',
+  'hiddenRoles',
+  'branchScore',
+  'hiddenScore',
+  'interactionPenalty',
+  'interaction.adjust',
+  'interaction.penalty',
+  '结构分',
+  '日支互动',
+], 'professional bazi flow scoring uses branch hidden stems and interactions');
+includesAll(index, [
+  'function personalBacktestNote(score)',
+  'getActualEntries',
+  'isTradeOutcome',
+  'isWinOutcome',
+  'scoreToColor(score',
+  '个人记录',
+  '不参与调分',
+  'personalBacktestNote(d.score)',
+], 'action score explains personal backtest validation');
 assert.ok(
   !index.includes('var spread=base<=50?28:(base<=66?34:38)'),
   'monthly trend should not keep the old extreme spread',
@@ -352,7 +380,9 @@ assert.ok(
 includesAll(index, [
   'data.push(hourActionScore(profile,new Date(y,m-1,d),h))',
   'HOURLY ACTION TREND',
-  'dayAction.score+(hourScore-60)*.85-riskPenalty',
+  'hourRead=dailyRead(profile,{day:hourGz})',
+  'hourTrigger=Math.round(hourScore*.55+(hourRead?hourRead.zScore:60)*.45)',
+  'dayAction.score+(hourTrigger-60)*.75-riskPenalty',
   "calibrateActionScore(raw,'hour'",
   'var sc=hourActionScore(profile,now,(i*2)%24)',
 ], 'hourly trend uses intraday action score');
