@@ -266,6 +266,8 @@ includesAll(index, [
   'function compactDateForTrend(date)',
   'id="trend-title"',
   'id="trend-scroll"',
+  'function trendGzForDate(dt)',
+  'function trendCompositeScore(profile,dt)',
   'function daysInMonth(year,month)',
   'function buildMonthTrend(profile,now)',
   'function buildDayTrend(profile,now)',
@@ -276,6 +278,17 @@ includesAll(index, [
   "renderTrend(window.__trendMode||'day')",
   "svg.setAttribute('viewBox','0 0 '+width+' 280')",
 ], 'trend month day hour scroll modes');
+
+includesAll(index, [
+  "data.push(trendCompositeScore(profile,dt))",
+  "title:y+'年'+m+'月 每日综合走势 · DAILY TREND'",
+  "mark:now.getDate()+'号 今日总分'",
+  'Math.round(layerScore(dyGz)*0.2+layerScore(gz.year)*0.25+layerScore(gz.month)*0.25+layerScore(gz.day)*0.3)',
+], 'daily trend uses composite score');
+assert.ok(
+  !index.includes("function buildDayTrend(profile,now){var y=now.getFullYear(),m=now.getMonth()+1,days=daysInMonth(y,m),labels=[],subs=[],data=[];for(var d=1;d<=days;d++){var dt=new Date(y,m-1,d),gz=gzDayD(dt);labels.push(d+'号');subs.push(gz);data.push(chartScore(profile,gz));}"),
+  'daily trend should not use flow-day single score',
+);
 
 assert.equal(
   countMatches(index, /if\(dr\)updateTodaySurfaces\(profile,today,dr\);/g),
