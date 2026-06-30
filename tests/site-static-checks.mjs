@@ -266,12 +266,17 @@ includesAll(index, [
   'function compactDateForTrend(date)',
   'id="trend-title"',
   'id="trend-scroll"',
+  '.chart{position:relative;height:340px;',
+  '.chart .trend-hit{cursor:pointer}',
   'function trendGzForDate(dt)',
   'function foundationRead(profile,today)',
   'function actionRead(profile,today,dr,foundation)',
   'function trendActionScore(profile,dt)',
   'function monthActionScore(profile,dt)',
   'function hourActionScore(profile,dt,h)',
+  'function trendY(score)',
+  'function trendPointMark(trend,idx,mode)',
+  'function selectTrendPoint(idx)',
   'function daysInMonth(year,month)',
   'function buildMonthTrend(profile,now)',
   'function buildDayTrend(profile,now)',
@@ -279,9 +284,13 @@ includesAll(index, [
   'function scrollTrendToCurrent(curIdx,count,width)',
   'data-m="day"',
   "e.target.closest('.trend-toggle [data-m]')",
+  "e.target.closest('#trend-svg .trend-hit')",
+  'class="trend-hit"',
+  'data-selected-index',
   'window.__trendMode=mode',
   "renderTrend(window.__trendMode||'day')",
-  "svg.setAttribute('viewBox','0 0 '+width+' 280')",
+  "svg.setAttribute('viewBox','0 0 '+width+' 260')",
+  'buildTrendSVG(trend.labels,trend.data,selectedIdx,selectedMark,trend.subs,width)',
 ], 'trend month day hour scroll modes');
 
 includesAll(index, [
@@ -354,7 +363,7 @@ includesAll(index, [
 includesAll(index, [
   '.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:20px;margin-bottom:20px}',
   '.card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;min-width:0}',
-  '.chart{position:relative;height:280px;width:100%;min-width:0;overflow:hidden}',
+  '.chart{position:relative;height:340px;width:100%;min-width:0;overflow:hidden}',
   '.trend-scroll{height:100%;width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;',
 ], 'trend scroll stays inside chart');
 
