@@ -111,4 +111,31 @@ includesAll(index, [
   '.today-score',
 ], 'shared user profile rendering');
 
+includesAll(index, [
+  "'report'",
+  "'account'",
+  "'terms'",
+  "'privacy'",
+  "'about'",
+  "'contact'",
+  'data-view="report"',
+  'data-view="account"',
+  'data-view="terms"',
+  'data-view="privacy"',
+  'data-view="about"',
+  'data-view="contact"',
+  'href="#/report"',
+  'href="#/account"',
+], 'production routes');
+
+includesAll(index, [
+  "const CHECKINS='madeshed_checkins_v1'",
+  'function loadCheckins()',
+  'function saveCheckins(items)',
+  'function recordCheckin(o,m)',
+  'function renderStoredCheckin()',
+  'function renderReport()',
+  'function renderAccount()',
+], 'local persistence shell');
+
 console.log('Static site checks passed');

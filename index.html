@@ -374,7 +374,28 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 .cta-soft .text{font-size:13px}
 .cta-soft .text strong{color:var(--accent)}
 .cta-soft button{background:var(--accent);color:var(--bg);border:none;padding:8px 16px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit}
+.page{padding:36px 0 80px}
+.page-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-end;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:18px}
+.page-head h1{font-size:28px;line-height:1.2}
+.page-head p{color:var(--text-2);font-size:14px;margin-top:8px;max-width:640px}
+.page-kicker{font-size:12px;color:var(--accent);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.page-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.page-grid.two{grid-template-columns:1fr 1fr}
+.metric{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:18px}
+.metric .k{font-size:12px;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em}
+.metric .v{font-size:28px;font-family:var(--font-mono);font-weight:700;color:var(--accent);margin-top:8px}
+.metric .d{font-size:13px;color:var(--text-2);margin-top:6px;line-height:1.6}
+.legal-block{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:14px}
+.legal-block h2{font-size:18px;margin-bottom:10px}
+.legal-block p,.legal-block li{font-size:14px;color:var(--text-2);line-height:1.8}
+.legal-block ul{padding-left:20px}
+.account-list{display:grid;gap:10px}
+.account-row{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--border);padding:12px 0;font-size:14px}
+.account-row:last-child{border-bottom:none}
+.account-row span:first-child{color:var(--text-2)}
+.account-row strong{font-family:var(--font-mono)}
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media (max-width:760px){.page-head{display:block}.page-grid,.page-grid.two{grid-template-columns:1fr}.account-row{display:block}.account-row strong{display:block;margin-top:4px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -387,8 +408,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
       <a href="#/daily" data-route="/daily">每日 Daily</a>
       <a href="#/dashboard" data-route="/dashboard">命盘 Chart</a>
       <a href="/chart-full.html">流年大运 Forecast</a>
-      <span class="nav-disabled" aria-disabled="true">月报 Report</span>
-      <span class="nav-disabled" aria-disabled="true">设置 Account</span>
+      <a href="#/report" data-route="/report">月报 Report</a>
+      <a href="#/account" data-route="/account">设置 Account</a>
     </div>
   </div>
   <div class="nav-right">
@@ -402,8 +423,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <a href="#/daily" data-route="/daily">每日 Daily</a>
     <a href="#/dashboard" data-route="/dashboard">命盘 Chart</a>
     <a href="/chart-full.html">流年大运 Forecast</a>
-    <span class="nav-disabled" aria-disabled="true">月报 Report · Coming soon</span>
-    <span class="nav-disabled" aria-disabled="true">设置 Account · Coming soon</span>
+    <a href="#/report" data-route="/report">月报 Report</a>
+    <a href="#/account" data-route="/account">设置 Account</a>
     <div class="mobile-actions">
       <div class="lang" aria-label="语言"><button class="active" type="button" aria-pressed="true">中</button><button type="button" aria-pressed="false">EN</button></div>
       <button class="btn-signin" type="button" data-route="/onboarding">登录</button>
@@ -470,7 +491,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 </div></section>
 
 <footer><div class="footer-content"><div>© 2026 Madeshed · <span style="font-family:var(--font-cn);">命盘 × 数据</span></div>
-<div class="footer-links"><a>关于</a><a>隐私政策</a><a>服务条款</a><a>联系我们</a></div></div>
+<div class="footer-links"><a href="#/about" data-route="/about">关于</a><a href="#/privacy" data-route="/privacy">隐私政策</a><a href="#/terms" data-route="/terms">服务条款</a><a href="#/contact" data-route="/contact">联系我们</a></div></div>
 <div class="footer-disclaim risk-note"><strong>风险提示:</strong> Madeshed 提供的所有评分、回测、警示均为<strong>决策辅助工具</strong>,不构成任何投资建议。任何基于本工具产生的交易决策与盈亏责任,均由用户自行承担。投资有风险,入市需谨慎。</div></footer>
 </main>
 </section>
@@ -660,12 +681,71 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 </div>
 </section>
 
+<!-- REPORT -->
+<section class="view" data-view="report">
+<div class="container page">
+<div class="page-head"><div><div class="page-kicker">Monthly Report</div><h1>月报</h1><p>基于你保存的命盘和每日交易记录生成阶段性复盘。正式云端版会同步数据库；当前先使用本机记录。</p></div><button class="btn-signin" data-route="/daily">去记录今日</button></div>
+<div class="page-grid" id="report-summary">
+  <div class="metric"><div class="k">本地记录</div><div class="v">0</div><div class="d">开始记录后自动统计。</div></div>
+  <div class="metric"><div class="k">胜率</div><div class="v">—</div><div class="d">至少 5 条交易后显示。</div></div>
+  <div class="metric"><div class="k">当前命盘</div><div class="v">—</div><div class="d">先生成命盘后可关联分析。</div></div>
+</div>
+<div class="legal-block" style="margin-top:14px"><h2>本月观察</h2><p id="report-insight">还没有足够记录。每天收盘后点一次结果，系统会逐步生成个人胜率、红灯日规避、亏损后追单等模式。</p></div>
+</div>
+</section>
+
+<!-- ACCOUNT -->
+<section class="view" data-view="account">
+<div class="container page">
+<div class="page-head"><div><div class="page-kicker">Account</div><h1>设置</h1><p>管理当前设备上的命盘、记录和正式版账号状态。云端同步、支付和数据导出会在后续阶段接入。</p></div><button class="btn-signin" data-route="/onboarding">重新生成命盘</button></div>
+<div class="page-grid two">
+  <div class="metric"><div class="k">当前命盘</div><div class="account-list" id="account-profile"></div></div>
+  <div class="metric"><div class="k">本地数据</div><div class="account-list" id="account-storage"></div></div>
+</div>
+<div class="legal-block" style="margin-top:14px"><h2>正式版状态</h2><p>账号登录、云端同步、订阅权限和发票会在下一阶段接入 Supabase 与支付服务；当前所有体验数据仍保存在你的浏览器本地。</p></div>
+</div>
+</section>
+
+<!-- ABOUT -->
+<section class="view" data-view="about">
+<div class="container page">
+<div class="page-head"><div><div class="page-kicker">About</div><h1>关于 Madeshed</h1><p>Madeshed 把八字流日评分、个人交易记录和行为复盘放到同一个决策仪表盘里，帮助用户观察自己在不同状态下的交易表现。</p></div></div>
+<div class="legal-block"><h2>产品原则</h2><p>我们不把评分包装成确定性预测。正式版会持续强调样本量、置信区间和风险提示，让用户用自己的数据校准决策习惯。</p></div>
+</div>
+</section>
+
+<!-- PRIVACY -->
+<section class="view" data-view="privacy">
+<div class="container page">
+<div class="page-head"><div><div class="page-kicker">Privacy</div><h1>隐私政策</h1><p>当前内测版本优先在浏览器本地保存数据。接入云端账号前，我们会明确展示数据用途和删除方式。</p></div></div>
+<div class="legal-block"><h2>当前收集范围</h2><ul><li>出生日期、时间、性别等命盘输入保存在本机 localStorage。</li><li>每日交易结果记录保存在本机 localStorage。</li><li>未接入云端同步前，刷新浏览器配置或清除站点数据会删除这些记录。</li></ul></div>
+<div class="legal-block"><h2>后续云端版</h2><p>云端版会使用账号系统保存命盘和交易记录，并提供导出、删除账号和删除数据的入口。</p></div>
+</div>
+</section>
+
+<!-- TERMS -->
+<section class="view" data-view="terms">
+<div class="container page">
+<div class="page-head"><div><div class="page-kicker">Terms</div><h1>服务条款</h1><p>使用 Madeshed 即表示你理解本工具只用于自我观察和决策辅助，不构成投资建议。</p></div></div>
+<div class="legal-block"><h2>风险声明</h2><p>Madeshed 展示的评分、回测和提醒不保证任何收益。任何交易行为和盈亏责任均由用户自行承担。</p></div>
+<div class="legal-block"><h2>使用限制</h2><p>请勿把本工具作为唯一交易依据，也不要在不了解产品风险的情况下进行高杠杆或超出承受能力的交易。</p></div>
+</div>
+</section>
+
+<!-- CONTACT -->
+<section class="view" data-view="contact">
+<div class="container page">
+<div class="page-head"><div><div class="page-kicker">Contact</div><h1>联系我们</h1><p>如果你想试用正式版、反馈问题或讨论数据导入，请通过下面方式联系。</p></div></div>
+<div class="legal-block"><h2>联系入口</h2><p>邮箱：support@madeshed.com</p><p>反馈时建议附上浏览器、设备和你遇到的页面路径，方便复现。</p></div>
+</div>
+</section>
+
 <div class="loading-overlay" id="loading"><div class="loading-content"><div class="loading-spinner"></div><div class="loading-text">正在排盘 · 计算喜用神...</div></div></div>
 
 <script>
 // ========== ROUTER ==========
-const VIEWS = ['landing','onboarding','dashboard','daily'];
-const HASH_TO_VIEW = {'':'landing','/':'landing','/onboarding':'onboarding','/dashboard':'dashboard','/daily':'daily'};
+const VIEWS = ['landing','onboarding','dashboard','daily','report','account','terms','privacy','about','contact'];
+const HASH_TO_VIEW = {'':'landing','/':'landing','/onboarding':'onboarding','/dashboard':'dashboard','/daily':'daily','/report':'report','/account':'account','/terms':'terms','/privacy':'privacy','/about':'about','/contact':'contact'};
 const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
 const mobileMenu = document.getElementById('mobile-menu');
 
@@ -747,7 +827,16 @@ function renderInsights(entries){const traded=entries.filter(e=>e.outcome==='win
 
 const entries=genEntries(42);renderColorStats(entries);renderHeatmap(entries);renderInsights(entries);
 
-document.querySelectorAll('.outcome-btn').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.outcome-btn').forEach(function(x){x.classList.remove('selected');});b.classList.add('selected');var OC={big_win:['win','大赚'],win:['win',null],flat:['flat',null],loss:['loss',null],big_loss:['loss','大亏'],notrade:['notrade',null]};var o=OC[b.dataset.outcome]||[b.dataset.outcome,null];setTimeout(function(){showRecordedSummary(o[0],o[1]);},250);});});
+const CHECKINS='madeshed_checkins_v1';
+function loadCheckins(){try{return JSON.parse(localStorage.getItem(CHECKINS)||'[]');}catch(e){return[];}}
+function saveCheckins(items){try{localStorage.setItem(CHECKINS,JSON.stringify(items));}catch(e){}}
+function currentCheckinKey(){const st=window.__todayState||{};return st.compactDate||new Date().toISOString().slice(0,10);}
+function recordCheckin(o,m){const st=window.__todayState||{};const key=currentCheckinKey();const items=loadCheckins().filter(x=>x.date!==key);items.push({date:key,outcome:o,mag:m||null,label:st.label||null,score:st.score||null,day:st.day||null,createdAt:new Date().toISOString()});saveCheckins(items);showRecordedSummary(o,m);renderReport();renderAccount();}
+function renderStoredCheckin(){const item=loadCheckins().find(x=>x.date===currentCheckinKey());if(item)showRecordedSummary(item.outcome,item.mag);}
+function renderReport(){const box=document.getElementById('report-summary'),note=document.getElementById('report-insight');if(!box)return;const items=loadCheckins();const traded=items.filter(x=>x.outcome==='win'||x.outcome==='loss'||x.outcome==='flat');const wins=traded.filter(x=>x.outcome==='win').length;const rate=traded.length?Math.round(wins/traded.length*100)+'%':'—';let profile=null;try{profile=JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');}catch(e){}const chart=profile&&profile.pillarsStr?Object.values(profile.pillarsStr).join(' · '):'未生成';box.innerHTML='<div class="metric"><div class="k">本地记录</div><div class="v">'+items.length+'</div><div class="d">保存在当前浏览器。</div></div><div class="metric"><div class="k">胜率</div><div class="v">'+rate+'</div><div class="d">'+(traded.length?('交易样本 '+traded.length+' 条'):'至少 5 条交易后更有参考价值')+'</div></div><div class="metric"><div class="k">当前命盘</div><div class="v" style="font-size:18px;line-height:1.6">'+chart+'</div><div class="d">与 Dashboard / Daily 共用同一份本地命盘。</div></div>';if(note)note.textContent=items.length?'已开始积累你的个人记录。下一阶段会把这些记录同步到云端，并生成完整月报。':'还没有足够记录。每天收盘后点一次结果，系统会逐步生成个人胜率、红灯日规避、亏损后追单等模式。';}
+function renderAccount(){const prof=document.getElementById('account-profile'),store=document.getElementById('account-storage');if(!prof||!store)return;let p=null;try{p=JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');}catch(e){}const rows=p?[['出生日期',p.birth],['出生时间',p.time],['性别',p.gender==='M'?'男':'女'],['四柱',p.pillarsStr?Object.values(p.pillarsStr).join(' · '):'已保存']]:[['命盘','尚未生成']];prof.innerHTML=rows.map(r=>'<div class="account-row"><span>'+r[0]+'</span><strong>'+r[1]+'</strong></div>').join('');const checkins=loadCheckins();store.innerHTML='<div class="account-row"><span>每日记录</span><strong>'+checkins.length+' 条</strong></div><div class="account-row"><span>数据位置</span><strong>当前浏览器</strong></div><div class="account-row"><span>云端同步</span><strong>下一阶段接入</strong></div>';}
+
+document.querySelectorAll('.outcome-btn').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.outcome-btn').forEach(function(x){x.classList.remove('selected');});b.classList.add('selected');var OC={big_win:['win','大赚'],win:['win',null],flat:['flat',null],loss:['loss',null],big_loss:['loss','大亏'],notrade:['notrade',null]};var o=OC[b.dataset.outcome]||[b.dataset.outcome,null];setTimeout(function(){recordCheckin(o[0],o[1]);},250);});});
 
 function showRecordedSummary(o,m){const card=document.getElementById('checkin-card');card.classList.add('recorded');const labels={win:'赚',loss:'亏',flat:'平',notrade:'未交易'};const icons={win:'🟢',loss:'🔴',flat:'⚪',notrade:'🚫'};const cls=o==='win'?'win':o==='loss'?'loss':'';const st=window.__todayState||{};const meta=(st.compactDate||'今天')+' · '+(st.label||'今日')+'日';card.innerHTML=`<div class="checkin-h"><div class="checkin-t">今日已记录 · DONE</div><div class="checkin-time">刚刚 · 2 秒</div></div><div class="recorded-summary"><div class="left"><div class="icon">${icons[o]}</div><div class="info"><div class="label">${meta}</div><div class="value ${cls}">${labels[o]}${m?' · '+m:''}</div></div></div><button class="edit-link">修改</button></div>`;}
 </script>
@@ -892,7 +981,7 @@ function handleSubmit(){
 }
 function bindForm(){const v=document.querySelectorAll('.view'),onb=v[1];if(!onb)return;const sb=onb.querySelector('button[name="submit-btn"], button.submit');if(!sb||sb.dataset.madeshedBound)return;sb.dataset.madeshedBound='1';sb.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();handleSubmit();},true);}
 function refresh(){const p=loadProfile(),t=getTodayGZ();if(p)applyProfile(p,t);else if(t){const pl=document.querySelector('.pillars-line');if(pl)pl.innerHTML='流年 <span class="cn">'+t.year+'</span><span class="sep">·</span> 流月 <span class="cn">'+t.month+'</span><span class="sep">·</span> 流日 <span class="cn">'+t.day+'</span>';const sd=document.querySelector('.score-d');if(sd){const rows=sd.querySelectorAll('.row');if(rows[0]){const v=rows[0].querySelector('.v');if(v)v.textContent=t.day;}}}}
-function init(){bindForm();refresh();window.addEventListener('hashchange',function(){setTimeout(refresh,50);});}
+function init(){bindForm();refresh();renderReport();renderAccount();renderStoredCheckin();window.addEventListener('hashchange',function(){setTimeout(function(){refresh();renderReport();renderAccount();renderStoredCheckin();},50);});}
 function waitForLunar(cb){if(typeof Solar!=='undefined')return cb();let n=0;const t=setInterval(function(){if(typeof Solar!=='undefined'||n++>50){clearInterval(t);if(typeof Solar!=='undefined')cb();}},200);}
 function start(){waitForLunar(init);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
