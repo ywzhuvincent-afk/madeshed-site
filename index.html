@@ -1296,6 +1296,43 @@ function updateTodaySurfaces(profile,today,dr){
   }
   if(typeof renderDailyStats==='function')renderDailyStats();
 }
+function clearProfileSurfaces(today){
+  window.__todayState=null;
+  window.__profile=null;
+  if(window.__trendTimer){clearInterval(window.__trendTimer);window.__trendTimer=null;}
+  const now=new Date(),W=['日','一','二','三','四','五','六'];
+  const pad=n=>String(n).padStart(2,'0');
+  const compactDate=now.getFullYear()+'.'+pad(now.getMonth()+1)+'.'+pad(now.getDate());
+  const dateText=now.getFullYear()+' 年 '+(now.getMonth()+1)+' 月 '+now.getDate()+' 日 · 星期'+W[now.getDay()];
+  const dash=document.querySelector('[data-view="dashboard"]');
+  if(dash){
+    const pillars=dash.querySelector('.pillars');if(pillars)pillars.textContent='尚未生成命盘';
+    dash.querySelectorAll('.dash-meta .v').forEach(el=>{el.textContent='—';});
+    const dateMarks=dash.querySelectorAll('.dash-hero > .dash-meta .k');
+    if(dateMarks[0])dateMarks[0].textContent=compactDate;
+    if(dateMarks[1])dateMarks[1].textContent='星期'+W[now.getDay()];
+    const sn=dash.querySelector('.score-n');if(sn)sn.textContent='—';
+    const sl=dash.querySelector('.score-l');if(sl)sl.textContent='请先生成命盘';
+    const sd=dash.querySelector('.score-d');if(sd)sd.innerHTML='<div class="row"><span class="k">命盘状态</span><span class="v">尚未生成</span></div><div class="row"><span class="k">今日行动指数</span><span class="v">—</span></div><div class="row"><span class="k">操作建议</span><span class="v">先完成出生信息输入</span></div>';
+    const trendTitle=dash.querySelector('#trend-title');if(trendTitle)trendTitle.textContent='生成命盘后显示行动走势';
+    const stat=dash.querySelector('#trend-stat');if(stat)stat.textContent='';
+    const svg=dash.querySelector('#trend-svg');if(svg){svg.setAttribute('viewBox','0 0 800 260');svg.innerHTML='<text x="400" y="132" text-anchor="middle" fill="#6E7681" font-size="13">生成命盘后显示流月 / 流日 / 当天走势</text>';}
+    const yong=dash.querySelector('#yong-list');if(yong)yong.innerHTML='<div class="el-note"><b>尚未生成命盘。</b> 完成出生信息输入后，这里会显示喜用神、权重和解释。</div>';
+    const dy=dash.querySelector('.dy-list');if(dy)dy.innerHTML='<div class="el-note">完成命盘后显示大运时间轴。</div>';
+    const luck=dash.querySelector('#luck-summary');if(luck)luck.textContent='完成命盘后显示流年、流月、流日与时段建议。';
+  }
+  const daily=document.querySelector('[data-view="daily"]');
+  if(daily){
+    const date=daily.querySelector('.today .date'),title=daily.querySelector('.today h1'),scoreEl=daily.querySelector('.today-score'),tag=daily.querySelector('.today-tag'),meta=daily.querySelector('.today-meta'),pl=daily.querySelector('.pillars-line');
+    if(date)date.textContent=dateText;
+    if(title)title.textContent='今日: 请先生成命盘';
+    if(pl&&today)pl.innerHTML='流年 <span class="cn">'+today.year+'</span><span class="sep">·</span> 流月 <span class="cn">'+today.month+'</span><span class="sep">·</span> 流日 <span class="cn">'+today.day+'</span>';
+    if(scoreEl)scoreEl.textContent='—';
+    if(tag)tag.textContent='未生成命盘';
+    if(meta)meta.textContent='生成命盘后显示今日行动指数、仓位和建议';
+  }
+  if(typeof renderDailyStats==='function')renderDailyStats();
+}
 function applyProfile(profile,today){
   if(!profile)return;
   document.querySelectorAll('.pillars,.result-pillars,.m-pillars').forEach(el=>renderPillars(el,profile.pillars));
@@ -1341,7 +1378,7 @@ function handleSubmit(){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function bindForm(){const v=document.querySelectorAll('.view'),onb=v[1];if(!onb)return;const sb=onb.querySelector('button[name="submit-btn"], button.submit');if(!sb||sb.dataset.madeshedBound)return;sb.dataset.madeshedBound='1';sb.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();handleSubmit();},true);}
-function refresh(){const p=loadProfile(),t=getTodayGZ();if(p)applyProfile(p,t);else if(t){const pl=document.querySelector('.pillars-line');if(pl)pl.innerHTML='流年 <span class="cn">'+t.year+'</span><span class="sep">·</span> 流月 <span class="cn">'+t.month+'</span><span class="sep">·</span> 流日 <span class="cn">'+t.day+'</span>';const sd=document.querySelector('.score-d');if(sd){const rows=sd.querySelectorAll('.row');if(rows[0]){const v=rows[0].querySelector('.v');if(v)v.textContent=t.day;}}}}
+function refresh(){const p=loadProfile(),t=getTodayGZ();if(p)applyProfile(p,t);else clearProfileSurfaces(t);}
 function init(){bindForm();refresh();renderReport();renderAccount();renderStoredCheckin();window.addEventListener('hashchange',function(){setTimeout(function(){refresh();renderReport();renderAccount();renderStoredCheckin();},50);});}
 function waitForLunar(cb){if(typeof Solar!=='undefined')return cb();let n=0;const t=setInterval(function(){if(typeof Solar!=='undefined'||n++>50){clearInterval(t);if(typeof Solar!=='undefined')cb();}},200);}
 function start(){waitForLunar(init);}

@@ -123,6 +123,16 @@ includesAll(index, [
 ], 'shared user profile rendering');
 
 includesAll(index, [
+  'function clearProfileSurfaces(today)',
+  'window.__todayState=null',
+  "pillars.textContent='尚未生成命盘'",
+  "sl.textContent='请先生成命盘'",
+  "scoreEl.textContent='—'",
+  "tag.textContent='未生成命盘'",
+  'function refresh(){const p=loadProfile(),t=getTodayGZ();if(p)applyProfile(p,t);else clearProfileSurfaces(t);}',
+], 'no saved profile neutral state');
+
+includesAll(index, [
   'const PROFILE_SCHEMA_VERSION',
   'function stampProfile(profile,source)',
   'profileSchemaVersion',
