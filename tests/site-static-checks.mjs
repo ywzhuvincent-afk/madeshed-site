@@ -293,6 +293,16 @@ includesAll(index, [
 ], 'favorables dayun balanced layout');
 
 includesAll(index, [
+  '.el-note{margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);font-size:11px;line-height:1.65;color:var(--text-3)}',
+  '.el-note b{color:var(--text-2)}',
+  'id="yong-weight-note"',
+  'function yongWeightNoteHtml()',
+  '右侧数字=用神权重',
+  '正数代表喜用',
+  '负数代表忌神',
+], 'favorable weight explanation');
+
+includesAll(index, [
   'id="stats-range-controls"',
   'data-range="7"',
   'data-range="30"',

@@ -263,6 +263,8 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 .el-src{font-size:11px;color:var(--text-3)}
 .el-w{font-family:var(--font-mono);font-size:12px;color:var(--text-2);justify-self:start}
 .el-i{min-width:0}
+.el-note{margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);font-size:11px;line-height:1.65;color:var(--text-3)}
+.el-note b{color:var(--text-2)}
 .dy-list{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px}
 .dy{flex-shrink:0;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;min-width:90px;text-align:center;cursor:pointer}
 .dy.current{border-color:var(--accent);background:rgba(0,188,212,.08)}
@@ -692,6 +694,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 <div class="el-row"><div class="el-tag wood">木</div><div class="el-i"><div class="el-name">木 · 中性</div><div class="el-src">无明显作用</div></div><div class="el-w">0.0</div></div>
 <div class="el-row"><div class="el-tag fire">火</div><div class="el-i"><div class="el-name">火 · 忌神</div><div class="el-src">日元偏强,助身过旺</div></div><div class="el-w">-0.7</div></div>
 <div class="el-row"><div class="el-tag earth">土</div><div class="el-i"><div class="el-name">土 · 忌神</div><div class="el-src">同党,加剧偏强</div></div><div class="el-w">-1.0</div></div>
+<div class="el-note" id="yong-weight-note"><b>右侧数字=用神权重。</b> 不是收益率。正数代表喜用，越高越优先参考；0 为中性；负数代表忌神，越低越需要控制或避开。</div>
 </div>
 </div>
 
@@ -1190,6 +1193,7 @@ function stampProfile(profile,source){const now=new Date().toISOString(),next=Ob
 function saveProfile(p){const stamped=stampProfile(p,'local');try{localStorage.setItem(STORAGE,JSON.stringify(stamped));}catch(e){}if(window.syncProfileToCloud)window.syncProfileToCloud(stamped);return stamped;}
 function loadProfile(){try{return JSON.parse(localStorage.getItem(STORAGE)||'null');}catch(e){return null;}}
 function renderPillars(el,pillars){if(!el)return;let h='';pillars.forEach((p,i)=>{h+='<span class="p"><span>'+p.stem+'</span><span>'+p.branch+'</span></span>';if(i<3)h+='<span class="sep">·</span>';});el.innerHTML=h;}
+function yongWeightNoteHtml(){return '<div class="el-note" id="yong-weight-note"><b>右侧数字=用神权重。</b> 不是收益率。正数代表喜用，越高越优先参考；0 为中性；负数代表忌神，越低越需要控制或避开。</div>';}
 function renderYongProfile(profile){
   const box=document.getElementById('yong-list');
   if(!box||!profile||!profile.yongShen)return;
@@ -1216,7 +1220,7 @@ function renderYongProfile(profile){
   box.innerHTML=rows.map(function(r){
     const cn=BAZI.EL_CN[r.el]||r.el;
     return '<div class="el-row"><div class="el-tag '+cls[r.el]+'">'+cn+'</div><div class="el-i"><div class="el-name">'+cn+' · '+r.label+'</div><div class="el-src">'+r.reason+'</div></div><div class="el-w">'+r.weight+'</div></div>';
-  }).join('');
+  }).join('')+yongWeightNoteHtml();
 }
 function updateTodaySurfaces(profile,today,dr){
   if(!profile||!today||!dr)return;
