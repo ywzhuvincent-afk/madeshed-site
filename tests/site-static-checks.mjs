@@ -206,6 +206,24 @@ includesAll(index, [
 ], 'local persistence shell');
 
 includesAll(index, [
+  'const OUTCOME_META',
+  'const TRADE_OUTCOMES',
+  'function canonicalOutcome(item)',
+  'function isTradeOutcome(outcome)',
+  'function isWinOutcome(outcome)',
+  'function storageOutcome(outcome)',
+  'function outcomeFromRemote(row)',
+  "big_win:{label:'大赚'",
+  "big_loss:{label:'大亏'",
+  "recordCheckin(raw,buildMagnitude(raw,input&&input.value))",
+  "payload:Object.assign({},x,{outcome:x.outcome})",
+  'class="outcome-dist"',
+  '✓✓=大赚',
+  'XX=大亏',
+  '大赚+赚 / 已交易',
+], 'six outcome checkin tracking');
+
+includesAll(index, [
   'const COLOR_MEANING',
   'function formatHeatmapDate',
   'function outcomeMark',
