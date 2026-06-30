@@ -592,4 +592,115 @@ includesAll(index, [
   'function signOut()',
 ], 'Supabase auth and sync shell');
 
+includesAll(index, [
+  "'fortune'",
+  'data-view="fortune"',
+  'href="#/fortune"',
+  'id="fortune-tabs"',
+  'id="fortune-products"',
+  'id="master-question-form"',
+  'id="master-question-category"',
+  'id="master-question-horizon"',
+  'id="master-question-depth"',
+  'id="master-question-text"',
+  'id="master-answer-output"',
+  'id="master-history-list"',
+  'const FORTUNE_PRODUCTS',
+  'const MASTER_CATEGORY_LABELS',
+  'const CREDIT_PACK_PRODUCT',
+  'function getFortuneProfile()',
+  'function buildFortuneContext(profile)',
+  'function renderFortuneCenter()',
+  'function renderFortuneProducts()',
+  'function renderMasterForm()',
+  'function submitMasterQuestion()',
+  'function renderMasterHistory()',
+  'data-fortune-tab="ask"',
+  'data-fortune-report-type="full"',
+  'data-fortune-report-type="dayun"',
+  'data-fortune-report-type="month"',
+  '全盘解读',
+  '流年大运解读',
+  '每月运程',
+  '问大师',
+  '点数余额',
+  '不提供具体投资标的建议',
+], 'fortune consultation frontend');
+
+includesAll(supabaseSchema, [
+  'create table if not exists public.credit_ledger',
+  'create table if not exists public.fortune_reports',
+  'create table if not exists public.master_questions',
+  'alter table public.credit_ledger enable row level security',
+  'alter table public.fortune_reports enable row level security',
+  'alter table public.master_questions enable row level security',
+  'credit_ledger_select_own',
+  'fortune_reports_select_own',
+  'master_questions_select_own',
+  "check (entry_type in ('purchase', 'membership_grant', 'spend', 'refund', 'admin'))",
+  "check (report_type in ('full', 'dayun', 'month'))",
+  "check (category in ('marriage', 'career', 'wealth', 'family', 'health', 'timing', 'life', 'custom'))",
+  'unique (user_id, report_key)',
+], 'fortune schema and RLS');
+
+[
+  'api/fortune-report.js',
+  'api/master-question.js',
+  'api/master-history.js',
+  'api/create-credit-checkout-session.js',
+  'api/stripe-webhook.js',
+].forEach((file) => assert.ok(existsSync(file), `${file} should exist`));
+
+const fortuneReportApi = readFileSync('api/fortune-report.js', utf8);
+const masterQuestionApi = readFileSync('api/master-question.js', utf8);
+const masterHistoryApi = readFileSync('api/master-history.js', utf8);
+const creditCheckoutApi = readFileSync('api/create-credit-checkout-session.js', utf8);
+const stripeWebhookApi = readFileSync('api/stripe-webhook.js', utf8);
+
+includesAll(fortuneReportApi, [
+  'FORTUNE_REPORT_TYPES',
+  'buildFortuneReport',
+  'full',
+  'dayun',
+  'month',
+  '不构成投资、医疗或法律建议',
+], 'fortune report API');
+
+includesAll(masterQuestionApi, [
+  'MASTER_CATEGORIES',
+  'normal:1',
+  'deep:3',
+  'LLM_BASE_URL',
+  'LLM_API_KEY',
+  'LLM_MODEL',
+  'AI 服务暂未配置',
+  '不消耗点数',
+  '不提供具体投资标的建议',
+  'buildMasterPrompt',
+], 'master question API');
+
+includesAll(masterHistoryApi, [
+  'master_questions',
+  'history',
+], 'master history API');
+
+includesAll(creditCheckoutApi, [
+  'checkout.sessions',
+  "mode:'payment'",
+  'CREDIT_PACK_PRODUCT',
+  'STRIPE_SECRET_KEY',
+  'STRIPE_CREDIT_PRICE_ID',
+], 'credit checkout API');
+
+includesAll(stripeWebhookApi, [
+  'STRIPE_WEBHOOK_SECRET',
+  'checkout.session.completed',
+  'credit_ledger',
+  'memberships',
+  'report_entitlements',
+], 'stripe webhook API');
+
+assert.ok(!index.includes('LLM_API_KEY'), 'frontend must not expose LLM_API_KEY');
+assert.ok(!index.includes('STRIPE_SECRET_KEY'), 'frontend must not expose STRIPE_SECRET_KEY');
+
 console.log('Static site checks passed');

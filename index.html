@@ -447,7 +447,7 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 .cta-soft .text{font-size:13px}
 .cta-soft .text strong{color:var(--accent)}
 .cta-soft button{background:var(--accent);color:var(--bg);border:none;padding:8px 16px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit}
-.page{padding:36px 0 80px}
+.page{padding:36px 24px 80px}
 .page-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-end;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:18px}
 .page-head h1{font-size:28px;line-height:1.2}
 .page-head p{color:var(--text-2);font-size:14px;margin-top:8px;max-width:640px}
@@ -497,14 +497,37 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 .report-badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:4px 10px;font-size:11px;color:var(--text-2);margin:3px 6px 8px 0}
 .report-paywall{border:1px dashed var(--accent);background:rgba(0,188,212,.06);border-radius:10px;padding:16px;color:var(--text-2);font-size:13px;line-height:1.7}
 .report-warning{border-left:3px solid var(--yellow);background:rgba(247,183,49,.08);padding:10px 12px;border-radius:6px;margin:12px 0;color:var(--text-2);font-size:12px;line-height:1.7}
+.fortune-status{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-bottom:14px}
+.credit-box{display:grid;gap:10px;background:linear-gradient(135deg,rgba(0,188,212,.09),rgba(38,166,154,.04));border:1px solid rgba(0,188,212,.24);border-radius:10px;padding:18px}
+.credit-box .v{font-size:30px;font-family:var(--font-mono);font-weight:800;color:var(--accent)}
+.credit-box .d{font-size:12px;color:var(--text-2);line-height:1.7}
+.fortune-tabs{margin:0 0 16px}
+.fortune-panels{display:grid;gap:14px}
+.fortune-panel{display:none}
+.fortune-panel.active{display:grid;gap:14px}
+.master-form{display:grid;gap:14px}
+.master-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.master-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.master-field{display:grid;gap:7px}
+.master-field label{font-size:12px;color:var(--text-3);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.master-field select,.master-field input,.master-field textarea{width:100%;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:8px;padding:10px 12px;font-family:inherit;font-size:13px}
+.master-field textarea{min-height:118px;resize:vertical;line-height:1.7}
+.master-answer{display:grid;gap:10px}
+.master-history-item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;display:grid;gap:8px}
+.master-history-item .meta{font-size:11px;color:var(--text-3);font-family:var(--font-mono)}
+.master-history-item .q{font-size:13px;color:var(--text);font-weight:700}
+.master-history-item .a{font-size:12px;color:var(--text-2);line-height:1.7;max-height:92px;overflow:hidden}
+.fortune-entry{margin-top:14px;border:1px solid rgba(0,188,212,.24);border-radius:10px;padding:14px;background:rgba(0,188,212,.05);display:flex;justify-content:space-between;gap:12px;align-items:center;text-decoration:none;color:var(--text)}
+.fortune-entry strong{color:var(--accent)}
+.fortune-entry span{font-size:12px;color:var(--text-2);line-height:1.6}
 .account-list{display:grid;gap:10px}
 .account-row{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--border);padding:12px 0;font-size:14px}
 .account-row:last-child{border-bottom:none}
 .account-row span:first-child{color:var(--text-2)}
 .account-row strong{font-family:var(--font-mono)}
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-@media (max-width:980px){.report-product-grid,.generated-report-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:760px){.page-head{display:block}.page-grid,.page-grid.two{grid-template-columns:1fr}.account-row{display:block}.account-row strong{display:block;margin-top:4px}.report-product-grid,.generated-report-list{grid-template-columns:1fr}.generated-report-card{grid-template-columns:1fr}.generated-report-card button{justify-self:start}}
+@media (max-width:980px){.report-product-grid,.generated-report-list{grid-template-columns:repeat(2,minmax(0,1fr))}.fortune-status{grid-template-columns:1fr}.master-grid,.master-grid.two{grid-template-columns:1fr}}
+@media (max-width:760px){.page-head{display:block}.page-grid,.page-grid.two{grid-template-columns:1fr}.account-row{display:block}.account-row strong{display:block;margin-top:4px}.report-product-grid,.generated-report-list{grid-template-columns:1fr}.generated-report-card{grid-template-columns:1fr}.generated-report-card button{justify-self:start}.fortune-entry{display:grid}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -518,6 +541,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
       <a href="#/dashboard" data-route="/dashboard">命盘 Chart</a>
       <a href="/chart-full.html">流年大运 Forecast</a>
       <a href="#/report" data-route="/report">月报 Report</a>
+      <a href="#/fortune" data-route="/fortune">命理咨询 Ask Master</a>
       <a href="#/account" data-route="/account">设置 Account</a>
     </div>
   </div>
@@ -533,6 +557,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <a href="#/dashboard" data-route="/dashboard">命盘 Chart</a>
     <a href="/chart-full.html">流年大运 Forecast</a>
     <a href="#/report" data-route="/report">月报 Report</a>
+    <a href="#/fortune" data-route="/fortune">命理咨询 Ask Master</a>
     <a href="#/account" data-route="/account">设置 Account</a>
     <div class="mobile-actions">
       <div class="lang" aria-label="语言"><button class="active" type="button" aria-pressed="true">中</button><button type="button" aria-pressed="false">EN</button></div>
@@ -719,6 +744,10 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 <div class="dy"><div class="gz">癸亥</div><div class="age">67-77</div></div>
 </div>
 <div id="luck-summary" style="margin-top:16px;font-size:12px;color:var(--text-2);padding-top:12px;border-top:1px solid var(--border);"></div>
+<a class="fortune-entry" href="#/fortune" data-route="/fortune">
+  <div><strong>命理咨询 · Ask Master</strong><br><span>全盘、流年大运、月运报告和重大问题咨询。</span></div>
+  <span>进入 →</span>
+</a>
 </div>
 
 <div class="card"><div class="card-h"><div class="card-t">今日警示 · ALERTS</div></div>
@@ -812,6 +841,65 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 </div>
 </section>
 
+<!-- FORTUNE -->
+<section class="view" data-view="fortune">
+<div class="container page">
+<div class="page-head">
+  <div><div class="page-kicker">Fortune Series</div><h1>命理咨询 · Ask Master</h1><p>固定报告负责稳定、可控的专业解读；问大师负责重大问题的互动式咨询。所有判断都基于你保存的统一八字命盘、流年、大运和当前周期，不提供具体投资标的建议。</p></div>
+  <button class="btn-signin" data-route="/dashboard">返回仪表盘</button>
+</div>
+
+<div class="fortune-status">
+  <div class="credit-box">
+    <div class="account-row"><span>点数余额</span><strong id="fortune-credit-balance">0 点</strong></div>
+    <div class="d">普通问题消耗 1 点，重大决定深度分析消耗 3 点；最高级会员每月赠送 30 点，并免费解锁固定报告。</div>
+    <div class="report-actions"><button class="report-btn primary" type="button" data-fortune-action="buy-credits">购买 10 点包 · ¥99</button></div>
+  </div>
+  <div class="legal-block" style="margin-bottom:0">
+    <h2>使用边界</h2>
+    <p>财运只按传统命理解释收入机会、破财风险、花费压力、事业财星和适合求稳/开拓的节奏，不提供具体投资标的建议；医疗、法律、极端风险问题会提示寻求专业帮助。</p>
+  </div>
+</div>
+
+<div class="range-controls fortune-tabs" id="fortune-tabs" aria-label="命理咨询分类">
+  <button type="button" class="active" data-fortune-tab="full">全盘</button>
+  <button type="button" data-fortune-tab="dayun">流年大运</button>
+  <button type="button" data-fortune-tab="month">每月运程</button>
+  <button type="button" data-fortune-tab="ask">问大师</button>
+  <button type="button" data-fortune-tab="history">历史记录</button>
+</div>
+
+<div class="fortune-panels">
+  <div class="fortune-panel active" data-fortune-panel="products">
+    <div class="legal-block"><h2>付费命理报告</h2><p>全盘、流年大运、每月运程会用同一份命盘上下文生成，AI 只负责组织语言，核心判断来自结构化命理逻辑。</p><div class="report-product-grid" id="fortune-products"></div><div hidden><button data-fortune-report-type="full"></button><button data-fortune-report-type="dayun"></button><button data-fortune-report-type="month"></button></div></div>
+    <div class="report-output" id="fortune-report-output"></div>
+  </div>
+  <div class="fortune-panel" data-fortune-panel="ask">
+    <div class="legal-block">
+      <h2>问大师</h2>
+      <form class="master-form" id="master-question-form">
+        <div class="master-grid">
+          <div class="master-field"><label for="master-question-category">问题类型</label><select id="master-question-category"></select></div>
+          <div class="master-field"><label for="master-question-horizon">时间范围</label><select id="master-question-horizon"></select></div>
+          <div class="master-field"><label for="master-question-depth">深度模式</label><select id="master-question-depth"><option value="normal">普通 · 1 点</option><option value="deep">重大决定 · 3 点</option></select></div>
+        </div>
+        <div class="master-grid two">
+          <div class="master-field"><label for="master-target-date">可选目标日期</label><input id="master-target-date" type="date"></div>
+          <div class="master-field"><label for="master-target-month">可选目标月份</label><input id="master-target-month" type="month"></div>
+        </div>
+        <div class="master-field"><label for="master-question-text">问题正文</label><textarea id="master-question-text" placeholder="例如：今年是否适合换工作？某个日期是否适合签约？未来三个月财务节奏应该保守还是开拓？"></textarea></div>
+        <div class="report-actions"><button class="report-btn primary" type="submit">提交问大师</button></div>
+      </form>
+    </div>
+    <div class="master-answer" id="master-answer-output"></div>
+  </div>
+  <div class="fortune-panel" data-fortune-panel="history">
+    <div class="legal-block"><h2>历史记录</h2><p>这里保存你已经生成的问大师回答，后续登录后会同步到 `master_questions` 云端表。</p><div id="master-history-list"></div></div>
+  </div>
+</div>
+</div>
+</section>
+
 <!-- REPORT -->
 <section class="view" data-view="report">
 <div class="container page">
@@ -889,8 +977,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 
 <script>
 // ========== ROUTER ==========
-const VIEWS = ['landing','onboarding','dashboard','daily','report','account','terms','privacy','about','contact'];
-const HASH_TO_VIEW = {'':'landing','/':'landing','/onboarding':'onboarding','/dashboard':'dashboard','/daily':'daily','/report':'report','/account':'account','/terms':'terms','/privacy':'privacy','/about':'about','/contact':'contact'};
+const VIEWS = ['landing','onboarding','dashboard','daily','report','fortune','account','terms','privacy','about','contact'];
+const HASH_TO_VIEW = {'':'landing','/':'landing','/onboarding':'onboarding','/dashboard':'dashboard','/daily':'daily','/report':'report','/fortune':'fortune','/account':'account','/terms':'terms','/privacy':'privacy','/about':'about','/contact':'contact'};
 const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
 const mobileMenu = document.getElementById('mobile-menu');
 
@@ -1011,6 +1099,21 @@ const REPORT_PRODUCTS={
   '365':{label:'年度报告',period:'近 1 年',price:'¥199',days:365,desc:'全年交易命理画像，找出高胜率月份、危险周期和年度纪律。'},
   all:{label:'全部历史报告',period:'全部历史',price:'¥399',days:null,desc:'长期个人模型，沉淀最适合你的颜色、五行、十神和风控规则。'}
 };
+const FORTUNE_CREDITS_KEY='madeshed_fortune_credits_v1';
+const MASTER_HISTORY_KEY='madeshed_master_history_v1';
+const FORTUNE_REPORTS_KEY='madeshed_fortune_reports_v1';
+const FORTUNE_REPORT_ENDPOINT='/api/fortune-report';
+const MASTER_QUESTION_ENDPOINT='/api/master-question';
+const CREDIT_CHECKOUT_ENDPOINT='/api/create-credit-checkout-session';
+const CREDIT_PACK_PRODUCT={label:'问大师 10 点包',price:'¥99',credits:10};
+const FORTUNE_PRODUCTS={
+  full:{label:'全盘解读',price:'¥69',desc:'一生格局、性格、婚姻、事业、财运、健康倾向，适合建立长期人生底盘。',featured:true},
+  dayun:{label:'流年大运解读',price:'¥99',desc:'当前大运、今年流年和未来 3 年关键节点，适合重大规划前查看。'},
+  month:{label:'每月运程',price:'¥29',desc:'指定月份的婚姻、事业、财运、人际和风险提醒，适合短期节奏安排。'}
+};
+const MASTER_CATEGORY_LABELS={marriage:'婚姻感情',career:'事业工作',wealth:'财运收支',family:'家庭关系',health:'健康倾向',timing:'择日时机',life:'人生全局',custom:'自定义'};
+const MASTER_HORIZON_LABELS={short:'短期',month:'本月/指定月份',year:'今年/未来一年',dayun:'大运阶段',lifetime:'长期/一生'};
+let fortuneTab='full';
 function filterEntriesByRange(entries,range){const r=range||statsRange;if(!entries.length||r.type==='all')return entries.slice();let start=null,end=null;if(r.type==='custom'){start=parseYmdDate(r.start);end=parseYmdDate(r.end);}else{const days=parseInt(r.type,10);end=rangeAnchor(entries);start=addDays(end,-days+1);}if(start)start.setHours(0,0,0,0);if(end)end.setHours(23,59,59,999);return entries.filter(e=>(!start||e.date>=start)&&(!end||e.date<=end));}
 function getRangeLabel(range){const r=range||statsRange;if(r.type==='7')return'近 7 天';if(r.type==='30')return'近 1 月';if(r.type==='365')return'近 1 年';if(r.type==='custom')return(r.start&&r.end)?`${r.start} 至 ${r.end}`:'自定义日期段';return'全部历史';}
 function pct(n,d){return d?Math.round(n/d*100)+'%':'—';}
@@ -1043,6 +1146,32 @@ function buildDetailedReport(type,summary,profile){const product=REPORT_PRODUCTS
 function renderDetailedReport(type,locked){const out=document.getElementById('premium-report-output');if(!out)return;const profile=getReportProfile(),data=reportEntriesFor(type),summary=summarizeReportEntries(data.entries,profile);summary.usingSample=data.usingSample;out.innerHTML=buildDetailedReport(type,summary,profile)+(locked?'<div class="report-paywall"><strong>完整报告已锁定。</strong> 单次购买可解锁本报告；最高级会员可免费生成全部报告。点击“单次购买”会请求 Stripe Checkout Session。</div>':'');}
 async function beginReportCheckout(type){const out=document.getElementById('premium-report-output'),product=REPORT_PRODUCTS[type]||REPORT_PRODUCTS['30'];if(out)out.innerHTML='<div class="report-paywall">正在准备 '+product.label+' 支付页面...</div>';try{const r=await fetch(STRIPE_CHECKOUT_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reportType:type,returnUrl:location.href,product:product})});const j=await r.json();if(j&&j.url){location.href=j.url;return;}}catch(e){}if(out)out.innerHTML='<div class="report-paywall"><strong>支付接口待接入。</strong> 前端已经按 Stripe Checkout Sessions 预留 '+STRIPE_CHECKOUT_ENDPOINT+'；后端创建 Session 后返回 url 即可跳转。当前可先用“预览报告”查看内容结构。</div>';}
 async function beginMembershipCheckout(){const out=document.getElementById('premium-report-output');if(out)out.innerHTML='<div class="report-paywall">正在准备最高级会员订阅页面...</div>';try{const r=await fetch(MEMBERSHIP_CHECKOUT_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tier:'ultimate',returnUrl:location.href})});const j=await r.json();if(j&&j.url){location.href=j.url;return;}}catch(e){}if(out)out.innerHTML='<div class="report-paywall"><strong>会员支付接口待接入。</strong> 订阅应使用 Stripe Billing + Checkout Session；后端完成后最高级会员可免费生成全部报告。</div>';}
+function getFortuneProfile(){return getReportProfile();}
+function isUltimateMember(){try{const m=JSON.parse(localStorage.getItem(MEMBERSHIP_KEY)||'null');return !!(m&&(m.tier==='ultimate'||m.tier==='highest')&&m.status!=='canceled');}catch(e){return false;}}
+function loadCreditState(){try{const x=JSON.parse(localStorage.getItem(FORTUNE_CREDITS_KEY)||'{}');return x&&typeof x==='object'?Object.assign({balance:0,grants:{}},x):{balance:0,grants:{}};}catch(e){return{balance:0,grants:{}};}}
+function saveCreditState(state){try{localStorage.setItem(FORTUNE_CREDITS_KEY,JSON.stringify(state||{balance:0,grants:{}}));}catch(e){}}
+function ensureMonthlyMembershipCredits(){const state=loadCreditState(),key=monthKey(new Date());if(state.source==='cloud')return state;if(isUltimateMember()&&state.grants&&state.grants[key]!=='ultimate-30'){state.balance=(Number(state.balance)||0)+30;state.grants[key]='ultimate-30';state.updatedAt=new Date().toISOString();saveCreditState(state);}return state;}
+function getCreditBalance(){const state=ensureMonthlyMembershipCredits();return Math.max(0,Number(state.balance)||0);}
+function adjustCredits(delta,reason){const state=ensureMonthlyMembershipCredits();state.balance=Math.max(0,(Number(state.balance)||0)+delta);state.updatedAt=new Date().toISOString();state.lastReason=reason||null;saveCreditState(state);return state.balance;}
+function loadMasterHistory(){try{const data=JSON.parse(localStorage.getItem(MASTER_HISTORY_KEY)||'[]');return Array.isArray(data)?data:[];}catch(e){return[];}}
+function saveMasterHistory(items){try{localStorage.setItem(MASTER_HISTORY_KEY,JSON.stringify(Array.isArray(items)?items.slice(0,80):[]));}catch(e){}}
+function loadFortuneReports(){try{const data=JSON.parse(localStorage.getItem(FORTUNE_REPORTS_KEY)||'{}');return data&&typeof data==='object'?data:{};}catch(e){return{};}}
+function saveFortuneReports(items){try{localStorage.setItem(FORTUNE_REPORTS_KEY,JSON.stringify(items||{}));}catch(e){}}
+function fortuneProfileLine(profile){return profile&&profile.pillarsStr?Object.values(profile.pillarsStr).join(' · '):'未生成命盘';}
+function elementLabel(v){return({wood:'木',fire:'火',earth:'土',metal:'金',water:'水'})[v]||v||'';}
+function buildFortuneContext(profile){const st=window.__todayState||{},current=profile&&profile.currentDayunIdx>=0&&profile.daYun?profile.daYun[profile.currentDayunIdx]:null,y=profile&&profile.yongShen?profile.yongShen:{};return{pillars:fortuneProfileLine(profile),birth:profile&&profile.birth,time:profile&&profile.time,gender:profile&&profile.gender,dayMaster:profile?(profile.dayStem+' · '+profile.dayElement):null,strength:profile&&profile.strength?profile.strength.category+' '+profile.strength.score:null,monthBranch:profile&&profile.monthBranch,monthRelation:profile&&profile.monthRelation,yongShen:elementLabel(y.main),favorable:(y.xi||[]).map(elementLabel),unfavorable:(y.ji||[]).map(elementLabel),currentDayun:current?current.pillar+' '+current.range:null,today:{date:st.compactDate||dateKey(new Date()),day:st.day||null,actionScore:st.score||null,label:st.label||null,wealth:st.wealth||null,foundation:st.foundation||null,riskPenalty:st.riskPenalty||0},tradeStats:summarizeReportEntries(reportEntriesFor('30').entries,profile)};}
+function escapeHtml(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function fortuneAccessLevel(type){if(isUltimateMember())return'membership';const reports=loadFortuneReports();return reports[type]&&reports[type].accessLevel==='paid'?'paid':'preview';}
+function hasFortuneReportAccess(type){return fortuneAccessLevel(type)!=='preview';}
+async function cloudJsonHeaders(){const headers={'Content-Type':'application/json'};try{if(window.supa){const r=await window.supa.auth.getSession();const token=r&&r.data&&r.data.session&&r.data.session.access_token;if(token)headers.Authorization='Bearer '+token;}}catch(e){}return headers;}
+function buildLocalFortuneReport(type,profile){const ctx=buildFortuneContext(profile),p=FORTUNE_PRODUCTS[type]||FORTUNE_PRODUCTS.full,title=p.label+' · 命理报告',fav=(ctx.favorable||[]).join('、')||'待计算',unfav=(ctx.unfavorable||[]).join('、')||'待计算',period=type==='month'?'本月/指定月份':(type==='dayun'?'当前大运与未来三年':'全盘长期格局');let focus;if(type==='full')focus='全盘先看日主强弱、月令气势、用神喜忌和四柱互动，再把婚姻、事业、财运、健康倾向拆成长期主题。';else if(type==='dayun')focus='流年大运重点看当前大运是否扶身或泄耗、今年流年对财官食伤的触发，以及未来三年的高低节奏。';else focus='每月运程重点看流月五行、流日节奏、财星与风险扣分，给出本月适合推进、观望和避险的窗口。';return '<div class="report-generated"><h2>'+title+'</h2><span class="report-badge">'+period+'</span><span class="report-badge">统一命盘：'+escapeHtml(ctx.pillars)+'</span><h3>结论</h3><p>'+focus+' 当前喜用倾向为 '+escapeHtml(fav)+'，忌神/压力倾向为 '+escapeHtml(unfav)+'；行动建议以稳健、可验证、不过度承诺为原则。</p><h3>命理依据</h3><ul><li>日主：'+escapeHtml(ctx.dayMaster||'未生成')+'；强弱：'+escapeHtml(ctx.strength||'未生成')+'。</li><li>月令：'+escapeHtml(ctx.monthBranch||'未生成')+' · '+escapeHtml(ctx.monthRelation||'')+'；当前大运：'+escapeHtml(ctx.currentDayun||'尚未起运/未生成')+'。</li><li>今日参考：'+escapeHtml(ctx.today.date)+' · 行动指数 '+escapeHtml(ctx.today.actionScore||'—')+' · 财运 '+escapeHtml(ctx.today.wealth||'—')+'。</li></ul><h3>关键时间窗口</h3><p>顺势窗口优先选择喜用五行、财星可承载、风险扣分低的日期；忌神强、冲刑害明显、亏损后情绪未稳的窗口应减仓或不做重大决定。</p><h3>风险点</h3><p>命理报告只能做节奏和风险管理参考，不承诺必然发生；财运只讨论收入机会、花费压力、破财风险与事业财星，不提供具体投资标的建议。</p><h3>建议行动</h3><p>把报告用于计划、复盘和择时：重大决定先看大运/流年背景，再看流月/流日触发，最后用个人真实记录验证。</p><div class="report-warning">本内容不构成投资、医疗或法律建议；如涉及疾病、法律纠纷或极端风险，请寻求持牌专业人士帮助。</div></div>';}
+async function openFortuneReport(type,mode){const out=document.getElementById('fortune-report-output');if(!out)return;const profile=getFortuneProfile(),product=FORTUNE_PRODUCTS[type]||FORTUNE_PRODUCTS.full;if(!profile){out.innerHTML='<div class="report-paywall">请先生成并保存八字命盘，固定报告和问大师都会默认使用同一份命盘。</div>';return;}const locked=mode==='buy'||(!hasFortuneReportAccess(type)&&mode!=='preview');if(mode==='buy'){out.innerHTML='<div class="report-paywall"><strong>'+product.label+' 支付接口已预留。</strong> 单次价格 '+product.price+'；Stripe webhook 写入权益后会自动解锁。最高级会员可免费生成。</div>';return;}out.innerHTML='<div class="report-paywall">正在生成 '+product.label+'...</div>';let html=null;try{const r=await fetch(FORTUNE_REPORT_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify({reportType:type,profile:profile,targetPeriod:document.getElementById('master-target-month')?.value||null,context:buildFortuneContext(profile)})});const j=await r.json();if(j&&j.reportHtml)html=j.reportHtml;}catch(e){}if(!html)html=buildLocalFortuneReport(type,profile);out.innerHTML=html+(locked?'<div class="report-paywall"><strong>完整报告已锁定。</strong> 当前展示为结构预览；单次购买或最高级会员可解锁完整报告。</div>':'');const reports=loadFortuneReports();reports[type]={reportType:type,reportHtml:html,accessLevel:fortuneAccessLevel(type),updatedAt:new Date().toISOString()};saveFortuneReports(reports);out.scrollIntoView({behavior:'smooth',block:'start'});}
+function renderFortuneProducts(){const box=document.getElementById('fortune-products');if(!box)return;box.innerHTML=Object.keys(FORTUNE_PRODUCTS).map(function(type){const p=FORTUNE_PRODUCTS[type],access=fortuneAccessLevel(type);return '<div class="report-product '+(p.featured?'featured':'')+'"><div class="t">'+p.label+'</div><div class="p">'+p.price+'</div><div class="d">'+p.desc+'</div><div class="report-badge">'+(access==='membership'?'高级会员免费':(access==='paid'?'已解锁':'单次解锁'))+'</div><div class="report-actions"><button class="report-btn" type="button" data-fortune-action="preview-report" data-fortune-report-type="'+type+'">预览</button><button class="report-btn primary" type="button" data-fortune-action="buy-report" data-fortune-report-type="'+type+'">单次购买</button><button class="report-btn" type="button" data-fortune-action="generate-report" data-fortune-report-type="'+type+'">生成报告</button></div></div>';}).join('')+'<div class="report-product featured"><div class="t">最高级会员</div><div class="p">¥199/月</div><div class="d">固定报告免费生成；问大师每月赠送 30 点，适合高频咨询和长期复盘。</div><div class="report-actions"><button class="report-btn primary" type="button" data-report-action="membership">开通最高级会员</button></div></div>';}
+function renderMasterForm(){const cat=document.getElementById('master-question-category'),hor=document.getElementById('master-question-horizon');if(cat&&!cat.options.length)cat.innerHTML=Object.keys(MASTER_CATEGORY_LABELS).map(k=>'<option value="'+k+'">'+MASTER_CATEGORY_LABELS[k]+'</option>').join('');if(hor&&!hor.options.length)hor.innerHTML=Object.keys(MASTER_HORIZON_LABELS).map(k=>'<option value="'+k+'">'+MASTER_HORIZON_LABELS[k]+'</option>').join('');}
+function renderMasterHistory(){const box=document.getElementById('master-history-list');if(!box)return;const items=loadMasterHistory();if(!items.length){box.innerHTML='<div class="report-paywall">还没有问大师历史。提交问题后，结论、命理依据、关键时间窗口、风险点和建议行动会保存在这里。</div>';return;}box.innerHTML=items.map(function(x){return '<div class="master-history-item"><div class="meta">'+escapeHtml(x.createdAt||'')+' · '+escapeHtml(MASTER_CATEGORY_LABELS[x.category]||x.category)+' · '+escapeHtml(x.depth==='deep'?'深度':'普通')+'</div><div class="q">'+escapeHtml(x.question)+'</div><div class="a">'+(x.answerHtml||'')+'</div></div>';}).join('');}
+function renderFortuneCenter(){document.querySelectorAll('#fortune-tabs [data-fortune-tab]').forEach(b=>b.classList.toggle('active',b.dataset.fortuneTab===fortuneTab));const productPanel=document.querySelector('[data-fortune-panel="products"]'),askPanel=document.querySelector('[data-fortune-panel="ask"]'),historyPanel=document.querySelector('[data-fortune-panel="history"]');if(productPanel)productPanel.classList.toggle('active',['full','dayun','month'].indexOf(fortuneTab)>=0);if(askPanel)askPanel.classList.toggle('active',fortuneTab==='ask');if(historyPanel)historyPanel.classList.toggle('active',fortuneTab==='history');const balance=document.getElementById('fortune-credit-balance');if(balance)balance.textContent=getCreditBalance()+' 点';renderFortuneProducts();renderMasterForm();renderMasterHistory();}
+async function beginCreditCheckout(){const out=document.getElementById('master-answer-output')||document.getElementById('fortune-report-output');if(!window.__cloudUser){if(out)out.innerHTML='<div class="report-paywall">请先登录后再购买点数，点数账本需要绑定到你的账号。</div>';return;}if(out)out.innerHTML='<div class="report-paywall">正在准备 '+CREDIT_PACK_PRODUCT.label+' 支付页面...</div>';try{const r=await fetch(CREDIT_CHECKOUT_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify({product:CREDIT_PACK_PRODUCT,returnUrl:location.href})});const j=await r.json();if(j&&j.url){location.href=j.url;return;}if(j&&j.message&&out)out.innerHTML='<div class="report-paywall">'+escapeHtml(j.message)+'</div>';else if(out)out.innerHTML='<div class="report-paywall">点数购买接口已预留；Stripe 配置完成后会跳转 Checkout。</div>';}catch(e){if(out)out.innerHTML='<div class="report-paywall">点数购买接口暂不可用，当前不会扣费。</div>';}}
+async function submitMasterQuestion(){const out=document.getElementById('master-answer-output');if(!out)return;const profile=getFortuneProfile(),category=document.getElementById('master-question-category')?.value||'custom',horizon=document.getElementById('master-question-horizon')?.value||'short',depth=document.getElementById('master-question-depth')?.value||'normal',question=(document.getElementById('master-question-text')?.value||'').trim(),targetDate=document.getElementById('master-target-date')?.value||null,targetMonth=document.getElementById('master-target-month')?.value||null,cost=depth==='deep'?3:1;if(!profile){out.innerHTML='<div class="report-paywall">请先生成八字命盘。登录后，全网站会默认使用这一份命盘，除非你自行修改。</div>';return;}if(!window.__cloudUser){out.innerHTML='<div class="report-paywall">请先登录再使用问大师。问题、答案和点数账本需要绑定到你的账号。</div>';return;}if(question.length<6){out.innerHTML='<div class="report-paywall">请把问题写得再具体一点，例如时间范围、想做的决定、担心的风险。</div>';return;}if(!isUltimateMember()&&getCreditBalance()<cost){out.innerHTML='<div class="report-paywall"><strong>点数余额不足。</strong> '+(depth==='deep'?'深度分析需要 3 点。':'普通问题需要 1 点。')+' 可以购买 10 点包，或开通最高级会员。</div>';return;}out.innerHTML='<div class="report-paywall">正在整理八字、大运、流年与问题上下文...</div>';const payload={category,horizon,question,targetDate,targetMonth,depth,profile,context:buildFortuneContext(profile)};try{const r=await fetch(MASTER_QUESTION_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify(payload)});const j=await r.json();if(!r.ok){out.innerHTML='<div class="report-paywall">'+escapeHtml((j&&j.message)||'问大师服务暂不可用，本次不消耗点数。')+'</div>';return;}const spent=Number(j.creditsSpent)||0;if(spent>0)adjustCredits(-spent,'master-question');const answer=j.answerHtml||'<div class="report-generated"><h2>问大师回答</h2><p>服务端已返回，但没有正文。</p></div>';out.innerHTML=answer;const items=loadMasterHistory();items.unshift({category,horizon,depth,question,targetDate,targetMonth,creditsSpent:spent,answerHtml:answer,createdAt:new Date().toLocaleString('zh-CN')});saveMasterHistory(items);renderFortuneCenter();}catch(e){out.innerHTML='<div class="report-paywall">问大师接口暂不可用，本次不消耗点数。</div>';}}
 function tradedCount(entries){return entries.filter(e=>isTradeOutcome(e.outcome)).length;}
 function syncRangeButtons(){document.querySelectorAll('#stats-range-controls [data-range]').forEach(b=>b.classList.toggle('active',b.dataset.range===statsRange.type));const cr=document.getElementById('stats-custom-range');if(cr)cr.classList.toggle('show',statsRange.type==='custom');document.querySelectorAll('#history-range-controls [data-history-range]').forEach(b=>b.classList.toggle('active',b.dataset.historyRange===historyRange.type));const hr=document.getElementById('history-custom-range');if(hr)hr.classList.toggle('show',historyRange.type==='custom');}
 function setStatsRange(type){statsRange={type:type,start:statsRange.start,end:statsRange.end};syncRangeButtons();renderDailyStats();}
@@ -1085,7 +1214,8 @@ function renderAccount(){const prof=document.getElementById('account-profile'),s
 
 bindCheckinForm();
 document.addEventListener('click',function(e){const outcome=e.target.closest('#checkin-card .outcome-btn');if(outcome){e.preventDefault();selectCheckinOutcome(outcome.dataset.outcome,null);return;}const save=e.target.closest('#checkin-card [data-checkin-action="save"]');if(save){e.preventDefault();const card=document.getElementById('checkin-card'),raw=card&&card.dataset.pendingOutcome;if(!raw){alert('请先选择今天的交易结果');return;}const input=card.querySelector('#checkin-pnl');recordCheckin(raw,buildMagnitude(raw,input&&input.value));return;}const cancel=e.target.closest('#checkin-card [data-checkin-action="cancel"]');if(cancel){e.preventDefault();const item=loadCheckins().find(x=>x.date===currentCheckinKey());if(item)showRecordedSummary(item.outcome,item.mag);else renderCheckinForm();return;}const edit=e.target.closest('.edit-link');if(edit&&edit.closest('#checkin-card')){e.preventDefault();const item=loadCheckins().find(x=>x.date===currentCheckinKey());renderCheckinForm(item);}});
-document.addEventListener('click',function(e){const sr=e.target.closest('#stats-range-controls [data-range]');if(sr){e.preventDefault();setStatsRange(sr.dataset.range);return;}const sa=e.target.closest('[data-stats-action="apply-custom"]');if(sa){e.preventDefault();applyStatsCustomRange();return;}const rr=e.target.closest('#report-range-controls [data-report-range]');if(rr){e.preventDefault();reportRange={type:rr.dataset.reportRange,start:null,end:null};renderReportCenter();return;}const ra=e.target.closest('[data-report-action]');if(ra){e.preventDefault();const type=ra.dataset.reportType||reportRange.type,act=ra.dataset.reportAction;if(act==='open-generated'){openGeneratedReport(ra.dataset.generatedReportKey);return;}if(act==='preview'){renderDetailedReport(type,true);return;}if(act==='buy'){beginReportCheckout(type);return;}if(act==='generate'){if(hasReportAccess(type))renderDetailedReport(type,false);else renderDetailedReport(type,true);return;}if(act==='membership'){beginMembershipCheckout();return;}}const open=e.target.closest('[data-history-action="open"]');if(open){e.preventDefault();openHistoryModal();return;}const close=e.target.closest('[data-history-action="close"]');if(close){e.preventDefault();closeHistoryModal();return;}if(e.target&&e.target.id==='history-modal'){closeHistoryModal();return;}const hr=e.target.closest('#history-range-controls [data-history-range]');if(hr){e.preventDefault();setHistoryRange(hr.dataset.historyRange);return;}const ha=e.target.closest('[data-history-action="apply-custom"]');if(ha){e.preventDefault();applyHistoryCustomRange();}});
+document.addEventListener('click',function(e){const sr=e.target.closest('#stats-range-controls [data-range]');if(sr){e.preventDefault();setStatsRange(sr.dataset.range);return;}const sa=e.target.closest('[data-stats-action="apply-custom"]');if(sa){e.preventDefault();applyStatsCustomRange();return;}const rr=e.target.closest('#report-range-controls [data-report-range]');if(rr){e.preventDefault();reportRange={type:rr.dataset.reportRange,start:null,end:null};renderReportCenter();return;}const ft=e.target.closest('#fortune-tabs [data-fortune-tab]');if(ft){e.preventDefault();fortuneTab=ft.dataset.fortuneTab;renderFortuneCenter();return;}const fa=e.target.closest('[data-fortune-action]');if(fa){e.preventDefault();const act=fa.dataset.fortuneAction,type=fa.dataset.fortuneReportType;if(act==='preview-report'){openFortuneReport(type,'preview');return;}if(act==='buy-report'){openFortuneReport(type,'buy');return;}if(act==='generate-report'){openFortuneReport(type,'generate');return;}if(act==='buy-credits'){beginCreditCheckout();return;}}const ra=e.target.closest('[data-report-action]');if(ra){e.preventDefault();const type=ra.dataset.reportType||reportRange.type,act=ra.dataset.reportAction;if(act==='open-generated'){openGeneratedReport(ra.dataset.generatedReportKey);return;}if(act==='preview'){renderDetailedReport(type,true);return;}if(act==='buy'){beginReportCheckout(type);return;}if(act==='generate'){if(hasReportAccess(type))renderDetailedReport(type,false);else renderDetailedReport(type,true);return;}if(act==='membership'){beginMembershipCheckout();return;}}const open=e.target.closest('[data-history-action="open"]');if(open){e.preventDefault();openHistoryModal();return;}const close=e.target.closest('[data-history-action="close"]');if(close){e.preventDefault();closeHistoryModal();return;}if(e.target&&e.target.id==='history-modal'){closeHistoryModal();return;}const hr=e.target.closest('#history-range-controls [data-history-range]');if(hr){e.preventDefault();setHistoryRange(hr.dataset.historyRange);return;}const ha=e.target.closest('[data-history-action="apply-custom"]');if(ha){e.preventDefault();applyHistoryCustomRange();}});
+document.addEventListener('submit',function(e){if(e.target&&e.target.id==='master-question-form'){e.preventDefault();submitMasterQuestion();}});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeHistoryModal();});
 
 function showRecordedSummary(o,m){const card=document.getElementById('checkin-card');if(!card)return;card.classList.add('recorded');const outcome=canonicalOutcome({outcome:o,mag:m}),metaInfo=OUTCOME_META[outcome]||OUTCOME_META.notrade;const cls=metaInfo.tone==='win'?'win':(metaInfo.tone==='loss'?'loss':'');const st=window.__todayState||{};const meta=(st.compactDate||'今天')+' · '+(st.label||'今日')+'日';card.innerHTML=`<div class="checkin-h"><div class="checkin-t">今日已记录 · DONE</div><div class="checkin-time">刚刚 · 2 秒</div></div><div class="recorded-summary"><div class="left"><div class="icon">${metaInfo.icon}</div><div class="info"><div class="label">${meta}</div><div class="value ${cls}">${metaInfo.label}${m?' · '+m:''}</div></div></div><button class="edit-link" type="button">修改</button></div>`;}
@@ -1098,6 +1228,9 @@ const CLOUD_CHECKINS_TABLE='checkins';
 const CLOUD_MEMBERSHIP_TABLE='memberships';
 const CLOUD_REPORT_TABLE='report_entitlements';
 const CLOUD_GENERATED_REPORTS_TABLE='generated_reports';
+const CLOUD_CREDIT_LEDGER_TABLE='credit_ledger';
+const CLOUD_MASTER_QUESTIONS_TABLE='master_questions';
+const CLOUD_FORTUNE_REPORTS_TABLE='fortune_reports';
 const CLOUD_SYNC_STATE='madeshed_cloud_sync_v1';
 (function(){
   const s=document.createElement('script');
@@ -1114,17 +1247,19 @@ const CLOUD_SYNC_STATE='madeshed_cloud_sync_v1';
     function writeLocalProfile(profile,rowUpdatedAt){const fallback=rowUpdatedAt||new Date().toISOString(),next=Object.assign({},profile||{});if(!next.createdAt)next.createdAt=next.updatedAt||fallback;if(!next.updatedAt)next.updatedAt=next.createdAt||fallback;next.profileSchemaVersion=next.profileSchemaVersion||2;next.profileSource='cloud';localStorage.setItem('madeshed_profile_v1',JSON.stringify(next));return next;}
     function resolveProfileSync(localProfile,remoteProfile,remoteUpdatedAt){if(!remoteProfile)return{source:'local',profile:localProfile};if(!localProfile)return{source:'cloud',profile:writeLocalProfile(remoteProfile,remoteUpdatedAt)};const localTime=getProfileUpdatedAt(localProfile),remoteTime=getProfileUpdatedAt(remoteProfile,remoteUpdatedAt);if(remoteTime>localTime)return{source:'cloud',profile:writeLocalProfile(remoteProfile,remoteUpdatedAt)};return{source:'local',profile:localProfile};}
     async function syncProfileToCloud(profile){const user=window.__cloudUser;if(!window.supa||!user||!profile)return{skipped:true};const cloudProfile=ensureProfileEnvelope(profile,'local');const payload={user_id:user.id,birth:cloudProfile.birth||null,birth_time:cloudProfile.time||null,time_known:cloudProfile.timeKnown!==false,gender:cloudProfile.gender||null,pillars:cloudProfile.pillarsStr||{},profile:cloudProfile};const r=await window.supa.from(CLOUD_PROFILE_TABLE).upsert(payload,{onConflict:'user_id'});if(r.error){setCloudStatus('命盘云端同步失败: '+r.error.message,'error');return{ok:false,error:r.error};}setCloudStatus('命盘已同步到云端','ok');return{ok:true};}
-    async function syncReportAccessToLocal(){const user=window.__cloudUser;if(!window.supa||!user)return{skipped:true};let ok=true;const mr=await window.supa.from(CLOUD_MEMBERSHIP_TABLE).select('*').eq('user_id',user.id).maybeSingle();if(!mr.error&&mr.data){localStorage.setItem('madeshed_membership_v1',JSON.stringify(mr.data));}else if(mr.error&&mr.error.code!=='PGRST116'){ok=false;}const rr=await window.supa.from(CLOUD_REPORT_TABLE).select('report_type,status').eq('user_id',user.id).eq('status','active');if(!rr.error&&Array.isArray(rr.data)){localStorage.setItem('madeshed_report_access_v1',JSON.stringify({reports:rr.data.map(x=>String(x.report_type)),updatedAt:new Date().toISOString()}));}else if(rr.error){ok=false;}if(typeof renderReportCenter==='function')renderReportCenter();return{ok:ok};}
+    async function syncReportAccessToLocal(){const user=window.__cloudUser;if(!window.supa||!user)return{skipped:true};let ok=true;const mr=await window.supa.from(CLOUD_MEMBERSHIP_TABLE).select('*').eq('user_id',user.id).maybeSingle();if(!mr.error&&mr.data){localStorage.setItem('madeshed_membership_v1',JSON.stringify(mr.data));}else if(mr.error&&mr.error.code!=='PGRST116'){ok=false;}const rr=await window.supa.from(CLOUD_REPORT_TABLE).select('report_type,status').eq('user_id',user.id).eq('status','active');if(!rr.error&&Array.isArray(rr.data)){localStorage.setItem('madeshed_report_access_v1',JSON.stringify({reports:rr.data.map(x=>String(x.report_type)),updatedAt:new Date().toISOString()}));}else if(rr.error){ok=false;}if(typeof renderReportCenter==='function')renderReportCenter();if(typeof renderFortuneCenter==='function')renderFortuneCenter();return{ok:ok};}
     function remoteGeneratedReport(row){return{reportKey:row.report_key,reportType:String(row.report_type),periodStart:row.period_start,periodEnd:row.period_end,title:row.title,summary:row.summary||{},reportHtml:row.report_html||'',autoGenerated:row.auto_generated!==false,accessLevel:row.access_level||'preview',createdAt:row.created_at,updatedAt:row.updated_at};}
     async function syncGeneratedReportsFromCloud(){const user=window.__cloudUser;if(!window.supa||!user||typeof loadGeneratedReports!=='function')return{skipped:true};const r=await window.supa.from(CLOUD_GENERATED_REPORTS_TABLE).select('*').eq('user_id',user.id);if(r.error){setCloudStatus('自动报告云端读取失败: '+r.error.message,'error');return{ok:false,error:r.error};}const remote=Array.isArray(r.data)?r.data.map(remoteGeneratedReport):[],local=loadGeneratedReports(),merged=typeof mergeGeneratedReports==='function'?mergeGeneratedReports(local,remote):local.concat(remote);if(typeof saveGeneratedReports==='function')saveGeneratedReports(merged);if(typeof renderGeneratedReports==='function')renderGeneratedReports();return{ok:true};}
     async function syncGeneratedReportsToCloud(){const user=window.__cloudUser;if(!window.supa||!user||typeof loadGeneratedReports!=='function')return{skipped:true};const reports=loadGeneratedReports();if(!reports.length)return{ok:true};const payload=reports.map(function(r){return{user_id:user.id,report_key:r.reportKey,report_type:String(r.reportType),period_start:r.periodStart||'',period_end:r.periodEnd||'',title:r.title||'自动报告',summary:r.summary||{},report_html:r.reportHtml||'',auto_generated:r.autoGenerated!==false,access_level:r.accessLevel||'preview',created_at:r.createdAt||new Date().toISOString()};});const result=await window.supa.from(CLOUD_GENERATED_REPORTS_TABLE).upsert(payload,{onConflict:'user_id,report_key'});if(result.error){setCloudStatus('自动报告云端同步失败: '+result.error.message,'error');return{ok:false,error:result.error};}return{ok:true};}
+    async function syncFortuneCloudToLocal(){const user=window.__cloudUser;if(!window.supa||!user)return{skipped:true};let ok=true;const credits=await window.supa.from(CLOUD_CREDIT_LEDGER_TABLE).select('amount').eq('user_id',user.id);if(!credits.error&&Array.isArray(credits.data)){const balance=credits.data.reduce(function(sum,row){return sum+(Number(row.amount)||0);},0);localStorage.setItem('madeshed_fortune_credits_v1',JSON.stringify({balance:Math.max(0,balance),grants:{},updatedAt:new Date().toISOString(),source:'cloud'}));}else if(credits.error&&credits.error.code!=='PGRST116'){ok=false;}const history=await window.supa.from(CLOUD_MASTER_QUESTIONS_TABLE).select('category,horizon,depth,target_date,target_month,question,credits_spent,answer_html,created_at').eq('user_id',user.id).order('created_at',{ascending:false}).limit(50);if(!history.error&&Array.isArray(history.data)){localStorage.setItem('madeshed_master_history_v1',JSON.stringify(history.data.map(function(x){return{category:x.category,horizon:x.horizon,depth:x.depth,targetDate:x.target_date,targetMonth:x.target_month,question:x.question,creditsSpent:x.credits_spent,answerHtml:x.answer_html,createdAt:x.created_at};})));}else if(history.error&&history.error.code!=='PGRST116'){ok=false;}if(typeof renderFortuneCenter==='function')renderFortuneCenter();return{ok:ok};}
     async function syncCheckinsToCloud(){const user=window.__cloudUser;if(!window.supa||!user)return{skipped:true};const items=typeof loadCheckins==='function'?loadCheckins():[];if(!items.length)return{ok:true};const payload=items.map(function(x){return{user_id:user.id,checkin_date:x.date,outcome:storageOutcome(x.outcome),magnitude:x.mag||null,label:x.label||null,score:Number.isFinite(x.score)?x.score:null,day_ganzhi:x.day||null,payload:Object.assign({},x,{outcome:x.outcome}),created_at:x.createdAt||new Date().toISOString()};});const r=await window.supa.from(CLOUD_CHECKINS_TABLE).upsert(payload,{onConflict:'user_id,checkin_date'});if(r.error){setCloudStatus('记录云端同步失败: '+r.error.message,'error');return{ok:false,error:r.error};}setCloudStatus('每日记录已同步到云端','ok');return{ok:true};}
     async function syncCloudToLocal(){const user=window.__cloudUser;if(!window.supa||!user)return{skipped:true};let ok=true;const localProfile=getLocalProfile();const pr=await window.supa.from(CLOUD_PROFILE_TABLE).select('profile,updated_at').eq('user_id',user.id).maybeSingle();if(pr.error){setCloudStatus('读取云端命盘失败: '+pr.error.message,'error');ok=false;}else{const chosen=resolveProfileSync(localProfile,pr.data&&pr.data.profile,pr.data&&pr.data.updated_at);if(chosen&&chosen.source==='cloud'){withMadeshed(function(m){m.refresh();});if(typeof renderReport==='function')renderReport();if(typeof renderAccount==='function')renderAccount();}}const cr=await window.supa.from(CLOUD_CHECKINS_TABLE).select('*').eq('user_id',user.id);if(cr.error){setCloudStatus('读取云端记录失败: '+cr.error.message,'error');ok=false;}else if(Array.isArray(cr.data)&&typeof saveCheckins==='function'){saveCheckins(mergeCheckins(loadCheckins(),cr.data.map(remoteCheckin)));if(typeof renderDailyStats==='function')renderDailyStats();renderReport();renderAccount();renderStoredCheckin();}return{ok:ok};}
-    async function bootstrapCloudSync(session){if(!session||!session.user)return;showLoggedIn(session.user.email,session.user);setCloudStatus('正在同步云端数据...','syncing');const results=[];results.push(await syncCloudToLocal());results.push(await syncReportAccessToLocal());results.push(await syncGeneratedReportsFromCloud());if(typeof autoGenerateDueReports==='function')autoGenerateDueReports();const profile=getLocalProfile();if(profile)results.push(await syncProfileToCloud(profile));results.push(await syncCheckinsToCloud());results.push(await syncGeneratedReportsToCloud());if(results.every(function(x){return x.ok||x.skipped;}))setCloudStatus('云端同步完成','ok');}
+    async function bootstrapCloudSync(session){if(!session||!session.user)return;showLoggedIn(session.user.email,session.user);setCloudStatus('正在同步云端数据...','syncing');const results=[];results.push(await syncCloudToLocal());results.push(await syncReportAccessToLocal());results.push(await syncGeneratedReportsFromCloud());results.push(await syncFortuneCloudToLocal());if(typeof autoGenerateDueReports==='function')autoGenerateDueReports();const profile=getLocalProfile();if(profile)results.push(await syncProfileToCloud(profile));results.push(await syncCheckinsToCloud());results.push(await syncGeneratedReportsToCloud());if(results.every(function(x){return x.ok||x.skipped;}))setCloudStatus('云端同步完成','ok');}
     async function signOut(){if(!window.supa)return;await window.supa.auth.signOut();window.__cloudUser=null;delete document.body.dataset.user;document.querySelectorAll('[data-auth-action="signin"]').forEach(function(btn){btn.textContent='登录';});setCloudStatus('已退出登录，本机数据仍保留','info');}
     window.syncProfileToCloud=syncProfileToCloud;
     window.syncCheckinsToCloud=syncCheckinsToCloud;
     window.syncGeneratedReportsToCloud=syncGeneratedReportsToCloud;
+    window.syncFortuneCloudToLocal=syncFortuneCloudToLocal;
     window.syncCloudToLocal=syncCloudToLocal;
     window.bootstrapCloudSync=bootstrapCloudSync;
     window.signOut=signOut;
@@ -1413,7 +1548,7 @@ function handleSubmit(){
 }
 function bindForm(){const v=document.querySelectorAll('.view'),onb=v[1];if(!onb)return;const sb=onb.querySelector('button[name="submit-btn"], button.submit');if(!sb||sb.dataset.madeshedBound)return;sb.dataset.madeshedBound='1';sb.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();handleSubmit();},true);}
 function refresh(){const p=loadProfile(),t=getTodayGZ();if(p)applyProfile(p,t);else clearProfileSurfaces(t);}
-function init(){bindForm();refresh();renderReport();renderAccount();renderStoredCheckin();window.addEventListener('hashchange',function(){setTimeout(function(){refresh();renderReport();renderAccount();renderStoredCheckin();},50);});}
+function init(){bindForm();refresh();renderReport();renderFortuneCenter();renderAccount();renderStoredCheckin();window.addEventListener('hashchange',function(){setTimeout(function(){refresh();renderReport();renderFortuneCenter();renderAccount();renderStoredCheckin();},50);});}
 function waitForLunar(cb){if(typeof Solar!=='undefined')return cb();let n=0;const t=setInterval(function(){if(typeof Solar!=='undefined'||n++>50){clearInterval(t);if(typeof Solar!=='undefined')cb();}},200);}
 function start(){waitForLunar(init);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();

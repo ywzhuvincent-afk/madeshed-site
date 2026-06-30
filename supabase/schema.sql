@@ -61,7 +61,8 @@ create table if not exists public.report_entitlements (
   stripe_session_id text unique,
   payload jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique (user_id, report_type)
 );
 
 create table if not exists public.generated_reports (
@@ -79,6 +80,52 @@ create table if not exists public.generated_reports (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (user_id, report_key)
+);
+
+create table if not exists public.credit_ledger (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  entry_type text not null check (entry_type in ('purchase', 'membership_grant', 'spend', 'refund', 'admin')),
+  amount integer not null,
+  balance_after integer,
+  reference_type text,
+  reference_id text,
+  stripe_session_id text,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.fortune_reports (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  report_key text not null,
+  report_type text not null check (report_type in ('full', 'dayun', 'month')),
+  target_period text,
+  title text not null,
+  context jsonb not null default '{}'::jsonb,
+  report_html text not null,
+  access_level text not null default 'preview' check (access_level in ('preview', 'paid', 'membership')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, report_key)
+);
+
+create table if not exists public.master_questions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  category text not null check (category in ('marriage', 'career', 'wealth', 'family', 'health', 'timing', 'life', 'custom')),
+  horizon text not null check (horizon in ('short', 'month', 'year', 'dayun', 'lifetime')),
+  depth text not null default 'normal' check (depth in ('normal', 'deep')),
+  target_date text,
+  target_month text,
+  question text not null,
+  credits_spent integer not null default 0,
+  context jsonb not null default '{}'::jsonb,
+  answer_html text not null,
+  status text not null default 'answered' check (status in ('answered', 'failed', 'refunded')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 drop trigger if exists profiles_set_updated_at on public.profiles;
@@ -106,11 +153,29 @@ create trigger generated_reports_set_updated_at
 before update on public.generated_reports
 for each row execute function public.set_updated_at();
 
+drop trigger if exists credit_ledger_set_updated_at on public.credit_ledger;
+create trigger credit_ledger_set_updated_at
+before update on public.credit_ledger
+for each row execute function public.set_updated_at();
+
+drop trigger if exists fortune_reports_set_updated_at on public.fortune_reports;
+create trigger fortune_reports_set_updated_at
+before update on public.fortune_reports
+for each row execute function public.set_updated_at();
+
+drop trigger if exists master_questions_set_updated_at on public.master_questions;
+create trigger master_questions_set_updated_at
+before update on public.master_questions
+for each row execute function public.set_updated_at();
+
 alter table public.profiles enable row level security;
 alter table public.checkins enable row level security;
 alter table public.report_entitlements enable row level security;
 alter table public.memberships enable row level security;
 alter table public.generated_reports enable row level security;
+alter table public.credit_ledger enable row level security;
+alter table public.fortune_reports enable row level security;
+alter table public.master_questions enable row level security;
 
 drop policy if exists profiles_select_own on public.profiles;
 create policy profiles_select_own
@@ -199,11 +264,51 @@ on public.generated_reports for delete
 to authenticated
 using (auth.uid() = user_id);
 
+drop policy if exists credit_ledger_select_own on public.credit_ledger;
+create policy credit_ledger_select_own
+on public.credit_ledger for select
+to authenticated
+using (auth.uid() = user_id);
+
+drop policy if exists fortune_reports_select_own on public.fortune_reports;
+create policy fortune_reports_select_own
+on public.fortune_reports for select
+to authenticated
+using (auth.uid() = user_id);
+
+drop policy if exists fortune_reports_insert_own on public.fortune_reports;
+create policy fortune_reports_insert_own
+on public.fortune_reports for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+drop policy if exists fortune_reports_update_own on public.fortune_reports;
+create policy fortune_reports_update_own
+on public.fortune_reports for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+drop policy if exists master_questions_select_own on public.master_questions;
+create policy master_questions_select_own
+on public.master_questions for select
+to authenticated
+using (auth.uid() = user_id);
+
+drop policy if exists master_questions_insert_own on public.master_questions;
+create policy master_questions_insert_own
+on public.master_questions for insert
+to authenticated
+with check (auth.uid() = user_id);
+
 grant select, insert, update, delete on public.profiles to authenticated;
 grant select, insert, update, delete on public.checkins to authenticated;
 grant select on public.memberships to authenticated;
 grant select on public.report_entitlements to authenticated;
 grant select, insert, update, delete on public.generated_reports to authenticated;
+grant select on public.credit_ledger to authenticated;
+grant select, insert, update on public.fortune_reports to authenticated;
+grant select, insert on public.master_questions to authenticated;
 
 create or replace function public.upsert_auto_generated_reports(p_run_date date default current_date)
 returns integer
