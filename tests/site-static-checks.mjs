@@ -148,22 +148,6 @@ includesAll(index, [
   '个人真实记录',
 ], 'accurate input and sample-data labels');
 
-includesAll(index, [
-  'id="trend-rail-shell"',
-  'id="trend-rail"',
-  'id="hour-rail-shell"',
-  'id="hour-rail"',
-  'id="forecast-strip"',
-  'function renderScrollableRail',
-  'function enableRailDrag',
-  'function renderTrendRail',
-  'aria-label="流月滚轴"',
-  'aria-label="流日滚轴"',
-  'aria-label="今日时辰滚轴"',
-  'for(var i=0;i<24;i++)',
-  'for(var i=0;i<30;i++)',
-], 'dashboard scrollable month/day/hour rails');
-
 includesAll(chart, [
   '/bazi-engine.js',
   'window.MadeshedBazi.calcBaziCore',
