@@ -64,6 +64,23 @@ create table if not exists public.report_entitlements (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.generated_reports (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  report_key text not null,
+  report_type text not null check (report_type in ('7', '30', '365', 'all')),
+  period_start text not null,
+  period_end text not null,
+  title text not null,
+  summary jsonb not null default '{}'::jsonb,
+  report_html text not null,
+  auto_generated boolean not null default true,
+  access_level text not null default 'preview' check (access_level in ('preview', 'paid', 'membership')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, report_key)
+);
+
 drop trigger if exists profiles_set_updated_at on public.profiles;
 create trigger profiles_set_updated_at
 before update on public.profiles
@@ -84,10 +101,16 @@ create trigger report_entitlements_set_updated_at
 before update on public.report_entitlements
 for each row execute function public.set_updated_at();
 
+drop trigger if exists generated_reports_set_updated_at on public.generated_reports;
+create trigger generated_reports_set_updated_at
+before update on public.generated_reports
+for each row execute function public.set_updated_at();
+
 alter table public.profiles enable row level security;
 alter table public.checkins enable row level security;
 alter table public.report_entitlements enable row level security;
 alter table public.memberships enable row level security;
+alter table public.generated_reports enable row level security;
 
 drop policy if exists profiles_select_own on public.profiles;
 create policy profiles_select_own
@@ -151,7 +174,33 @@ on public.report_entitlements for select
 to authenticated
 using (auth.uid() = user_id);
 
+drop policy if exists generated_reports_select_own on public.generated_reports;
+create policy generated_reports_select_own
+on public.generated_reports for select
+to authenticated
+using (auth.uid() = user_id);
+
+drop policy if exists generated_reports_insert_own on public.generated_reports;
+create policy generated_reports_insert_own
+on public.generated_reports for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+drop policy if exists generated_reports_update_own on public.generated_reports;
+create policy generated_reports_update_own
+on public.generated_reports for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+drop policy if exists generated_reports_delete_own on public.generated_reports;
+create policy generated_reports_delete_own
+on public.generated_reports for delete
+to authenticated
+using (auth.uid() = user_id);
+
 grant select, insert, update, delete on public.profiles to authenticated;
 grant select, insert, update, delete on public.checkins to authenticated;
 grant select on public.memberships to authenticated;
 grant select on public.report_entitlements to authenticated;
+grant select, insert, update, delete on public.generated_reports to authenticated;
