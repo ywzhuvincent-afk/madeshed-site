@@ -304,6 +304,27 @@ includesAll(index, [
 ], 'trend month day hour scroll modes');
 
 includesAll(index, [
+  'function clampScore(n,min,max)',
+  'function calibrateActionScore(raw,mode,context)',
+  'function smoothTrendData(data)',
+  'function trendScoreDetails(trend,idx,mode)',
+  'function renderTrendExplanation(trend,idx,mode)',
+  'id="trend-explain"',
+  "rawScore:raw",
+  "mode==='month'",
+  "mode==='day'",
+  "mode==='hour'",
+], 'steady but responsive trend calibration layer');
+assert.ok(
+  !index.includes('var spread=base<=50?28:(base<=66?34:38)'),
+  'monthly trend should not keep the old extreme spread',
+);
+assert.ok(
+  !index.includes('60+(trigger-60)*1.15+(wealth-55)*0.35+(base-60)*0.25-riskPenalty'),
+  'monthly trend should not keep the old over-amplified raw formula',
+);
+
+includesAll(index, [
   "data.push(trendActionScore(profile,dt))",
   "title:y+'年'+m+'月 每日行动指数 · DAILY ACTION TREND'",
   "mark:now.getDate()+'号 行动指数'",
@@ -316,11 +337,13 @@ includesAll(index, [
   'MONTHLY ACTION TREND',
   'var monthRead=dailyRead(profile,{day:gz.month})',
   'var monthScore=chartScore(profile,gz.month)',
-  'var trigger=Math.round((monthRead?monthRead.zScore:60)*0.5+monthScore*0.35+wealth*0.15)',
-  '60+(trigger-60)*1.15+(wealth-55)*0.35+(base-60)*0.25-riskPenalty',
-  'var spread=base<=50?28:(base<=66?34:38)',
+  'var trigger=Math.round((monthRead?monthRead.zScore:60)*0.48+monthScore*0.34+wealth*0.18)',
+  '60+(trigger-60)*.82+(wealth-55)*.25+(base-60)*.18-riskPenalty',
+  "calibrateActionScore(raw,'month'",
+  'data=smoothTrendData(data)',
+  'details.forEach(function(d,i){d.score=data[i]',
   "mark:(now.getMonth()+1)+'",
-], 'monthly trend uses amplified monthly action score');
+], 'monthly trend uses steady calibrated monthly action score');
 assert.ok(
   !/function buildMonthTrend\(profile,now\)[\s\S]{0,360}data\.push\(chartScore\(profile,gzMonth/.test(index),
   'monthly trend should not use month single score',
@@ -329,7 +352,8 @@ assert.ok(
 includesAll(index, [
   'data.push(hourActionScore(profile,new Date(y,m-1,d),h))',
   'HOURLY ACTION TREND',
-  '55+(dayAction.score-55)*0.55+(hourScore-60)*0.75-riskPenalty',
+  'dayAction.score+(hourScore-60)*.85-riskPenalty',
+  "calibrateActionScore(raw,'hour'",
   'var sc=hourActionScore(profile,now,(i*2)%24)',
 ], 'hourly trend uses intraday action score');
 assert.ok(
