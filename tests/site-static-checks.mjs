@@ -218,10 +218,42 @@ includesAll(index, [
   'function scoreToColor',
   'function checkinToEntry',
   'function mergeActualEntries',
+  'function getActualEntries',
+  'function getAnalysisEntries',
+  'function filterEntriesByRange',
+  'function setStatsRange',
+  'function updateStatsHeader',
   'function renderDailyStats',
+  'renderColorStats(filtered)',
   'renderDailyStats();renderReport();renderAccount();',
   "if(typeof renderDailyStats==='function')renderDailyStats();",
 ], 'daily checkins refresh stats charts');
+
+includesAll(index, [
+  'id="stats-range-controls"',
+  'data-range="7"',
+  'data-range="30"',
+  'data-range="365"',
+  'data-range="all"',
+  'data-range="custom"',
+  'id="stats-start"',
+  'id="stats-end"',
+  'data-stats-action="apply-custom"',
+  '个人真实历史',
+  '持续累积更多真实记录',
+], 'daily stats range controls');
+
+includesAll(index, [
+  'data-history-action="open"',
+  'id="history-modal"',
+  'id="history-calendar"',
+  'function renderHistoryPanel',
+  'function renderMonthCalendar',
+  'function openHistoryModal',
+  'function closeHistoryModal',
+  '查看全部历史',
+  '按月份查看全部累计记录',
+], 'full history modal');
 
 assert.ok(existsSync(supabaseSchemaPath), 'supabase/schema.sql should exist');
 

@@ -330,6 +330,15 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 .stats-h .meta-info{font-size:12px;color:var(--text-3);font-family:var(--font-mono)}
 .stats-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:20px}
 @media (max-width:900px){.stats-grid{grid-template-columns:1fr}}
+.range-controls{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.range-controls button,.small-ghost{background:transparent;border:1px solid var(--border);color:var(--text-2);border-radius:6px;padding:6px 10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer}
+.range-controls button.active,.range-controls button:hover,.small-ghost:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,188,212,.08)}
+.custom-range{display:none;grid-template-columns:1fr auto 1fr auto;gap:8px;align-items:center;margin-bottom:12px}
+.custom-range.show{display:grid}
+.custom-range input{width:100%;min-width:0;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:11px;font-family:var(--font-mono);color-scheme:dark}
+.custom-range span{font-size:11px;color:var(--text-3)}
+.custom-range button{background:var(--accent);color:var(--bg);border:none;border-radius:6px;padding:8px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer}
+@media(max-width:640px){.custom-range{grid-template-columns:1fr}.custom-range span{display:none}}
 .color-row{display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
 .color-row:last-child{border-bottom:none}
 .color-chip{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--bg)}
@@ -367,6 +376,7 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 .hm-cell.orange{background:rgba(255,138,101,.6)}
 .hm-cell.red{background:rgba(239,83,80,.6)}
 .hm-cell .hm-date{position:absolute;top:5px;left:6px;font-family:var(--font-mono);font-size:10px;font-weight:700;line-height:1;color:rgba(255,255,255,.72)}
+.hm-cell.empty .hm-date{color:var(--text-3)}
 .hm-cell .hm-mark{font-size:18px;font-weight:800;line-height:1;color:rgba(255,255,255,.95)}
 .hm-cell.flat .hm-mark{color:rgba(255,255,255,.78)}
 .hm-cell.notrade .hm-mark{font-size:20px;color:rgba(255,255,255,.55)}
@@ -374,6 +384,32 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 .hm-legend .item{display:flex;align-items:center;gap:4px}
 .hm-legend .dot{width:12px;height:12px;border-radius:3px}
 .weekday-row{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;font-size:10px;color:var(--text-3);text-align:center;font-family:var(--font-mono)}
+.history-modal{position:fixed;inset:0;z-index:220;display:none;align-items:center;justify-content:center;background:rgba(14,17,23,.82);backdrop-filter:blur(6px);padding:24px}
+.history-modal.open{display:flex}
+.history-panel{width:min(980px,100%);max-height:min(820px,92vh);overflow:auto;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:22px;box-shadow:0 24px 80px rgba(0,0,0,.45)}
+.history-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px}
+.history-head h3{font-family:var(--font-cn);font-size:20px;font-weight:700;margin-bottom:4px}
+.history-sub{font-size:12px;color:var(--text-3);line-height:1.6}
+.history-close{background:var(--bg-input);border:1px solid var(--border);color:var(--text);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:20px;line-height:1}
+.history-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0 18px}
+.history-metric{border:1px solid var(--border);border-radius:8px;padding:10px;background:rgba(148,163,184,.04)}
+.history-metric .k{font-size:11px;color:var(--text-3)}
+.history-metric .v{font-family:var(--font-mono);font-size:18px;font-weight:700;margin-top:3px}
+.history-calendar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.history-month{border:1px solid var(--border);border-radius:10px;padding:12px;background:rgba(14,17,23,.35)}
+.history-month h4{font-size:13px;margin-bottom:10px;color:var(--text)}
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.month-grid .w{font-size:9px;color:var(--text-3);text-align:center;padding-bottom:3px}
+.hist-cell{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-family:var(--font-mono);color:rgba(255,255,255,.86);background:var(--bg-input);position:relative}
+.hist-cell.empty{background:transparent}
+.hist-cell.green-l{background:rgba(77,208,225,.6)}
+.hist-cell.green{background:rgba(38,166,154,.6)}
+.hist-cell.yellow{background:rgba(247,183,49,.62)}
+.hist-cell.orange{background:rgba(255,138,101,.62)}
+.hist-cell.red{background:rgba(239,83,80,.62)}
+.hist-cell .m{position:absolute;right:3px;bottom:1px;font-size:9px;font-weight:800}
+.history-empty{border:1px dashed var(--border);border-radius:10px;padding:24px;color:var(--text-2);font-size:13px;line-height:1.7;text-align:center}
+@media(max-width:760px){.history-modal{padding:10px}.history-panel{padding:16px}.history-summary,.history-calendar{grid-template-columns:1fr}}
 .insight-card{background:linear-gradient(135deg,rgba(0,188,212,.06),rgba(38,166,154,.03));border:1px solid rgba(0,188,212,.2);border-radius:12px;padding:20px}
 .insight-h{display:flex;align-items:center;gap:8px;margin-bottom:16px}
 .insight-h .icon{font-size:18px}
@@ -677,11 +713,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 </div>
 
 <div class="stats-section" id="stats-section">
-<div class="stats-h"><h2>示例数据</h2><div class="meta-info">示例 N=42 · 个人真实记录请看月报</div></div>
+<div class="stats-h"><h2 id="stats-title">示例数据</h2><div class="meta-info" id="stats-meta">示例 N=42 · 个人真实记录请看月报</div></div>
 <div class="stats-grid">
-<div class="card"><div class="card-h"><div class="card-t">按命理颜色分组</div><div class="card-sub">胜率 · 样本数 · 置信区间</div></div><div id="color-stats"></div><div id="color-stats-note" class="stats-note"><strong>右侧大百分比=胜率</strong>，表示该颜色命理状态下已记录交易的赚钱占比；<strong>N=样本数</strong>；下面小字为 <strong>95%置信区间</strong>，样本少时只作参考。</div><div id="color-meaning" class="state-legend" aria-label="命理状态颜色说明"></div></div>
+<div class="card"><div class="card-h"><div class="card-t">按命理颜色分组</div><div class="card-sub">胜率 · 样本数 · 置信区间</div></div><div class="range-controls" id="stats-range-controls" aria-label="统计范围"><button type="button" class="active" data-range="30">近 1 月</button><button type="button" data-range="7">近 7 天</button><button type="button" data-range="365">近 1 年</button><button type="button" data-range="all">全部</button><button type="button" data-range="custom">自定义</button></div><div class="custom-range" id="stats-custom-range"><input id="stats-start" type="date" aria-label="统计开始日期"><span>至</span><input id="stats-end" type="date" aria-label="统计结束日期"><button type="button" data-stats-action="apply-custom">应用</button></div><div id="color-stats"></div><div id="color-stats-note" class="stats-note"><strong>右侧大百分比=胜率</strong>，表示该颜色命理状态下已记录交易的赚钱占比；<strong>N=样本数</strong>；下面小字为 <strong>95%置信区间</strong>，样本少时只作参考。</div><div id="color-meaning" class="state-legend" aria-label="命理状态颜色说明"></div></div>
 <div class="card">
-<div class="card-h"><div class="card-t">近 30 天日历</div><div class="card-sub">颜色=命理状态 · 标记=交易结果</div></div>
+<div class="card-h"><div><div class="card-t">近 30 天日历</div><div class="card-sub">颜色=命理状态 · 标记=交易结果</div></div><button class="small-ghost" type="button" data-history-action="open">查看全部历史</button></div>
 <div class="weekday-row"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
 <div class="heatmap" id="heatmap"></div>
 <div class="hm-legend">
@@ -690,9 +726,19 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   <div class="item"><span class="dot" style="background:rgba(247,183,49,.6);"></span>黄=中性</div>
   <div class="item"><span class="dot" style="background:rgba(255,138,101,.6);"></span>橙=谨慎</div>
   <div class="item"><span class="dot" style="background:rgba(239,83,80,.6);"></span>红=高风险</div>
-  <div class="item">✓赚 ✗亏 —平 ·未交易</div>
+  <div class="item">✓赚 ✗亏 —平 ·未交易 空白=无记录</div>
 </div>
 </div>
+</div>
+</div>
+
+<div class="history-modal" id="history-modal" aria-hidden="true">
+<div class="history-panel" role="dialog" aria-modal="true" aria-labelledby="history-title">
+<div class="history-head"><div><h3 id="history-title">全部历史记录</h3><div class="history-sub">按月份查看全部累计记录。主页面保留近 30 天，完整历史在这里筛选回看。</div></div><button class="history-close" type="button" data-history-action="close" aria-label="关闭历史面板">×</button></div>
+<div class="range-controls" id="history-range-controls" aria-label="历史范围"><button type="button" data-history-range="30">近 1 月</button><button type="button" data-history-range="365">近 1 年</button><button type="button" class="active" data-history-range="all">全部</button><button type="button" data-history-range="custom">自定义</button></div>
+<div class="custom-range" id="history-custom-range"><input id="history-start" type="date" aria-label="历史开始日期"><span>至</span><input id="history-end" type="date" aria-label="历史结束日期"><button type="button" data-history-action="apply-custom">应用</button></div>
+<div class="history-summary" id="history-summary"></div>
+<div class="history-calendar" id="history-calendar"></div>
 </div>
 </div>
 
@@ -864,19 +910,41 @@ function parseYmdDate(value){const key=normalizeDateKey(value);if(!key)return nu
 function scoreToColor(score,label){const n=Number(score);if(Number.isFinite(n)){if(n>=70)return'green-l';if(n>=60)return'green';if(n>=50)return'yellow';if(n>=40)return'orange';return'red';}if(/顺势/.test(label||''))return'green';if(/谨慎/.test(label||''))return'orange';return'yellow';}
 function checkinToEntry(item){const d=parseYmdDate(item&&item.date);if(!d)return null;return{date:d,color:scoreToColor(item.score,item.label),outcome:item.outcome||'notrade',mag:item.mag||null,source:'real',label:item.label||null,score:item.score||null,day:item.day||null};}
 function mergeActualEntries(sample,items){const byDate=new Map();sample.forEach(e=>byDate.set(dateKey(e.date),Object.assign({source:'sample'},e)));(items||[]).map(checkinToEntry).filter(Boolean).forEach(e=>byDate.set(dateKey(e.date),e));return Array.from(byDate.values()).sort((a,b)=>a.date-b.date);}
+function sampleEntries(){return SAMPLE_ENTRIES.map(e=>Object.assign({source:'sample'},e)).sort((a,b)=>a.date-b.date);}
+function getActualEntries(){return loadCheckins().map(checkinToEntry).filter(Boolean).sort((a,b)=>a.date-b.date);}
+function getAnalysisEntries(){const actual=getActualEntries();return actual.length?actual:sampleEntries();}
+function addDays(date,days){const d=new Date(date);d.setDate(d.getDate()+days);d.setHours(0,0,0,0);return d;}
+function rangeAnchor(entries){return entries.length?entries[entries.length-1].date:new Date();}
+let statsRange={type:'30',start:null,end:null};
+let historyRange={type:'all',start:null,end:null};
+function filterEntriesByRange(entries,range){const r=range||statsRange;if(!entries.length||r.type==='all')return entries.slice();let start=null,end=null;if(r.type==='custom'){start=parseYmdDate(r.start);end=parseYmdDate(r.end);}else{const days=parseInt(r.type,10);end=rangeAnchor(entries);start=addDays(end,-days+1);}if(start)start.setHours(0,0,0,0);if(end)end.setHours(23,59,59,999);return entries.filter(e=>(!start||e.date>=start)&&(!end||e.date<=end));}
+function getRangeLabel(range){const r=range||statsRange;if(r.type==='7')return'近 7 天';if(r.type==='30')return'近 1 月';if(r.type==='365')return'近 1 年';if(r.type==='custom')return(r.start&&r.end)?`${r.start} 至 ${r.end}`:'自定义日期段';return'全部历史';}
+function tradedCount(entries){return entries.filter(e=>e.outcome==='win'||e.outcome==='loss'||e.outcome==='flat').length;}
+function syncRangeButtons(){document.querySelectorAll('#stats-range-controls [data-range]').forEach(b=>b.classList.toggle('active',b.dataset.range===statsRange.type));const cr=document.getElementById('stats-custom-range');if(cr)cr.classList.toggle('show',statsRange.type==='custom');document.querySelectorAll('#history-range-controls [data-history-range]').forEach(b=>b.classList.toggle('active',b.dataset.historyRange===historyRange.type));const hr=document.getElementById('history-custom-range');if(hr)hr.classList.toggle('show',historyRange.type==='custom');}
+function setStatsRange(type){statsRange={type:type,start:statsRange.start,end:statsRange.end};syncRangeButtons();renderDailyStats();}
+function applyStatsCustomRange(){statsRange={type:'custom',start:document.getElementById('stats-start')?.value||null,end:document.getElementById('stats-end')?.value||null};syncRangeButtons();renderDailyStats();}
+function updateStatsHeader(allEntries,filtered,usingSample){const title=document.getElementById('stats-title'),meta=document.getElementById('stats-meta');if(title)title.textContent=usingSample?'示例数据':'个人真实历史';if(meta){const sample=usingSample?'示例数据 · 仅演示':'个人真实记录';const range=getRangeLabel(statsRange);const n=tradedCount(filtered);const total=filtered.length;meta.textContent=usingSample?`${sample} · ${range} · 真实记录不足，持续累积更多真实记录`:`${sample} · ${range} · 交易样本 N=${n} · 总记录 ${total}`;}}
 function formatHeatmapDate(date){return `${date.getMonth()+1}/${date.getDate()}`;}
 function outcomeMark(outcome){return outcome==='win'?'✓':outcome==='loss'?'✗':outcome==='flat'?'—':'·';}
 
-function renderHeatmap(entries){const last30=entries.slice(-30);const firstDay=last30.length>0?new Date(last30[0].date):new Date(2026,5,27);const sw=firstDay.getDay();let cells=[];for(let i=0;i<sw;i++)cells.push('<div class="hm-cell empty"></div>');last30.forEach(e=>{const d=new Date(e.date);const colorText=`${COLOR_NAMES[e.color]}=${COLOR_MEANING[e.color]}`;const source=e.source==='real'?' · 真实记录':'';cells.push(`<div class="hm-cell ${e.color} ${e.outcome}" title="${d.toLocaleDateString('zh-CN')} · ${colorText}${source}"><span class="hm-date">${formatHeatmapDate(d)}</span><span class="hm-mark">${outcomeMark(e.outcome)}</span></div>`);});const st=window.__todayState||{},todayKey=normalizeDateKey(st.compactDate)||dateKey(new Date()),todayDate=parseYmdDate(todayKey)||new Date();if(!last30.some(e=>dateKey(e.date)===todayKey)){const todayColor=scoreToColor(st.score,st.label);cells.push(`<div class="hm-cell ${todayColor} notrade" style="outline:2px solid #00BCD4;outline-offset:2px;" title="${todayDate.toLocaleDateString('zh-CN')} · 今天 · ${COLOR_NAMES[todayColor]}=${COLOR_MEANING[todayColor]}"><span class="hm-date">${formatHeatmapDate(todayDate)}</span><span class="hm-mark">·</span></div>`);}const hm=document.getElementById('heatmap');if(hm)hm.innerHTML=cells.join('');}
+function renderHeatmap(entries){const hasReal=entries.some(e=>e.source==='real');const anchor=hasReal?(parseYmdDate(currentCheckinKey())||rangeAnchor(entries)):rangeAnchor(entries);const start=addDays(anchor,-29);const byDate=new Map(entries.map(e=>[dateKey(e.date),e]));let cells=[];for(let i=0;i<start.getDay();i++)cells.push('<div class="hm-cell empty"></div>');for(let i=0;i<30;i++){const d=addDays(start,i),key=dateKey(d),e=byDate.get(key);if(e){const colorText=`${COLOR_NAMES[e.color]}=${COLOR_MEANING[e.color]}`;const source=e.source==='real'?' · 真实记录':'';cells.push(`<div class="hm-cell ${e.color} ${e.outcome}" title="${d.toLocaleDateString('zh-CN')} · ${colorText}${source}"><span class="hm-date">${formatHeatmapDate(d)}</span><span class="hm-mark">${outcomeMark(e.outcome)}</span></div>`);}else{cells.push(`<div class="hm-cell empty" title="${d.toLocaleDateString('zh-CN')} · 无记录"><span class="hm-date">${formatHeatmapDate(d)}</span></div>`);}}const hm=document.getElementById('heatmap');if(hm)hm.innerHTML=cells.join('');}
 
-function renderInsights(entries){const traded=entries.filter(e=>e.outcome==='win'||e.outcome==='loss'||e.outcome==='flat');const n=traded.length;const il=document.getElementById('insights-list');if(!il)return;if(n<10){il.innerHTML=`<div class="insight-item"><div class="title">📊 数据累积中</div><div class="desc">已记录 ${n} 次交易, 还需要约 ${20-n} 天的数据才能开始显示初步胜率分组。</div></div>`;return;}const cs=COLORS.map(c=>{const g=traded.filter(e=>e.color===c);const w=g.filter(e=>e.outcome==='win').length;return{color:c,n:g.length,rate:g.length>0?w/g.length:null};}).filter(s=>s.n>=3);cs.sort((a,b)=>b.rate-a.rate);const best=cs[0];const worst=cs[cs.length-1];const nt=entries.filter(e=>e.outcome==='notrade'&&(e.color==='red'||e.color==='orange')).length;il.innerHTML=`<div class="insight-item"><div class="title">🟢 你最强的状态: <span class="pos">${COLOR_NAMES[best.color]}日</span></div><div class="desc">在 <span class="stat">${COLOR_NAMES[best.color]}日</span> 你交易 <span class="stat">${best.n}</span> 次, 胜率 <span class="stat" style="color:var(--green);">${(best.rate*100).toFixed(0)}%</span>。${best.n>=10?'这是有统计意义的差异。':'样本还偏少, 继续累积。'}</div></div><div class="insight-item"><div class="title">🔴 你最弱的状态: <span class="neg">${COLOR_NAMES[worst.color]}日</span></div><div class="desc">在 <span class="stat">${COLOR_NAMES[worst.color]}日</span> 你交易 <span class="stat">${worst.n}</span> 次, 胜率仅 <span class="stat" style="color:var(--red);">${(worst.rate*100).toFixed(0)}%</span>。建议: 这种命理状态下避免重仓。</div></div>${nt>=3?`<div class="insight-item"><div class="title">🛡 你避开了 <span class="num">${nt}</span> 次红/橙日交易</div><div class="desc">这些日子如果交易, 同类用户平均亏 <span class="stat" style="color:var(--red);">-1.5%</span>。</div></div>`:''}<div class="insight-item"><div class="title">📈 如果只在喜用日交易…</div><div class="desc">回测显示: 如果完全跳过红/橙日, 你的累计收益会从 <span class="stat" style="color:var(--green);">+5.2%</span> 升到 <span class="stat" style="color:var(--green);">+9.7%</span>。</div></div>`;}
+function renderInsights(entries){const traded=entries.filter(e=>e.outcome==='win'||e.outcome==='loss'||e.outcome==='flat');const n=traded.length;const il=document.getElementById('insights-list');if(!il)return;if(n<10){il.innerHTML=`<div class="insight-item"><div class="title">📊 数据累积中</div><div class="desc">当前范围已记录 ${n} 次交易。必须持续累积更多真实记录，至少 20 条后才适合看颜色胜率分组。</div></div>`;return;}const cs=COLORS.map(c=>{const g=traded.filter(e=>e.color===c);const w=g.filter(e=>e.outcome==='win').length;return{color:c,n:g.length,rate:g.length>0?w/g.length:null};}).filter(s=>s.n>=3);if(!cs.length){il.innerHTML='<div class="insight-item"><div class="title">📊 样本分布还不够</div><div class="desc">总交易数已经开始累积，但单个颜色组还没有达到 N=3。继续记录后，系统会自动找出强弱状态。</div></div>';return;}cs.sort((a,b)=>b.rate-a.rate);const best=cs[0];const worst=cs[cs.length-1];const nt=entries.filter(e=>e.outcome==='notrade'&&(e.color==='red'||e.color==='orange')).length;il.innerHTML=`<div class="insight-item"><div class="title">🟢 你最强的状态: <span class="pos">${COLOR_NAMES[best.color]}日</span></div><div class="desc">在 <span class="stat">${COLOR_NAMES[best.color]}日</span> 你交易 <span class="stat">${best.n}</span> 次, 胜率 <span class="stat" style="color:var(--green);">${(best.rate*100).toFixed(0)}%</span>。${best.n>=10?'这是有统计意义的差异。':'样本还偏少, 继续累积。'}</div></div><div class="insight-item"><div class="title">🔴 你最弱的状态: <span class="neg">${COLOR_NAMES[worst.color]}日</span></div><div class="desc">在 <span class="stat">${COLOR_NAMES[worst.color]}日</span> 你交易 <span class="stat">${worst.n}</span> 次, 胜率仅 <span class="stat" style="color:var(--red);">${(worst.rate*100).toFixed(0)}%</span>。建议: 这种命理状态下避免重仓。</div></div>${nt>=3?`<div class="insight-item"><div class="title">🛡 你避开了 <span class="num">${nt}</span> 次红/橙日交易</div><div class="desc">这些日子如果交易, 同类用户平均亏 <span class="stat" style="color:var(--red);">-1.5%</span>。</div></div>`:''}<div class="insight-item"><div class="title">📈 如果只在喜用日交易…</div><div class="desc">持续记录越多，这里的个人模式会越接近你的真实交易节奏。</div></div>`;}
 
 const SAMPLE_ENTRIES=genEntries(42);
 const CHECKINS='madeshed_checkins_v1';
 function loadCheckins(){try{return JSON.parse(localStorage.getItem(CHECKINS)||'[]');}catch(e){return[];}}
 function saveCheckins(items){try{localStorage.setItem(CHECKINS,JSON.stringify(items));}catch(e){}}
-function renderDailyStats(){const entries=mergeActualEntries(SAMPLE_ENTRIES,loadCheckins());window.__dailyEntries=entries;renderColorStats(entries);renderColorMeaning();renderHeatmap(entries);renderInsights(entries);}
+function renderDailyStats(){const actual=getActualEntries();const usingSample=!actual.length;const entries=getAnalysisEntries();const filtered=filterEntriesByRange(entries,statsRange);window.__dailyEntries=entries;window.__dailyFilteredEntries=filtered;updateStatsHeader(entries,filtered,usingSample);syncRangeButtons();renderColorStats(filtered);renderColorMeaning();renderHeatmap(entries);renderInsights(filtered);if(document.getElementById('history-modal')?.classList.contains('open'))renderHistoryPanel();}
 renderDailyStats();
+function monthKey(date){return `${date.getFullYear()}-${pad2(date.getMonth()+1)}`;}
+function monthTitle(key){const p=key.split('-');return `${p[0]} 年 ${parseInt(p[1],10)} 月`;}
+function renderMonthCalendar(key,entries){const p=key.split('-'),y=+p[0],m=+p[1];const byDay=new Map(entries.map(e=>[e.date.getDate(),e]));const first=new Date(y,m-1,1),days=new Date(y,m,0).getDate();let html='<div class="history-month"><h4>'+monthTitle(key)+'</h4><div class="month-grid"><div class="w">日</div><div class="w">一</div><div class="w">二</div><div class="w">三</div><div class="w">四</div><div class="w">五</div><div class="w">六</div>';for(let i=0;i<first.getDay();i++)html+='<div class="hist-cell empty"></div>';for(let d=1;d<=days;d++){const e=byDay.get(d);html+=e?`<div class="hist-cell ${e.color}" title="${dateKey(e.date)} · ${COLOR_NAMES[e.color]}=${COLOR_MEANING[e.color]} · ${e.outcome}"><span>${d}</span><span class="m">${outcomeMark(e.outcome)}</span></div>`:`<div class="hist-cell"><span>${d}</span></div>`;}html+='</div></div>';return html;}
+function renderHistoryPanel(){const box=document.getElementById('history-calendar'),sum=document.getElementById('history-summary');if(!box)return;const actual=getActualEntries();const filtered=filterEntriesByRange(actual,historyRange);syncRangeButtons();const traded=filtered.filter(e=>e.outcome==='win'||e.outcome==='loss'||e.outcome==='flat'),wins=traded.filter(e=>e.outcome==='win').length,rate=traded.length?Math.round(wins/traded.length*100)+'%':'—';if(sum)sum.innerHTML='<div class="history-metric"><div class="k">日期范围</div><div class="v">'+getRangeLabel(historyRange)+'</div></div><div class="history-metric"><div class="k">累计记录</div><div class="v">'+filtered.length+'</div></div><div class="history-metric"><div class="k">胜率</div><div class="v">'+rate+'</div></div>';if(!actual.length){box.innerHTML='<div class="history-empty">还没有真实历史记录。必须不断累积更多数据，系统才会逐步分析你的个人胜率、颜色状态和交易节奏。</div>';return;}if(!filtered.length){box.innerHTML='<div class="history-empty">这个日期段没有记录。可以切换到全部历史，或继续每天收盘后记录一次。</div>';return;}const months=[...new Set(filtered.map(e=>monthKey(e.date)))].sort().reverse();box.innerHTML=months.map(k=>renderMonthCalendar(k,filtered.filter(e=>monthKey(e.date)===k))).join('');}
+function openHistoryModal(){const modal=document.getElementById('history-modal');if(!modal)return;modal.classList.add('open');modal.setAttribute('aria-hidden','false');renderHistoryPanel();}
+function closeHistoryModal(){const modal=document.getElementById('history-modal');if(!modal)return;modal.classList.remove('open');modal.setAttribute('aria-hidden','true');}
+function setHistoryRange(type){historyRange={type:type,start:historyRange.start,end:historyRange.end};syncRangeButtons();renderHistoryPanel();}
+function applyHistoryCustomRange(){historyRange={type:'custom',start:document.getElementById('history-start')?.value||null,end:document.getElementById('history-end')?.value||null};syncRangeButtons();renderHistoryPanel();}
 function currentCheckinKey(){const st=window.__todayState||{};return normalizeDateKey(st.compactDate)||dateKey(new Date());}
 function checkinFormHtml(){return '<div class="checkin-h"><div class="checkin-t">今日记录 · CHECK-IN</div><div class="checkin-time">10 秒搞定</div></div><div class="checkin-prompt">今天的交易结果?</div><div class="outcomes"><button class="outcome-btn" data-outcome="big_win"><span class="emoji">📈</span>大赚</button><button class="outcome-btn" data-outcome="win"><span class="emoji">🟢</span>赚</button><button class="outcome-btn" data-outcome="flat"><span class="emoji">⚪</span>平</button><button class="outcome-btn" data-outcome="loss"><span class="emoji">🔴</span>亏</button><button class="outcome-btn" data-outcome="big_loss"><span class="emoji">📉</span>大亏</button><button class="outcome-btn" data-outcome="notrade"><span class="emoji">🚫</span>没交易</button></div><div class="magnitude-row" id="checkin-detail"><div class="magnitude-label">盈亏金额 / 百分比（可选）</div><div class="checkin-detail-grid"><input id="checkin-pnl" class="checkin-pnl" type="text" inputmode="decimal" placeholder="例如 +320、-1.8%、+$120"><button class="mag-btn" type="button" data-checkin-action="save">保存今日记录</button><button class="mag-btn" type="button" data-checkin-action="cancel">取消</button></div><div class="checkin-help">先选择今天结果，再填实际盈亏；不填也可以只保存赚/亏/平。</div></div>';}
 function normalizeCheckin(raw){const OC={big_win:['win','大赚'],win:['win',null],flat:['flat',null],loss:['loss',null],big_loss:['loss','大亏'],notrade:['notrade',null]};return OC[raw]||[raw,null];}
@@ -893,6 +961,8 @@ function renderAccount(){const prof=document.getElementById('account-profile'),s
 
 bindCheckinForm();
 document.addEventListener('click',function(e){const outcome=e.target.closest('#checkin-card .outcome-btn');if(outcome){e.preventDefault();selectCheckinOutcome(outcome.dataset.outcome,null);return;}const save=e.target.closest('#checkin-card [data-checkin-action="save"]');if(save){e.preventDefault();const card=document.getElementById('checkin-card'),raw=card&&card.dataset.pendingOutcome;if(!raw){alert('请先选择今天的交易结果');return;}const n=normalizeCheckin(raw),input=card.querySelector('#checkin-pnl');recordCheckin(n[0],buildMagnitude(raw,input&&input.value));return;}const cancel=e.target.closest('#checkin-card [data-checkin-action="cancel"]');if(cancel){e.preventDefault();const item=loadCheckins().find(x=>x.date===currentCheckinKey());if(item)showRecordedSummary(item.outcome,item.mag);else renderCheckinForm();return;}const edit=e.target.closest('.edit-link');if(edit&&edit.closest('#checkin-card')){e.preventDefault();const item=loadCheckins().find(x=>x.date===currentCheckinKey());renderCheckinForm(item);}});
+document.addEventListener('click',function(e){const sr=e.target.closest('#stats-range-controls [data-range]');if(sr){e.preventDefault();setStatsRange(sr.dataset.range);return;}const sa=e.target.closest('[data-stats-action="apply-custom"]');if(sa){e.preventDefault();applyStatsCustomRange();return;}const open=e.target.closest('[data-history-action="open"]');if(open){e.preventDefault();openHistoryModal();return;}const close=e.target.closest('[data-history-action="close"]');if(close){e.preventDefault();closeHistoryModal();return;}if(e.target&&e.target.id==='history-modal'){closeHistoryModal();return;}const hr=e.target.closest('#history-range-controls [data-history-range]');if(hr){e.preventDefault();setHistoryRange(hr.dataset.historyRange);return;}const ha=e.target.closest('[data-history-action="apply-custom"]');if(ha){e.preventDefault();applyHistoryCustomRange();}});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeHistoryModal();});
 
 function showRecordedSummary(o,m){const card=document.getElementById('checkin-card');if(!card)return;card.classList.add('recorded');const labels={win:'赚',loss:'亏',flat:'平',notrade:'未交易'};const icons={win:'🟢',loss:'🔴',flat:'⚪',notrade:'🚫'};const cls=o==='win'?'win':o==='loss'?'loss':'';const st=window.__todayState||{};const meta=(st.compactDate||'今天')+' · '+(st.label||'今日')+'日';card.innerHTML=`<div class="checkin-h"><div class="checkin-t">今日已记录 · DONE</div><div class="checkin-time">刚刚 · 2 秒</div></div><div class="recorded-summary"><div class="left"><div class="icon">${icons[o]}</div><div class="info"><div class="label">${meta}</div><div class="value ${cls}">${labels[o]}${m?' · '+m:''}</div></div></div><button class="edit-link" type="button">修改</button></div>`;}
 </script>
