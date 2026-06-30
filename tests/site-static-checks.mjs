@@ -267,7 +267,9 @@ includesAll(index, [
   'id="trend-title"',
   'id="trend-scroll"',
   'function trendGzForDate(dt)',
-  'function trendCompositeScore(profile,dt)',
+  'function foundationRead(profile,today)',
+  'function actionRead(profile,today,dr,foundation)',
+  'function trendActionScore(profile,dt)',
   'function daysInMonth(year,month)',
   'function buildMonthTrend(profile,now)',
   'function buildDayTrend(profile,now)',
@@ -280,11 +282,12 @@ includesAll(index, [
 ], 'trend month day hour scroll modes');
 
 includesAll(index, [
-  "data.push(trendCompositeScore(profile,dt))",
-  "title:y+'年'+m+'月 每日综合走势 · DAILY TREND'",
-  "mark:now.getDate()+'号 今日总分'",
-  'Math.round(layerScore(dyGz)*0.2+layerScore(gz.year)*0.25+layerScore(gz.month)*0.25+layerScore(gz.day)*0.3)',
-], 'daily trend uses composite score');
+  "data.push(trendActionScore(profile,dt))",
+  "title:y+'年'+m+'月 每日行动指数 · DAILY ACTION TREND'",
+  "mark:now.getDate()+'号 行动指数'",
+  '60+(dr.zScore-60)*0.75+(dr.cScore-55)*0.35+(foundation.score-60)*0.25-riskPenalty',
+  'if(foundation.score<=45)cap=64;else if(foundation.score<=55)cap=72;else if(foundation.score<=66)cap=84;else cap=92;',
+], 'daily trend uses action score');
 assert.ok(
   !index.includes("function buildDayTrend(profile,now){var y=now.getFullYear(),m=now.getMonth()+1,days=daysInMonth(y,m),labels=[],subs=[],data=[];for(var d=1;d<=days;d++){var dt=new Date(y,m-1,d),gz=gzDayD(dt);labels.push(d+'号');subs.push(gz);data.push(chartScore(profile,gz));}"),
   'daily trend should not use flow-day single score',
@@ -301,11 +304,23 @@ assert.ok(
 );
 includesAll(index, [
   '综合年月日 <b style="color:var(--accent)">',
+  '今日行动指数',
   '<span class="k">综合年月日</span>',
-  '/综合年月日|综合运/',
-  'if(sn)sn.textContent=z',
-  "if(sl)sl.textContent=zl+' · 财运 '+(drT?drT.cScore:'')",
-], 'dashboard composite score rendering');
+  '<span class="k">流日触发</span>',
+  '<span class="k">风险扣分</span>',
+  'if(sn)sn.textContent=action.score',
+  "if(sl)sl.textContent=action.label+' · 财运 '+(drT?drT.cScore:'')+' · 底盘 '+foundation.score",
+], 'dashboard action score rendering');
+
+includesAll(index, [
+  '今日行动指数 · TODAY',
+  'window.__todayState={dateText,compactDate,day:today.day,label:action.label,score:action.score',
+  "document.querySelectorAll('.m-score-label').forEach(el=>{el.textContent='今日行动指数';});",
+  "document.querySelectorAll('.score-n').forEach(el=>{el.textContent=action.score;});",
+  "document.querySelectorAll('.score-l').forEach(el=>{el.textContent=action.label+' · 财运 '+dr.cScore+' · 底盘 '+action.foundation.score;});",
+  "html+='<div style=\"flex:1 1 0;min-width:72px;",
+  "行动 '+a.score",
+], 'connected action score surfaces');
 
 includesAll(index, [
   '.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:20px;margin-bottom:20px}',
