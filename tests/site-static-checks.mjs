@@ -119,6 +119,7 @@ includesAll(index, [
   '.m-score-num',
   '.today-score',
   'window.MadeshedBazi.calcBaziCore',
+  'flex:1 1 0;min-width:72px',
 ], 'shared user profile rendering');
 
 includesAll(baziEngine, [
