@@ -202,9 +202,13 @@ includesAll(index, [
 
 includesAll(index, [
   'id="color-meaning"',
+  'id="color-stats-note"',
   'function renderColorMeaning',
   'COLOR_MEANING_DESC',
   '命理状态',
+  '右侧大百分比=胜率',
+  'N=样本数',
+  '95%置信区间',
   '适合按计划推进',
 ], 'color meaning explainer');
 
