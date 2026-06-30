@@ -277,6 +277,23 @@ includesAll(index, [
   "svg.setAttribute('viewBox','0 0 '+width+' 280')",
 ], 'trend month day hour scroll modes');
 
+assert.equal(
+  countMatches(index, /if\(dr\)updateTodaySurfaces\(profile,today,dr\);/g),
+  1,
+  'dashboard should not overwrite composite today score after renderLuck',
+);
+assert.ok(
+  !/renderLuck\(profile,today\);[\s\S]{0,220}if\(dr\)updateTodaySurfaces\(profile,today,dr\);/.test(index),
+  'renderLuck composite score should remain the final dashboard score',
+);
+includesAll(index, [
+  '综合年月日 <b style="color:var(--accent)">',
+  '<span class="k">综合年月日</span>',
+  '/综合年月日|综合运/',
+  'if(sn)sn.textContent=z',
+  "if(sl)sl.textContent=zl+' · 财运 '+(drT?drT.cScore:'')",
+], 'dashboard composite score rendering');
+
 includesAll(index, [
   '.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:20px;margin-bottom:20px}',
   '.card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;min-width:0}',
