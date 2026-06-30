@@ -88,4 +88,27 @@ includesAll(chart, [
   '.inbar{display:grid;grid-template-columns:1fr;align-items:stretch}',
 ], 'chart trust and accessibility copy');
 
+includesAll(chart, [
+  'class="site-nav"',
+  'aria-label="返回主仪表盘"',
+  'href="/#/dashboard"',
+  'href="/#/daily"',
+  'href="/#/"',
+], 'chart navigation');
+
+includesAll(chart, [
+  'function applySavedProfile()',
+  "localStorage.getItem('madeshed_profile_v1')",
+  'p.birth',
+  "p.gender==='M'?'1':'0'",
+], 'chart saved profile integration');
+
+includesAll(index, [
+  "document.querySelectorAll('.pillars,.result-pillars,.m-pillars')",
+  'function updateTodaySurfaces(profile,today,dr)',
+  'window.__todayState',
+  '.m-score-num',
+  '.today-score',
+], 'shared user profile rendering');
+
 console.log('Static site checks passed');

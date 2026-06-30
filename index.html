@@ -749,7 +749,7 @@ const entries=genEntries(42);renderColorStats(entries);renderHeatmap(entries);re
 
 document.querySelectorAll('.outcome-btn').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.outcome-btn').forEach(function(x){x.classList.remove('selected');});b.classList.add('selected');var OC={big_win:['win','大赚'],win:['win',null],flat:['flat',null],loss:['loss',null],big_loss:['loss','大亏'],notrade:['notrade',null]};var o=OC[b.dataset.outcome]||[b.dataset.outcome,null];setTimeout(function(){showRecordedSummary(o[0],o[1]);},250);});});
 
-function showRecordedSummary(o,m){const card=document.getElementById('checkin-card');card.classList.add('recorded');const labels={win:'赚',loss:'亏',flat:'平',notrade:'未交易'};const icons={win:'🟢',loss:'🔴',flat:'⚪',notrade:'🚫'};const cls=o==='win'?'win':o==='loss'?'loss':'';card.innerHTML=`<div class="checkin-h"><div class="checkin-t">今日已记录 · DONE</div><div class="checkin-time">刚刚 · 2 秒</div></div><div class="recorded-summary"><div class="left"><div class="icon">${icons[o]}</div><div class="info"><div class="label">2026-06-27 · 浅绿日</div><div class="value ${cls}">${labels[o]}${m?' · '+m:''}</div></div></div><button class="edit-link">修改</button></div>`;}
+function showRecordedSummary(o,m){const card=document.getElementById('checkin-card');card.classList.add('recorded');const labels={win:'赚',loss:'亏',flat:'平',notrade:'未交易'};const icons={win:'🟢',loss:'🔴',flat:'⚪',notrade:'🚫'};const cls=o==='win'?'win':o==='loss'?'loss':'';const st=window.__todayState||{};const meta=(st.compactDate||'今天')+' · '+(st.label||'今日')+'日';card.innerHTML=`<div class="checkin-h"><div class="checkin-t">今日已记录 · DONE</div><div class="checkin-time">刚刚 · 2 秒</div></div><div class="recorded-summary"><div class="left"><div class="icon">${icons[o]}</div><div class="info"><div class="label">${meta}</div><div class="value ${cls}">${labels[o]}${m?' · '+m:''}</div></div></div><button class="edit-link">修改</button></div>`;}
 </script>
 <script>
 window.SUPA_URL='https://tkltasrbhjqwurybcyxo.supabase.co';
@@ -814,10 +814,41 @@ function getTodayGZ(){if(typeof Solar==='undefined')return null;const n=new Date
 function saveProfile(p){try{localStorage.setItem(STORAGE,JSON.stringify(p));}catch(e){}}
 function loadProfile(){try{return JSON.parse(localStorage.getItem(STORAGE)||'null');}catch(e){return null;}}
 function renderPillars(el,pillars){if(!el)return;let h='';pillars.forEach((p,i)=>{h+='<span class="p"><span>'+p.stem+'</span><span>'+p.branch+'</span></span>';if(i<3)h+='<span class="sep">·</span>';});el.innerHTML=h;}
+function updateTodaySurfaces(profile,today,dr){
+  if(!profile||!today||!dr)return;
+  const now=new Date(),W=['日','一','二','三','四','五','六'];
+  const pad=n=>String(n).padStart(2,'0');
+  const score=dr.zScore, position=score>=70?'80%':(score>=55?'50%':'20%');
+  const dateText=now.getFullYear()+' 年 '+(now.getMonth()+1)+' 月 '+now.getDate()+' 日 · 星期'+W[now.getDay()];
+  const compactDate=now.getFullYear()+'.'+pad(now.getMonth()+1)+'.'+pad(now.getDate());
+  window.__todayState={dateText,compactDate,day:today.day,label:dr.zLabel,score,position,role:dr.role,wealth:dr.cScore};
+  document.querySelectorAll('.m-score-num').forEach(el=>{el.textContent=score;});
+  document.querySelectorAll('.m-score-tag').forEach(el=>{el.textContent='仓位 '+position;});
+  document.querySelectorAll('.score-n').forEach(el=>{el.textContent=score;});
+  document.querySelectorAll('.score-l').forEach(el=>{el.textContent=dr.zLabel+' · 财运 '+dr.cScore;});
+  const strip=document.querySelector('.today-strip');
+  if(strip){
+    const k=strip.querySelector('.today-strip-left .k'),v=strip.querySelector('.today-strip-left .v'),n=strip.querySelector('.today-strip-right .num');
+    if(k)k.textContent='今日评分预览 ('+compactDate+')';
+    if(v)v.textContent=dr.zLabel+' · 财运 '+dr.cScore+' · 仓位 '+position;
+    if(n)n.textContent=score;
+  }
+  const dashTop=document.querySelectorAll('.dash-hero > .dash-meta .k');
+  if(dashTop[0])dashTop[0].textContent=compactDate;
+  if(dashTop[1])dashTop[1].textContent='星期'+W[now.getDay()];
+  const daily=document.querySelector('[data-view="daily"]');
+  if(daily){
+    const date=daily.querySelector('.today .date'),title=daily.querySelector('.today h1'),scoreEl=daily.querySelector('.today-score'),tag=daily.querySelector('.today-tag'),meta=daily.querySelector('.today-meta');
+    if(date)date.textContent=dateText;
+    if(title)title.textContent='今日: '+dr.zLabel+' · '+dr.role;
+    if(scoreEl)scoreEl.textContent=score;
+    if(tag)tag.textContent=dr.zLabel;
+    if(meta)meta.textContent='仓位 '+position+' · '+dr.advice;
+  }
+}
 function applyProfile(profile,today){
   if(!profile)return;
-  document.querySelectorAll('.pillars').forEach(el=>renderPillars(el,profile.pillars));
-  document.querySelectorAll('.result-pillars').forEach(el=>renderPillars(el,profile.pillars));
+  document.querySelectorAll('.pillars,.result-pillars,.m-pillars').forEach(el=>renderPillars(el,profile.pillars));
   const dm=document.querySelector('.dash-meta');
   if(dm){const vs=dm.querySelectorAll('.v');
     if(vs[0])vs[0].textContent=profile.dayStem+' · '+profile.dayElement;
@@ -836,7 +867,8 @@ function applyProfile(profile,today){
   if(dyList&&profile.daYun.length){const cells=dyList.querySelectorAll('.dy');cells.forEach((cell,i)=>{const dy=profile.daYun[i];if(!dy)return;const isC=i===profile.currentDayunIdx;cell.className='dy'+(isC?' current':'');cell.innerHTML='<div class="gz">'+dy.pillar+'</div><div class="age">'+dy.range+(isC?' ▲':'')+'</div>';});}
   if(today){
     const sd=document.querySelector('.score-d');
-    var dr=dailyRead(profile,today);var sn=document.querySelector('.score-n'),sl=document.querySelector('.score-l');if(dr&&sd){if(sn)sn.textContent=dr.zScore;if(sl)sl.textContent=dr.zLabel+' · 财运 '+dr.cScore;sd.innerHTML='<div class="row"><span class="k">流日干支</span><span class="v mono">'+today.day+' ('+dr.role+')</span></div><div class="row"><span class="k">综合运</span><span class="v">'+dr.zLabel+' '+dr.zScore+'</span></div><div class="row"><span class="k">财运</span><span class="v">'+dr.cLabel+' '+dr.cScore+'</span></div><div class="row"><span class="k">破财预警</span><span class="v">'+(dr.cWarn||'无')+'</span></div><div class="row"><span class="k">操作建议</span><span class="v">'+dr.advice+'</span></div>';}else if(sd){const rows=sd.querySelectorAll('.row');if(rows[0]){const v=rows[0].querySelector('.v');if(v)v.textContent=today.day;}}try{renderLuck(profile,today);window.__profile=profile;renderTrend('month');renderForecast(profile);fixLayout();}catch(e){}
+    var dr=dailyRead(profile,today);var sn=document.querySelector('.score-n'),sl=document.querySelector('.score-l');if(dr&&sd){if(sn)sn.textContent=dr.zScore;if(sl)sl.textContent=dr.zLabel+' · 财运 '+dr.cScore;sd.innerHTML='<div class="row"><span class="k">流日干支</span><span class="v mono">'+today.day+' ('+dr.role+')</span></div><div class="row"><span class="k">综合运</span><span class="v">'+dr.zLabel+' '+dr.zScore+'</span></div><div class="row"><span class="k">财运</span><span class="v">'+dr.cLabel+' '+dr.cScore+'</span></div><div class="row"><span class="k">破财预警</span><span class="v">'+(dr.cWarn||'无')+'</span></div><div class="row"><span class="k">操作建议</span><span class="v">'+dr.advice+'</span></div>';}else if(sd){const rows=sd.querySelectorAll('.row');if(rows[0]){const v=rows[0].querySelector('.v');if(v)v.textContent=today.day;}}if(dr)updateTodaySurfaces(profile,today,dr);try{renderLuck(profile,today);window.__profile=profile;renderTrend('month');renderForecast(profile);fixLayout();}catch(e){}
+    if(dr)updateTodaySurfaces(profile,today,dr);
     const pl=document.querySelector('.pillars-line');
     if(pl)pl.innerHTML='流年 <span class="cn">'+today.year+'</span><span class="sep">·</span> 流月 <span class="cn">'+today.month+'</span><span class="sep">·</span> 流日 <span class="cn">'+today.day+'</span>';
   }

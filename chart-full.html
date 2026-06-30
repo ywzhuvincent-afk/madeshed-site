@@ -28,6 +28,15 @@
   body{background:var(--bg);color:var(--text);font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
        line-height:1.5;-webkit-font-smoothing:antialiased;padding:0 0 80px}
   .wrap{max-width:980px;margin:0 auto;padding:0 20px}
+  .site-nav{position:sticky;top:0;z-index:20;background:rgba(10,13,20,.94);border-bottom:1px solid var(--line);backdrop-filter:blur(14px)}
+  .site-nav-inner{max-width:980px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:18px}
+  .brand{font-family:Georgia,serif;font-size:20px;font-weight:700;color:var(--text);text-decoration:none;white-space:nowrap}
+  .brand span{color:#00bcd4}
+  .nav-links{display:flex;gap:18px;align-items:center;flex:1}
+  .nav-links a{color:var(--text-2);text-decoration:none;font-size:13px;font-weight:600}
+  .nav-links a.active,.nav-links a:hover{color:var(--text)}
+  .back-link{margin-left:auto;color:#111827;background:var(--accent);border-radius:8px;padding:8px 13px;text-decoration:none;font-size:13px;font-weight:700;white-space:nowrap}
+  .back-link:hover{filter:brightness(1.08)}
 
   /* ---------- header ---------- */
   header{padding:30px 0 18px}
@@ -126,6 +135,9 @@
   footer b{color:var(--text-2)}
   .risk-note{margin-top:12px;color:var(--text-2)}
   @media(max-width:640px){
+    .site-nav-inner{gap:10px;flex-wrap:wrap}
+    .nav-links{order:3;width:100%;gap:14px;overflow-x:auto;padding-top:2px}
+    .back-link{margin-left:auto;padding:7px 10px}
     .inbar{display:grid;grid-template-columns:1fr;align-items:stretch}
     .field input,.field select{min-width:0;width:100%}
     .btn{width:100%}
@@ -138,6 +150,18 @@
 </style>
 </head>
 <body>
+<nav class="site-nav" aria-label="主导航">
+  <div class="site-nav-inner">
+    <a class="brand" href="/#/">Madeshed<span>·</span></a>
+    <div class="nav-links">
+      <a href="/#/">首页 Home</a>
+      <a href="/#/daily">每日 Daily</a>
+      <a href="/#/dashboard">命盘 Chart</a>
+      <a class="active" href="/chart-full.html">流年大运 Forecast</a>
+    </div>
+    <a class="back-link" aria-label="返回主仪表盘" href="/#/dashboard">← 返回仪表盘</a>
+  </div>
+</nav>
 <div class="wrap">
 
   <header>
@@ -565,18 +589,19 @@
   document.getElementById('go').addEventListener('click', compute);
   document.getElementById('in-date').addEventListener('keydown',function(e){if(e.key==='Enter')compute();});
 
-  /* === 生产环境集成示例（默认注释关闭）：从主站已保存命盘读取 ===
-  try{
-    var p=JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');
-    if(p && p.date){
-      document.getElementById('in-date').value=p.date;
-      if(p.time) document.getElementById('in-time').value=p.time;
-      if(p.gender!=null) document.getElementById('in-gender').value=p.gender;
-    }
-  }catch(_){}
-  */
+  function applySavedProfile(){
+    try{
+      var p=JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');
+      if(!p)return false;
+      if(p.birth)document.getElementById('in-date').value=p.birth;
+      if(p.time)document.getElementById('in-time').value=p.time;
+      if(p.gender!=null)document.getElementById('in-gender').value=p.gender==='M'?'1':'0';
+      return true;
+    }catch(_){return false;}
+  }
 
-  compute(); // 首屏：参考命盘
+  applySavedProfile();
+  compute(); // 首屏：优先使用主站已保存命盘
 })();
 </script>
 </body>
