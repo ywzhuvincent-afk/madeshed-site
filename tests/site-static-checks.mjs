@@ -285,6 +285,14 @@ includesAll(index, [
 ], 'trend scroll stays inside chart');
 
 includesAll(index, [
+  '.lower{display:grid;grid-template-columns:minmax(260px,.72fr) minmax(0,1.45fr) minmax(0,1fr);gap:20px}',
+  '.el-row{display:grid;grid-template-columns:32px minmax(0,210px) auto;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}',
+  '.el-w{font-family:var(--font-mono);font-size:12px;color:var(--text-2);justify-self:start}',
+  '.el-i{min-width:0}',
+  "window.matchMedia('(max-width:900px)').matches?'1fr':'minmax(260px,.72fr) minmax(0,1.45fr)'",
+], 'favorables dayun balanced layout');
+
+includesAll(index, [
   'id="stats-range-controls"',
   'data-range="7"',
   'data-range="30"',
