@@ -15,6 +15,7 @@
 <meta name="twitter:title" content="完整排盘 · 流年大运全景 · Madeshed">
 <meta name="twitter:description" content="Madeshed 完整排盘与流年大运全景时间轴。">
 <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.13/lunar.min.js"></script>
+<script src="/bazi-engine.js"></script>
 <style>
   :root{
     --bg:#0a0d14; --panel:#11151f; --panel-2:#161b27; --line:#222a3a;
@@ -372,7 +373,28 @@
     var t=document.getElementById('in-time').value.split(':');
     var gender=parseInt(document.getElementById('in-gender').value,10);
     var by=parseInt(d[0],10);
-    var solar=Solar.fromYmdHms(by,+d[1],+d[2],+t[0],+t[1],0);
+    var saved=state.savedProfile||{};
+    var meta=saved.inputMeta||{};
+    var inputDate=(meta.usedCalendar==='lunar'&&meta.sourceYmd)?meta.sourceYmd:document.getElementById('in-date').value;
+    var shared=window.MadeshedBazi.calcBaziCore({
+      date:inputDate,
+      time:document.getElementById('in-time').value,
+      gender:gender? 'M':'F',
+      timeKnown:saved.timeKnown!==false,
+      calendar:meta.usedCalendar||'solar',
+      city:meta.city||window.MadeshedBazi.DEFAULT_CITY,
+      ziPolicy:meta.ziPolicy||'late-zi-next-day'
+    });
+    var built=window.MadeshedBazi.solarFromBirthInput({
+      date:inputDate,
+      time:document.getElementById('in-time').value,
+      gender:gender? 'M':'F',
+      timeKnown:saved.timeKnown!==false,
+      calendar:meta.usedCalendar||'solar',
+      city:meta.city||window.MadeshedBazi.DEFAULT_CITY,
+      ziPolicy:meta.ziPolicy||'late-zi-next-day'
+    });
+    var solar=built.solar||Solar.fromYmdHms(by,+d[1],+d[2],+t[0],+t[1],0);
     var lunar=solar.getLunar();
     var ec=lunar.getEightChar();
     var yun=ec.getYun(gender);
@@ -389,7 +411,7 @@
     state.nowDy = nowDyObj? nowDyObj.getGanZhi() : '';
 
     state.ec=ec; state.yun=yun; state.daYun=daYun; state.birthYear=by;
-    state.gender=gender; state.lunar=lunar; state.solar=solar;
+    state.gender=gender; state.lunar=lunar; state.solar=solar; state.shared=shared; state.inputMeta=built.normalized;
 
     renderBasic();
     renderYong();
@@ -407,10 +429,16 @@
     var dm=ec.getDay().charAt(0);
     var startSolar=yun.getStartSolar();
     var lunarStr=lunar.getYearInChinese()+'年'+lunar.getMonthInChinese()+'月'+lunar.getDayInChinese()+lunar.getTimeZhi()+'时';
+    var meta=state.inputMeta||{};
+    var clockYmd=meta.solarYmd||solar.toYmd();
+    var clockTime=meta.clockTime||document.getElementById('in-time').value;
+    var ziText=meta.ziSegment==='late'?'晚子时换日':(meta.ziSegment==='early'?'早子时':'非子时');
     var rows=[
       ['性别', state.gender? '男':'女'],
-      ['公历', solar.toYmd()+' '+document.getElementById('in-time').value],
+      ['公历', clockYmd+' '+clockTime],
       ['农历', '<small>'+lunarStr+'</small>'],
+      ['真太阳时', '<small>'+((meta.trueSolarYmd||solar.toYmd())+' '+(meta.trueSolarTime||document.getElementById('in-time').value))+'</small>'],
+      ['子时判定', '<small>'+ziText+'</small>'],
       ['生肖', lunar.getYearShengXiao()],
       ['日元', elSpan(dm)+' · <span class="'+elClass(dm)+'">'+EL_CN[STEM_EL[dm]]+'</span>'],
       ['命宫', gzSpan(ec.getMingGong())],
@@ -428,8 +456,8 @@
     var stems=[ec.getYear().charAt(0),ec.getMonth().charAt(0),ec.getDay().charAt(0),ec.getTime().charAt(0)];
     var branches=[ec.getYear().charAt(1),ec.getMonth().charAt(1),ec.getDay().charAt(1),ec.getTime().charAt(1)];
     var hide=[ec.getYearHideGan(),ec.getMonthHideGan(),ec.getDayHideGan(),ec.getTimeHideGan()];
-    var st=calcStrength(stems,branches,hide);
-    var ys=calcYongShen(stems[2], st.pct, branches[1]);
+    var st=state.shared&&state.shared.strength?state.shared.strength:window.MadeshedBazi.calcStrength(stems,branches,hide);
+    var ys=state.shared&&state.shared.yongShen?state.shared.yongShen:window.MadeshedBazi.calcYongShen(stems[2], st.pct, branches[1]);
     state.strength=st; state.yong=ys;
 
     document.getElementById('yong').innerHTML=
@@ -446,7 +474,7 @@
 
   function renderWealth(){
     var st=state.strength, dm=state.ec.getDay().charAt(0);
-    var w=calcWealth(dm, st.pct);
+    var w=state.shared&&state.shared.wealth?state.shared.wealth:window.MadeshedBazi.calcWealth(dm, st.pct);
     state.wealth=w;
     document.getElementById('wealth').innerHTML=
       '<div class="box use"><div class="lab">财星 · 投资属性</div>'+
@@ -597,6 +625,7 @@
       if(p.birth)document.getElementById('in-date').value=p.birth;
       if(p.time)document.getElementById('in-time').value=p.time;
       if(p.gender!=null)document.getElementById('in-gender').value=p.gender==='M'?'1':'0';
+      state.savedProfile=p;
       return true;
     }catch(_){return false;}
   }

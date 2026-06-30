@@ -4,6 +4,10 @@ import { existsSync, readFileSync } from 'node:fs';
 const utf8 = 'utf8';
 const index = readFileSync('index.html', utf8);
 const chart = readFileSync('chart-full.html', utf8);
+const baziEnginePath = 'bazi-engine.js';
+const baziEngine = existsSync(baziEnginePath)
+  ? readFileSync(baziEnginePath, utf8)
+  : '';
 const supabaseSchemaPath = 'supabase/schema.sql';
 const supabaseSchema = existsSync(supabaseSchemaPath)
   ? readFileSync(supabaseSchemaPath, utf8)
@@ -43,6 +47,7 @@ includesAll(chart, [
 
 assert.ok(existsSync('robots.txt'), 'robots.txt should exist');
 assert.ok(existsSync('sitemap.xml'), 'sitemap.xml should exist');
+assert.ok(existsSync(baziEnginePath), 'shared bazi-engine.js should exist');
 
 includesAll(index, [
   'class="mobile-menu-toggle"',
@@ -113,7 +118,42 @@ includesAll(index, [
   'window.__todayState',
   '.m-score-num',
   '.today-score',
+  'window.MadeshedBazi.calcBaziCore',
 ], 'shared user profile rendering');
+
+includesAll(baziEngine, [
+  'function convertLunarToSolarYmd',
+  'function calcTrueSolarOffsetMinutes',
+  'function applyTrueSolarTime',
+  'function adjustForZiPolicy',
+  'function calcStrength',
+  'function calcYongShen',
+  'function calcBaziCore',
+  "ziSegment='late'",
+  "ziSegment='early'",
+  'trueSolarOffsetMinutes',
+  'usedCalendar',
+], 'shared bazi accuracy engine');
+
+includesAll(index, [
+  'SELECTED_CITY_KEY',
+  'getSelectedCity()',
+  'calendar-toggle',
+  'usedCalendar',
+  'trueSolarTime',
+  'ziSegment',
+  'id="yong-list"',
+  'renderYongProfile(profile)',
+  '示例数据',
+  '个人真实记录',
+], 'accurate input and sample-data labels');
+
+includesAll(chart, [
+  '/bazi-engine.js',
+  'window.MadeshedBazi.calcBaziCore',
+  'trueSolarTime',
+  'ziSegment',
+], 'chart shared engine integration');
 
 includesAll(index, [
   "'report'",
