@@ -303,9 +303,14 @@ includesAll(index, [
 ], 'daily trend uses action score');
 includesAll(index, [
   'data.push(monthActionScore(profile,dt))',
-  'MONTHLY BASELINE',
-  '55+(base-55)*0.75+(monthScore-60)*0.55',
-], 'monthly trend uses monthly action baseline');
+  'MONTHLY ACTION TREND',
+  'var monthRead=dailyRead(profile,{day:gz.month})',
+  'var monthScore=chartScore(profile,gz.month)',
+  'var trigger=Math.round((monthRead?monthRead.zScore:60)*0.5+monthScore*0.35+wealth*0.15)',
+  '60+(trigger-60)*1.15+(wealth-55)*0.35+(base-60)*0.25-riskPenalty',
+  'var spread=base<=50?28:(base<=66?34:38)',
+  "mark:(now.getMonth()+1)+'",
+], 'monthly trend uses amplified monthly action score');
 assert.ok(
   !/function buildMonthTrend\(profile,now\)[\s\S]{0,360}data\.push\(chartScore\(profile,gzMonth/.test(index),
   'monthly trend should not use month single score',
