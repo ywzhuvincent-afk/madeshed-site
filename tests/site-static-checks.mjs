@@ -352,6 +352,17 @@ includesAll(supabaseSchema, [
   'unique (user_id, report_key)',
 ], 'Supabase schema and RLS');
 
+includesAll(supabaseSchema, [
+  'create or replace function public.upsert_auto_generated_reports',
+  'create extension if not exists pg_cron',
+  "cron.schedule('madeshed-auto-generated-reports'",
+  "on conflict (user_id, report_key) do update",
+  "payload->>'outcome'",
+  "'big_win'",
+  "'big_loss'",
+  "'database_cron'",
+], 'scheduled generated report job');
+
 includesAll(index, [
   "const CLOUD_PROFILE_TABLE='profiles'",
   "const CLOUD_CHECKINS_TABLE='checkins'",

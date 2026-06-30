@@ -204,3 +204,216 @@ grant select, insert, update, delete on public.checkins to authenticated;
 grant select on public.memberships to authenticated;
 grant select on public.report_entitlements to authenticated;
 grant select, insert, update, delete on public.generated_reports to authenticated;
+
+create or replace function public.upsert_auto_generated_reports(p_run_date date default current_date)
+returns integer
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  affected integer := 0;
+begin
+  insert into public.generated_reports (
+    user_id,
+    report_key,
+    report_type,
+    period_start,
+    period_end,
+    title,
+    summary,
+    report_html,
+    auto_generated,
+    access_level
+  )
+  with periods as (
+    select '7'::text as report_type,
+      (date_trunc('week', p_run_date)::date - 7)::date as period_start,
+      (date_trunc('week', p_run_date)::date - 1)::date as period_end,
+      null::text as period_key_end,
+      '上一完整 7 天'::text as period_label
+    union all
+    select '30',
+      (date_trunc('month', p_run_date)::date - interval '1 month')::date,
+      (date_trunc('month', p_run_date)::date - interval '1 day')::date,
+      null::text,
+      '上一完整月份'
+    union all
+    select '365',
+      make_date(extract(year from p_run_date)::int - 1, 1, 1),
+      make_date(extract(year from p_run_date)::int - 1, 12, 31),
+      null::text,
+      (extract(year from p_run_date)::int - 1)::text || ' 年年度'
+    union all
+    select 'all',
+      null::date,
+      null::date,
+      to_char(p_run_date, 'YYYY-MM'),
+      '全部历史月度快照'
+  ),
+  normalized as (
+    select
+      c.user_id,
+      c.checkin_date::date as checkin_day,
+      coalesce(nullif(c.payload->>'outcome', ''), c.outcome) as raw_outcome,
+      c.outcome,
+      c.magnitude,
+      c.label,
+      c.score,
+      c.day_ganzhi
+    from public.checkins c
+    where c.checkin_date ~ '^\d{4}-\d{2}-\d{2}$'
+  ),
+  canonical as (
+    select
+      n.*,
+      case
+        when n.raw_outcome in ('big_win', 'win', 'flat', 'loss', 'big_loss', 'notrade') then n.raw_outcome
+        when n.outcome = 'win' and coalesce(n.magnitude, '') like '大赚%' then 'big_win'
+        when n.outcome = 'loss' and coalesce(n.magnitude, '') like '大亏%' then 'big_loss'
+        when n.outcome in ('win', 'flat', 'loss', 'notrade') then n.outcome
+        else 'notrade'
+      end as canonical_outcome
+    from normalized n
+  ),
+  scoped as (
+    select
+      c.user_id,
+      p.report_type,
+      p.period_label,
+      case when p.report_type = 'all' then min(c.checkin_day) over (partition by c.user_id) else p.period_start end as period_start,
+      case when p.report_type = 'all' then max(c.checkin_day) over (partition by c.user_id) else p.period_end end as period_end,
+      case when p.report_type = 'all' then 'all' else p.period_start::text end as key_start,
+      case when p.report_type = 'all' then p.period_key_end else p.period_end::text end as key_end,
+      c.canonical_outcome
+    from canonical c
+    cross join periods p
+    where p.report_type = 'all'
+      or (c.checkin_day between p.period_start and p.period_end)
+  ),
+  grouped as (
+    select
+      s.user_id,
+      s.report_type,
+      s.period_label,
+      min(s.period_start)::text as period_start,
+      max(s.period_end)::text as period_end,
+      min(s.key_start) as key_start,
+      min(s.key_end) as key_end,
+      count(*)::int as total,
+      count(*) filter (where s.canonical_outcome in ('big_win', 'win', 'flat', 'loss', 'big_loss'))::int as traded,
+      count(*) filter (where s.canonical_outcome in ('big_win', 'win'))::int as wins,
+      count(*) filter (where s.canonical_outcome in ('big_loss', 'loss'))::int as losses,
+      count(*) filter (where s.canonical_outcome = 'big_win')::int as big_win,
+      count(*) filter (where s.canonical_outcome = 'win')::int as win,
+      count(*) filter (where s.canonical_outcome = 'flat')::int as flat,
+      count(*) filter (where s.canonical_outcome = 'loss')::int as loss,
+      count(*) filter (where s.canonical_outcome = 'big_loss')::int as big_loss,
+      count(*) filter (where s.canonical_outcome = 'notrade')::int as notrade
+    from scoped s
+    group by s.user_id, s.report_type, s.period_label
+    having count(*) > 0
+  ),
+  enriched as (
+    select
+      g.*,
+      case g.report_type
+        when '7' then '7 天报告'
+        when '30' then '月度报告'
+        when '365' then '年度报告'
+        else '全部历史报告'
+      end as product_label,
+      case
+        when g.traded >= 50 then '高可信'
+        when g.traded >= 20 then '中等可信'
+        when g.traded >= 5 then '初步参考'
+        else '样本不足'
+      end as confidence,
+      case when g.traded > 0 then round(g.wins::numeric * 100 / g.traded)::text || '%' else '—' end as win_rate,
+      case
+        when m.user_id is not null then 'membership'
+        when e.user_id is not null then 'paid'
+        else 'preview'
+      end as access_level
+    from grouped g
+    left join public.memberships m
+      on m.user_id = g.user_id
+      and m.tier = 'ultimate'
+      and m.status in ('active', 'trialing')
+    left join public.report_entitlements e
+      on e.user_id = g.user_id
+      and e.report_type = g.report_type
+      and e.status = 'active'
+  )
+  select
+    e.user_id,
+    e.report_type || '-' || e.key_start || '-' || e.key_end as report_key,
+    e.report_type,
+    e.period_start,
+    e.period_end,
+    e.product_label || ' · ' || e.period_label as title,
+    jsonb_build_object(
+      'total', e.total,
+      'traded', e.traded,
+      'wins', e.wins,
+      'losses', e.losses,
+      'rate', e.win_rate,
+      'confidence', e.confidence,
+      'autoSource', 'database_cron',
+      'usingSample', false,
+      'generatedPeriod', jsonb_build_object('start', e.period_start, 'end', e.period_end, 'label', e.period_label),
+      'counts', jsonb_build_object(
+        'big_win', e.big_win,
+        'win', e.win,
+        'flat', e.flat,
+        'loss', e.loss,
+        'big_loss', e.big_loss,
+        'notrade', e.notrade
+      )
+    ) as summary,
+    '<div class="report-generated"><h2>' || e.product_label || ' · 数据库自动版</h2>' ||
+    '<span class="report-badge">' || e.period_start || ' 至 ' || e.period_end || '</span>' ||
+    '<span class="report-badge">' || e.confidence || '</span>' ||
+    '<span class="report-badge">胜率 ' || e.win_rate || '</span>' ||
+    '<p>本报告由系统定时任务根据你的真实交易记录自动生成，不使用示例数据。</p>' ||
+    '<h3>一、统计结论</h3><p>本周期共记录 ' || e.total || ' 天，实际交易 ' || e.traded ||
+    ' 次；大赚 ' || e.big_win || ' 次，赚 ' || e.win || ' 次，平 ' || e.flat ||
+    ' 次，亏 ' || e.loss || ' 次，大亏 ' || e.big_loss || ' 次，未交易 ' || e.notrade || ' 天。</p>' ||
+    '<h3>二、纪律建议</h3><p>样本不足时只作为复盘提示；样本稳定后，重点观察高胜率状态与大亏集中状态，并把红/橙风险日默认纳入降仓或不交易规则。</p>' ||
+    '<p>报告用于交易纪律和风险管理，不构成投资建议。</p></div>' as report_html,
+    true as auto_generated,
+    e.access_level
+  from enriched e
+  on conflict (user_id, report_key) do update
+  set
+    period_start = excluded.period_start,
+    period_end = excluded.period_end,
+    title = excluded.title,
+    summary = excluded.summary,
+    report_html = excluded.report_html,
+    auto_generated = excluded.auto_generated,
+    access_level = excluded.access_level,
+    updated_at = now()
+  where public.generated_reports.summary is distinct from excluded.summary
+    or public.generated_reports.report_html is distinct from excluded.report_html
+    or public.generated_reports.access_level is distinct from excluded.access_level;
+
+  get diagnostics affected = row_count;
+  return affected;
+end;
+$$;
+
+grant execute on function public.upsert_auto_generated_reports(date) to postgres;
+
+create extension if not exists pg_cron with schema extensions;
+
+select cron.unschedule('madeshed-auto-generated-reports')
+where exists (
+  select 1
+  from cron.job
+  where jobname = 'madeshed-auto-generated-reports'
+);
+
+select cron.schedule('madeshed-auto-generated-reports', '17 9 * * *', $job$
+  select public.upsert_auto_generated_reports(current_date);
+$job$);
