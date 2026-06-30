@@ -78,8 +78,8 @@ assertHasLabelFor(chart, 'in-gender', 'chart form');
 includesAll(index, [
   'risk-note',
   '不构成投资建议',
-  '进入演示仪表盘',
-  '真实账号登录即将开放',
+  '进入仪表盘',
+  '邮箱登录保存',
   ':focus-visible',
   'prefers-reduced-motion',
 ], 'trust and accessibility copy');
@@ -158,6 +158,7 @@ includesAll(supabaseSchema, [
 includesAll(index, [
   "const CLOUD_PROFILE_TABLE='profiles'",
   "const CLOUD_CHECKINS_TABLE='checkins'",
+  'data-route="/dashboard"><span class="icon">↗</span><span>进入仪表盘</span>',
   'function syncProfileToCloud(profile)',
   'function syncCheckinsToCloud()',
   'function syncCloudToLocal()',

@@ -536,15 +536,15 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 </div>
 <a href="/chart-full.html" style="display:block;text-align:center;margin:4px 0 22px;padding:14px;border:1px solid var(--accent,#c6b6f5);border-radius:12px;color:var(--accent,#c6b6f5);text-decoration:none;font-weight:600">完整排盘 · 流年大运全景 →</a>
 <div class="signup-card">
-<div class="badge">下一步</div><h2>保存命盘,继续体验演示</h2><p>当前为内测演示流程 · 真实账号登录即将开放 · 无需信用卡</p>
+<div class="badge">下一步</div><h2>保存命盘,继续体验</h2><p>当前可先进入仪表盘体验；登录后会自动尝试把命盘和每日记录同步到云端。</p>
 <div class="signup-features"><div>每日评分 + 流月走势曲线</div><div>2026 流年完整规划</div><div>交易记录 + 个人胜率回测</div><div>红灯日实时干预弹窗</div><div>大运 + 喜用神深度解读</div><div>跨设备数据同步</div></div>
 <div class="signup-buttons">
-  <button class="signup-btn email" data-route="/daily"><span class="icon">↗</span><span>进入演示仪表盘</span></button>
-  <button class="signup-btn" type="button" disabled><span class="icon">✉</span><span>邮箱保存即将开放</span></button>
-  <button class="signup-btn" type="button" disabled><span class="icon">G</span><span>Google 登录即将开放</span></button>
-  <button class="signup-btn wechat" type="button" disabled><span class="icon">💬</span><span>微信登录</span><span class="soon">v0.4 推出</span></button>
+  <button class="signup-btn email" data-route="/dashboard"><span class="icon">↗</span><span>进入仪表盘</span></button>
+  <button class="signup-btn" type="button" data-auth-action="signin"><span class="icon">✉</span><span>邮箱登录保存</span></button>
+  <button class="signup-btn" type="button" disabled><span class="icon">G</span><span>Google 登录后续开放</span></button>
+  <button class="signup-btn wechat" type="button" disabled><span class="icon">💬</span><span>微信登录</span><span class="soon">规划中</span></button>
 </div>
-<div class="privacy-note risk-note">演示数据仅用于体验产品流程；Madeshed 提供决策辅助工具,不构成投资建议。真实账号登录即将开放。<br><a href="#terms">服务条款</a> · <a href="#privacy">隐私政策</a></div>
+<div class="privacy-note risk-note">未登录时数据保存在当前浏览器；登录后会同步到 Supabase 云端。Madeshed 提供决策辅助工具,不构成投资建议。<br><a href="#terms">服务条款</a> · <a href="#privacy">隐私政策</a></div>
 </div>
 </div>
 </div>
@@ -684,7 +684,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 <!-- REPORT -->
 <section class="view" data-view="report">
 <div class="container page">
-<div class="page-head"><div><div class="page-kicker">Monthly Report</div><h1>月报</h1><p>基于你保存的命盘和每日交易记录生成阶段性复盘。正式云端版会同步数据库；当前先使用本机记录。</p></div><button class="btn-signin" data-route="/daily">去记录今日</button></div>
+<div class="page-head"><div><div class="page-kicker">Monthly Report</div><h1>月报</h1><p>基于你保存的命盘和每日交易记录生成阶段性复盘；登录后会自动尝试同步到云端。</p></div><button class="btn-signin" data-route="/daily">去记录今日</button></div>
 <div class="page-grid" id="report-summary">
   <div class="metric"><div class="k">本地记录</div><div class="v">0</div><div class="d">开始记录后自动统计。</div></div>
   <div class="metric"><div class="k">胜率</div><div class="v">—</div><div class="d">至少 5 条交易后显示。</div></div>
@@ -697,12 +697,12 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 <!-- ACCOUNT -->
 <section class="view" data-view="account">
 <div class="container page">
-<div class="page-head"><div><div class="page-kicker">Account</div><h1>设置</h1><p>管理当前设备上的命盘、记录和正式版账号状态。云端同步、支付和数据导出会在后续阶段接入。</p></div><button class="btn-signin" data-route="/onboarding">重新生成命盘</button></div>
+<div class="page-head"><div><div class="page-kicker">Account</div><h1>设置</h1><p>管理当前设备和 Supabase 账号中的命盘与记录；支付、导出和删除云端数据会在后续阶段补齐。</p></div><button class="btn-signin" data-route="/onboarding">重新生成命盘</button></div>
 <div class="page-grid two">
   <div class="metric"><div class="k">当前命盘</div><div class="account-list" id="account-profile"></div></div>
   <div class="metric"><div class="k">本地数据</div><div class="account-list" id="account-storage"></div></div>
 </div>
-<div class="legal-block" style="margin-top:14px"><h2>正式版状态</h2><p id="cloud-sync-note">账号登录和云端同步正在接入 Supabase；如果你已登录，命盘和每日记录会自动尝试同步。</p><button class="btn-signin" id="btn-signout" type="button">退出登录</button></div>
+<div class="legal-block" style="margin-top:14px"><h2>云端同步状态</h2><p id="cloud-sync-note">未登录，当前为本机数据。</p><button class="btn-signin" id="btn-signout" type="button" style="display:none">退出登录</button></div>
 </div>
 </section>
 
@@ -833,8 +833,8 @@ function saveCheckins(items){try{localStorage.setItem(CHECKINS,JSON.stringify(it
 function currentCheckinKey(){const st=window.__todayState||{};return st.compactDate||new Date().toISOString().slice(0,10);}
 function recordCheckin(o,m){const st=window.__todayState||{};const key=currentCheckinKey();const items=loadCheckins().filter(x=>x.date!==key);items.push({date:key,outcome:o,mag:m||null,label:st.label||null,score:st.score||null,day:st.day||null,createdAt:new Date().toISOString()});saveCheckins(items);if(window.syncCheckinsToCloud)window.syncCheckinsToCloud();showRecordedSummary(o,m);renderReport();renderAccount();}
 function renderStoredCheckin(){const item=loadCheckins().find(x=>x.date===currentCheckinKey());if(item)showRecordedSummary(item.outcome,item.mag);}
-function renderReport(){const box=document.getElementById('report-summary'),note=document.getElementById('report-insight');if(!box)return;const items=loadCheckins();const traded=items.filter(x=>x.outcome==='win'||x.outcome==='loss'||x.outcome==='flat');const wins=traded.filter(x=>x.outcome==='win').length;const rate=traded.length?Math.round(wins/traded.length*100)+'%':'—';let profile=null;try{profile=JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');}catch(e){}const chart=profile&&profile.pillarsStr?Object.values(profile.pillarsStr).join(' · '):'未生成';box.innerHTML='<div class="metric"><div class="k">本地记录</div><div class="v">'+items.length+'</div><div class="d">保存在当前浏览器。</div></div><div class="metric"><div class="k">胜率</div><div class="v">'+rate+'</div><div class="d">'+(traded.length?('交易样本 '+traded.length+' 条'):'至少 5 条交易后更有参考价值')+'</div></div><div class="metric"><div class="k">当前命盘</div><div class="v" style="font-size:18px;line-height:1.6">'+chart+'</div><div class="d">与 Dashboard / Daily 共用同一份本地命盘。</div></div>';if(note)note.textContent=items.length?'已开始积累你的个人记录。下一阶段会把这些记录同步到云端，并生成完整月报。':'还没有足够记录。每天收盘后点一次结果，系统会逐步生成个人胜率、红灯日规避、亏损后追单等模式。';}
-function renderAccount(){const prof=document.getElementById('account-profile'),store=document.getElementById('account-storage'),note=document.getElementById('cloud-sync-note');if(!prof||!store)return;let p=null;try{p=JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');}catch(e){}const rows=p?[['出生日期',p.birth],['出生时间',p.time],['性别',p.gender==='M'?'男':'女'],['四柱',p.pillarsStr?Object.values(p.pillarsStr).join(' · '):'已保存']]:[['命盘','尚未生成']];prof.innerHTML=rows.map(r=>'<div class="account-row"><span>'+r[0]+'</span><strong>'+r[1]+'</strong></div>').join('');const checkins=loadCheckins(),cloud=window.__cloudUser?window.__cloudUser.email:'未登录',status=window.__cloudStatus&&window.__cloudStatus.text?window.__cloudStatus.text:'未登录，当前为本机数据';store.innerHTML='<div class="account-row"><span>每日记录</span><strong>'+checkins.length+' 条</strong></div><div class="account-row"><span>数据位置</span><strong>当前浏览器 + Supabase</strong></div><div class="account-row"><span>云端账号</span><strong>'+cloud+'</strong></div><div class="account-row"><span>云端同步</span><strong>'+status+'</strong></div>';if(note)note.textContent=status;}
+function renderReport(){const box=document.getElementById('report-summary'),note=document.getElementById('report-insight');if(!box)return;const items=loadCheckins();const traded=items.filter(x=>x.outcome==='win'||x.outcome==='loss'||x.outcome==='flat');const wins=traded.filter(x=>x.outcome==='win').length;const rate=traded.length?Math.round(wins/traded.length*100)+'%':'—';const signedIn=!!window.__cloudUser;let profile=null;try{profile=JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');}catch(e){}const chart=profile&&profile.pillarsStr?Object.values(profile.pillarsStr).join(' · '):'未生成';const storageNote=signedIn?'当前浏览器 + Supabase 云端。':'保存在当前浏览器，登录后同步到云端。';box.innerHTML='<div class="metric"><div class="k">记录</div><div class="v">'+items.length+'</div><div class="d">'+storageNote+'</div></div><div class="metric"><div class="k">胜率</div><div class="v">'+rate+'</div><div class="d">'+(traded.length?('交易样本 '+traded.length+' 条'):'至少 5 条交易后更有参考价值')+'</div></div><div class="metric"><div class="k">当前命盘</div><div class="v" style="font-size:18px;line-height:1.6">'+chart+'</div><div class="d">与 Dashboard / Daily / Forecast 共用同一份命盘。</div></div>';if(note)note.textContent=items.length?(signedIn?'已开始积累你的个人记录，并会自动尝试同步到云端。':'已开始积累你的个人记录；登录后会自动尝试同步到云端。'):'还没有足够记录。每天收盘后点一次结果，系统会逐步生成个人胜率、红灯日规避、亏损后追单等模式。';}
+function renderAccount(){const prof=document.getElementById('account-profile'),store=document.getElementById('account-storage'),note=document.getElementById('cloud-sync-note'),signout=document.getElementById('btn-signout');if(!prof||!store)return;let p=null;try{p=JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');}catch(e){}const rows=p?[['出生日期',p.birth],['出生时间',p.time],['性别',p.gender==='M'?'男':'女'],['四柱',p.pillarsStr?Object.values(p.pillarsStr).join(' · '):'已保存']]:[['命盘','尚未生成']];prof.innerHTML=rows.map(r=>'<div class="account-row"><span>'+r[0]+'</span><strong>'+r[1]+'</strong></div>').join('');const checkins=loadCheckins(),signedIn=!!window.__cloudUser,cloud=signedIn?window.__cloudUser.email:'未登录',status=window.__cloudStatus&&window.__cloudStatus.text?window.__cloudStatus.text:'未登录，当前为本机数据',location=signedIn?'当前浏览器 + Supabase 云端':'当前浏览器（登录后同步到 Supabase）';store.innerHTML='<div class="account-row"><span>每日记录</span><strong>'+checkins.length+' 条</strong></div><div class="account-row"><span>数据位置</span><strong>'+location+'</strong></div><div class="account-row"><span>云端账号</span><strong>'+cloud+'</strong></div><div class="account-row"><span>云端同步</span><strong>'+status+'</strong></div>';if(note)note.textContent=status;if(signout)signout.style.display=signedIn?'inline-flex':'none';}
 
 document.querySelectorAll('.outcome-btn').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.outcome-btn').forEach(function(x){x.classList.remove('selected');});b.classList.add('selected');var OC={big_win:['win','大赚'],win:['win',null],flat:['flat',null],loss:['loss',null],big_loss:['loss','大亏'],notrade:['notrade',null]};var o=OC[b.dataset.outcome]||[b.dataset.outcome,null];setTimeout(function(){recordCheckin(o[0],o[1]);},250);});});
 
