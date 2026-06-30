@@ -278,6 +278,13 @@ includesAll(index, [
 ], 'trend month day hour scroll modes');
 
 includesAll(index, [
+  '.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:20px;margin-bottom:20px}',
+  '.card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;min-width:0}',
+  '.chart{position:relative;height:280px;width:100%;min-width:0;overflow:hidden}',
+  '.trend-scroll{height:100%;width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;',
+], 'trend scroll stays inside chart');
+
+includesAll(index, [
   'id="stats-range-controls"',
   'data-range="7"',
   'data-range="30"',
