@@ -190,6 +190,16 @@ includesAll(index, [
   'function renderAccount()',
 ], 'local persistence shell');
 
+includesAll(index, [
+  'const COLOR_MEANING',
+  'function formatHeatmapDate',
+  'function outcomeMark',
+  'class="hm-date"',
+  'class="hm-mark"',
+  '浅绿=高顺势',
+  '颜色=命理状态',
+], 'heatmap visible dates and legend meanings');
+
 assert.ok(existsSync(supabaseSchemaPath), 'supabase/schema.sql should exist');
 
 includesAll(supabaseSchema, [

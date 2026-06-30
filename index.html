@@ -347,18 +347,19 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 .bar-track{width:100%;height:4px;background:var(--bg-input);border-radius:2px;margin-top:6px;overflow:hidden}
 .bar-fill{height:100%;border-radius:2px}
 .heatmap{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:4px}
-.hm-cell{aspect-ratio:1;border-radius:4px;cursor:pointer;transition:transform .1s;display:flex;align-items:center;justify-content:center}
+.hm-cell{aspect-ratio:1;border-radius:4px;cursor:pointer;transition:transform .1s;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;min-width:0}
 .hm-cell:hover{transform:scale(1.1)}
-.hm-cell.empty{background:var(--bg-input)}
+.hm-cell.empty{background:var(--bg-input);cursor:default}
+.hm-cell.empty:hover{transform:none}
 .hm-cell.green-l{background:rgba(77,208,225,.6)}
 .hm-cell.green{background:rgba(38,166,154,.6)}
 .hm-cell.yellow{background:rgba(247,183,49,.6)}
 .hm-cell.orange{background:rgba(255,138,101,.6)}
 .hm-cell.red{background:rgba(239,83,80,.6)}
-.hm-cell.win::after{content:"✓";color:rgba(255,255,255,.95);font-size:14px;font-weight:800}
-.hm-cell.loss::after{content:"✗";color:rgba(255,255,255,.95);font-size:14px;font-weight:800}
-.hm-cell.flat::after{content:"—";color:rgba(255,255,255,.7);font-size:14px}
-.hm-cell.notrade::after{content:"·";color:rgba(255,255,255,.5);font-size:18px}
+.hm-cell .hm-date{position:absolute;top:5px;left:6px;font-family:var(--font-mono);font-size:10px;font-weight:700;line-height:1;color:rgba(255,255,255,.72)}
+.hm-cell .hm-mark{font-size:18px;font-weight:800;line-height:1;color:rgba(255,255,255,.95)}
+.hm-cell.flat .hm-mark{color:rgba(255,255,255,.78)}
+.hm-cell.notrade .hm-mark{font-size:20px;color:rgba(255,255,255,.55)}
 .hm-legend{display:flex;gap:16px;justify-content:center;margin-top:16px;font-size:11px;color:var(--text-3);flex-wrap:wrap}
 .hm-legend .item{display:flex;align-items:center;gap:4px}
 .hm-legend .dot{width:12px;height:12px;border-radius:3px}
@@ -670,15 +671,15 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 <div class="stats-grid">
 <div class="card"><div class="card-h"><div class="card-t">按命理颜色分组</div><div class="card-sub">95% 置信区间</div></div><div id="color-stats"></div></div>
 <div class="card">
-<div class="card-h"><div class="card-t">近 30 天日历</div><div class="card-sub">颜色=命理 · 标记=结果</div></div>
+<div class="card-h"><div class="card-t">近 30 天日历</div><div class="card-sub">颜色=命理状态 · 标记=交易结果</div></div>
 <div class="weekday-row"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
 <div class="heatmap" id="heatmap"></div>
 <div class="hm-legend">
-  <div class="item"><span class="dot" style="background:rgba(77,208,225,.6);"></span>浅绿</div>
-  <div class="item"><span class="dot" style="background:rgba(38,166,154,.6);"></span>绿</div>
-  <div class="item"><span class="dot" style="background:rgba(247,183,49,.6);"></span>黄</div>
-  <div class="item"><span class="dot" style="background:rgba(255,138,101,.6);"></span>橙</div>
-  <div class="item"><span class="dot" style="background:rgba(239,83,80,.6);"></span>红</div>
+  <div class="item"><span class="dot" style="background:rgba(77,208,225,.6);"></span>浅绿=高顺势</div>
+  <div class="item"><span class="dot" style="background:rgba(38,166,154,.6);"></span>绿=顺势</div>
+  <div class="item"><span class="dot" style="background:rgba(247,183,49,.6);"></span>黄=中性</div>
+  <div class="item"><span class="dot" style="background:rgba(255,138,101,.6);"></span>橙=谨慎</div>
+  <div class="item"><span class="dot" style="background:rgba(239,83,80,.6);"></span>红=高风险</div>
   <div class="item">✓赚 ✗亏 —平 ·未交易</div>
 </div>
 </div>
@@ -833,6 +834,7 @@ setSelectedCity(selectedCity);
 // ========== DAILY ==========
 const COLORS=['green-l','green','yellow','orange','red'];
 const COLOR_NAMES={'green-l':'浅绿','green':'绿','yellow':'黄','orange':'橙','red':'红'};
+const COLOR_MEANING={'green-l':'高顺势','green':'顺势','yellow':'中性','orange':'谨慎','red':'高风险'};
 const TRUE_WINRATE={'green-l':.67,'green':.55,'yellow':.45,'orange':.32,'red':.20};
 const TRUE_AVG={'green-l':1.4,'green':.8,'yellow':-.1,'orange':-.9,'red':-1.6};
 
@@ -842,7 +844,10 @@ function wilsonCI(w,n,z=1.96){if(n===0)return[0,1];const p=w/n;const dn=1+z*z/n;
 
 function renderColorStats(entries){const traded=entries.filter(e=>e.outcome==='win'||e.outcome==='loss'||e.outcome==='flat');const stats=COLORS.map(c=>{const g=traded.filter(e=>e.color===c);const w=g.filter(e=>e.outcome==='win').length;const n=g.length;return{color:c,n,wins:w,rate:n>0?w/n:0,ci:wilsonCI(w,n)};});const html=stats.map(s=>{const wp=s.n>0?(s.rate*100).toFixed(0):0;const ci=s.n>=5?`${(s.ci[0]*100).toFixed(0)}-${(s.ci[1]*100).toFixed(0)}%`:`N=${s.n} 太少`;const fill=s.color==='red'?'#EF5350':s.color==='orange'?'#FF8A65':s.color==='yellow'?'#F7B731':s.color==='green'?'#26A69A':'#4DD0E1';return `<div class="color-row"><div class="color-chip ${s.color}">${COLOR_NAMES[s.color]}</div><div><div class="color-label"><span class="name">${COLOR_NAMES[s.color]}日</span><span class="n">N=${s.n}</span></div><div class="bar-track"><div class="bar-fill" style="width:${wp}%;background:${fill};"></div></div></div><div class="color-rate"><div class="pct" style="color:${fill};">${s.n>0?(s.rate*100).toFixed(0):'—'}%</div><div class="ci">${ci}</div></div></div>`;}).join('');const cs=document.getElementById('color-stats');if(cs)cs.innerHTML=html;}
 
-function renderHeatmap(entries){const last30=entries.slice(-30);const firstDay=last30.length>0?new Date(last30[0].date):new Date(2026,5,27);const sw=firstDay.getDay();let cells=[];for(let i=0;i<sw;i++)cells.push('<div class="hm-cell empty"></div>');last30.forEach(e=>cells.push(`<div class="hm-cell ${e.color} ${e.outcome}" title="${e.date.toLocaleDateString('zh-CN')} · ${COLOR_NAMES[e.color]}"></div>`));cells.push(`<div class="hm-cell green-l" style="outline:2px solid #00BCD4;outline-offset:2px;" title="今天"></div>`);const hm=document.getElementById('heatmap');if(hm)hm.innerHTML=cells.join('');}
+function formatHeatmapDate(date){return `${date.getMonth()+1}/${date.getDate()}`;}
+function outcomeMark(outcome){return outcome==='win'?'✓':outcome==='loss'?'✗':outcome==='flat'?'—':'·';}
+
+function renderHeatmap(entries){const last30=entries.slice(-30);const firstDay=last30.length>0?new Date(last30[0].date):new Date(2026,5,27);const sw=firstDay.getDay();let cells=[];for(let i=0;i<sw;i++)cells.push('<div class="hm-cell empty"></div>');last30.forEach(e=>{const d=new Date(e.date);const colorText=`${COLOR_NAMES[e.color]}=${COLOR_MEANING[e.color]}`;cells.push(`<div class="hm-cell ${e.color} ${e.outcome}" title="${d.toLocaleDateString('zh-CN')} · ${colorText}"><span class="hm-date">${formatHeatmapDate(d)}</span><span class="hm-mark">${outcomeMark(e.outcome)}</span></div>`);});const today=new Date();cells.push(`<div class="hm-cell green-l notrade" style="outline:2px solid #00BCD4;outline-offset:2px;" title="${today.toLocaleDateString('zh-CN')} · 今天 · 浅绿=高顺势"><span class="hm-date">${formatHeatmapDate(today)}</span><span class="hm-mark">·</span></div>`);const hm=document.getElementById('heatmap');if(hm)hm.innerHTML=cells.join('');}
 
 function renderInsights(entries){const traded=entries.filter(e=>e.outcome==='win'||e.outcome==='loss'||e.outcome==='flat');const n=traded.length;const il=document.getElementById('insights-list');if(!il)return;if(n<10){il.innerHTML=`<div class="insight-item"><div class="title">📊 数据累积中</div><div class="desc">已记录 ${n} 次交易, 还需要约 ${20-n} 天的数据才能开始显示初步胜率分组。</div></div>`;return;}const cs=COLORS.map(c=>{const g=traded.filter(e=>e.color===c);const w=g.filter(e=>e.outcome==='win').length;return{color:c,n:g.length,rate:g.length>0?w/g.length:null};}).filter(s=>s.n>=3);cs.sort((a,b)=>b.rate-a.rate);const best=cs[0];const worst=cs[cs.length-1];const nt=entries.filter(e=>e.outcome==='notrade'&&(e.color==='red'||e.color==='orange')).length;il.innerHTML=`<div class="insight-item"><div class="title">🟢 你最强的状态: <span class="pos">${COLOR_NAMES[best.color]}日</span></div><div class="desc">在 <span class="stat">${COLOR_NAMES[best.color]}日</span> 你交易 <span class="stat">${best.n}</span> 次, 胜率 <span class="stat" style="color:var(--green);">${(best.rate*100).toFixed(0)}%</span>。${best.n>=10?'这是有统计意义的差异。':'样本还偏少, 继续累积。'}</div></div><div class="insight-item"><div class="title">🔴 你最弱的状态: <span class="neg">${COLOR_NAMES[worst.color]}日</span></div><div class="desc">在 <span class="stat">${COLOR_NAMES[worst.color]}日</span> 你交易 <span class="stat">${worst.n}</span> 次, 胜率仅 <span class="stat" style="color:var(--red);">${(worst.rate*100).toFixed(0)}%</span>。建议: 这种命理状态下避免重仓。</div></div>${nt>=3?`<div class="insight-item"><div class="title">🛡 你避开了 <span class="num">${nt}</span> 次红/橙日交易</div><div class="desc">这些日子如果交易, 同类用户平均亏 <span class="stat" style="color:var(--red);">-1.5%</span>。</div></div>`:''}<div class="insight-item"><div class="title">📈 如果只在喜用日交易…</div><div class="desc">回测显示: 如果完全跳过红/橙日, 你的累计收益会从 <span class="stat" style="color:var(--green);">+5.2%</span> 升到 <span class="stat" style="color:var(--green);">+9.7%</span>。</div></div>`;}
 
