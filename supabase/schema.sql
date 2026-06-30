@@ -40,6 +40,30 @@ create table if not exists public.checkins (
   unique (user_id, checkin_date)
 );
 
+create table if not exists public.memberships (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  tier text not null default 'free' check (tier in ('free', 'pro', 'ultimate')),
+  status text not null default 'inactive' check (status in ('inactive', 'active', 'trialing', 'past_due', 'canceled')),
+  stripe_customer_id text,
+  stripe_subscription_id text,
+  current_period_end timestamptz,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.report_entitlements (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  report_type text not null check (report_type in ('7', '30', '365', 'all')),
+  source text not null default 'purchase' check (source in ('purchase', 'membership', 'admin')),
+  status text not null default 'active' check (status in ('active', 'refunded', 'expired')),
+  stripe_session_id text unique,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 drop trigger if exists profiles_set_updated_at on public.profiles;
 create trigger profiles_set_updated_at
 before update on public.profiles
@@ -50,8 +74,20 @@ create trigger checkins_set_updated_at
 before update on public.checkins
 for each row execute function public.set_updated_at();
 
+drop trigger if exists memberships_set_updated_at on public.memberships;
+create trigger memberships_set_updated_at
+before update on public.memberships
+for each row execute function public.set_updated_at();
+
+drop trigger if exists report_entitlements_set_updated_at on public.report_entitlements;
+create trigger report_entitlements_set_updated_at
+before update on public.report_entitlements
+for each row execute function public.set_updated_at();
+
 alter table public.profiles enable row level security;
 alter table public.checkins enable row level security;
+alter table public.report_entitlements enable row level security;
+alter table public.memberships enable row level security;
 
 drop policy if exists profiles_select_own on public.profiles;
 create policy profiles_select_own
@@ -103,5 +139,19 @@ on public.checkins for delete
 to authenticated
 using (auth.uid() = user_id);
 
+drop policy if exists memberships_select_own on public.memberships;
+create policy memberships_select_own
+on public.memberships for select
+to authenticated
+using (auth.uid() = user_id);
+
+drop policy if exists report_entitlements_select_own on public.report_entitlements;
+create policy report_entitlements_select_own
+on public.report_entitlements for select
+to authenticated
+using (auth.uid() = user_id);
+
 grant select, insert, update, delete on public.profiles to authenticated;
 grant select, insert, update, delete on public.checkins to authenticated;
+grant select on public.memberships to authenticated;
+grant select on public.report_entitlements to authenticated;

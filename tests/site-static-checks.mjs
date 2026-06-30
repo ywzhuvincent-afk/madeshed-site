@@ -288,16 +288,46 @@ includesAll(index, [
   '按月份查看全部累计记录',
 ], 'full history modal');
 
+includesAll(index, [
+  'id="report-range-controls"',
+  'data-report-range="7"',
+  'data-report-range="30"',
+  'data-report-range="365"',
+  'data-report-range="all"',
+  'id="report-free-stats"',
+  'id="paid-report-products"',
+  'id="premium-report-output"',
+  'const REPORT_PRODUCTS',
+  'const STRIPE_CHECKOUT_ENDPOINT',
+  'const MEMBERSHIP_CHECKOUT_ENDPOINT',
+  'function summarizeReportEntries(entries,profile)',
+  'function renderReportCenter()',
+  'function renderPaidReportProducts()',
+  'function buildDetailedReport(type,summary,profile)',
+  'function beginReportCheckout(type)',
+  'function hasReportAccess(type)',
+  'data-report-action="buy"',
+  'data-report-action="generate"',
+  '高级会员免费生成',
+  '不构成投资建议',
+], 'paid detailed report center');
+
 assert.ok(existsSync(supabaseSchemaPath), 'supabase/schema.sql should exist');
 
 includesAll(supabaseSchema, [
   'create table if not exists public.profiles',
   'create table if not exists public.checkins',
+  'create table if not exists public.report_entitlements',
+  'create table if not exists public.memberships',
   'alter table public.profiles enable row level security',
   'alter table public.checkins enable row level security',
+  'alter table public.report_entitlements enable row level security',
+  'alter table public.memberships enable row level security',
   'auth.uid() = user_id',
   'profiles_select_own',
   'checkins_select_own',
+  'report_entitlements_select_own',
+  'memberships_select_own',
   'unique (user_id, checkin_date)',
 ], 'Supabase schema and RLS');
 
