@@ -12,6 +12,9 @@ const supabaseSchemaPath = 'supabase/schema.sql';
 const supabaseSchema = existsSync(supabaseSchemaPath)
   ? readFileSync(supabaseSchemaPath, utf8)
   : '';
+const packageJson = existsSync('package.json')
+  ? readFileSync('package.json', utf8)
+  : '';
 
 function includesAll(source, values, label) {
   for (const value of values) {
@@ -722,19 +725,56 @@ includesAll(supabaseSchema, [
 
 [
   'api/account.js',
+  'api/_bazi-runtime.js',
   'api/fortune-report.js',
   'api/master-question.js',
   'api/master-history.js',
+  'api/report.js',
   'api/checkout.js',
   'api/stripe-webhook.js',
 ].forEach((file) => assert.ok(existsSync(file), `${file} should exist`));
 
+includesAll(packageJson, [
+  '"lunar-javascript"',
+  '"1.6.13"',
+], 'server bazi dependency');
+
 const accountApi = readFileSync('api/account.js', utf8);
+const accessApi = readFileSync('api/_access.js', utf8);
+const baziRuntimeApi = readFileSync('api/_bazi-runtime.js', utf8);
 const fortuneReportApi = readFileSync('api/fortune-report.js', utf8);
 const masterQuestionApi = readFileSync('api/master-question.js', utf8);
 const masterHistoryApi = readFileSync('api/master-history.js', utf8);
+const reportApi = readFileSync('api/report.js', utf8);
 const checkoutApi = readFileSync('api/checkout.js', utf8);
 const stripeWebhookApi = readFileSync('api/stripe-webhook.js', utf8);
+const healthApi = readFileSync('api/health.js', utf8);
+const scoreApi = readFileSync('api/score.js', utf8);
+const profileApi = readFileSync('api/profile.js', utf8);
+const monthlyApi = readFileSync('api/monthly.js', utf8);
+
+includesAll(baziRuntimeApi, [
+  'lunar-javascript',
+  'runInNewContext',
+  'window.MadeshedBazi',
+  'loadBaziEngine',
+], 'server bazi runtime');
+
+[
+  ['score API', scoreApi],
+  ['profile API', profileApi],
+  ['monthly API', monthlyApi],
+].forEach(([label, source]) => {
+  includesAll(source, ['loadBaziEngine'], label);
+  assert.ok(!/placeholder|_placeholder/i.test(source), `${label} should not expose placeholder responses`);
+});
+
+includesAll(healthApi, [
+  'configuration',
+  'stripeConfigured',
+  'llmConfigured',
+  'supabaseConfigured',
+], 'health configuration readiness');
 
 includesAll(accountApi, [
   "action === 'bootstrap'",
@@ -771,11 +811,31 @@ includesAll(accountApi, [
 includesAll(fortuneReportApi, [
   'FORTUNE_REPORT_TYPES',
   'buildFortuneReport',
+  'authorizeFortuneReportAccess',
+  'loadSavedProfile',
+  "mode === 'preview'",
   'full',
   'dayun',
   'month',
   '不构成投资、医疗或法律建议',
 ], 'fortune report API');
+
+includesAll(reportApi, [
+  'authorizeTradeReportAccess',
+  'loadCloudCheckins',
+  'report_entitlements',
+  'generated_reports',
+  "mode === 'preview'",
+  '不构成投资建议',
+], 'server trade report API');
+
+includesAll(accessApi, [
+  'report_entitlements',
+  'generated_reports',
+  'fortune_reports',
+  'authorizeTradeReportAccess',
+  'authorizeFortuneReportAccess',
+], 'shared paid access API');
 
 includesAll(masterQuestionApi, [
   'MASTER_CATEGORIES',
@@ -838,6 +898,7 @@ includesAll(checkoutApi, [
 
 includesAll(stripeWebhookApi, [
   'STRIPE_WEBHOOK_SECRET',
+  'stripe_webhook_secret_required',
   'checkout.session.completed',
   'customer.subscription.updated',
   'invoice.paid',
@@ -847,6 +908,12 @@ includesAll(stripeWebhookApi, [
   'report_entitlements',
   'fortune_reports',
 ], 'stripe webhook API');
+
+assert.ok(!stripeWebhookApi.includes('if (secret &&'), 'stripe webhook must not accept unsigned production events when secret is missing');
+
+includesAll(index, [
+  "const TRADE_REPORT_ENDPOINT='/api/report'",
+], 'server trade report frontend integration');
 
 assert.ok(!index.includes('LLM_API_KEY'), 'frontend must not expose LLM_API_KEY');
 assert.ok(!index.includes('STRIPE_SECRET_KEY'), 'frontend must not expose STRIPE_SECRET_KEY');

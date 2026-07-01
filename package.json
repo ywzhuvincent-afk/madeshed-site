@@ -1,0 +1,9 @@
+{
+  "name": "madeshed-site",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "lunar-javascript": "1.6.13"
+  }
+}

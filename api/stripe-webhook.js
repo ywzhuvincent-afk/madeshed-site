@@ -255,7 +255,13 @@ export default async function handler(req, res) {
   }
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   const rawBody = await readRawBody(req);
-  if (secret && !verifyStripeSignature(rawBody, req.headers['stripe-signature'], secret)) {
+  if (!secret) {
+    return send(res, 503, {
+      error: 'stripe_webhook_secret_required',
+      message: 'STRIPE_WEBHOOK_SECRET is required before Stripe webhook events can be accepted.'
+    });
+  }
+  if (!verifyStripeSignature(rawBody, req.headers['stripe-signature'], secret)) {
     return send(res, 400, { error: 'invalid_signature' });
   }
 
