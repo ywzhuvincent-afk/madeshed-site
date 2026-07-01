@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -82,6 +82,19 @@
   .s-head{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
   .s-head h2{font-size:14px;font-weight:600;letter-spacing:.02em}
   .s-head .en{font-size:10px;letter-spacing:.2em;color:var(--text-3);text-transform:uppercase}
+  .s-head.toggle{cursor:pointer;user-select:none;border:1px solid transparent;border-radius:10px;padding:8px 10px;margin-left:-10px;margin-right:-10px}
+  .s-head.toggle:hover{background:var(--panel);border-color:var(--line)}
+  .s-head.toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .s-head .s-chev{margin-left:auto;align-self:center;color:var(--text-3);font-style:normal;font-size:15px;transition:transform .15s ease}
+  .s-head[aria-expanded="false"] .s-chev{transform:rotate(-90deg)}
+  .section-body[hidden]{display:none}
+  .sz-adv-toggle{margin-top:10px;width:100%;background:transparent;border:1px solid var(--line);border-radius:9px;color:var(--text-2);font-size:12px;font-family:inherit;padding:9px 10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+  .sz-adv-toggle:hover{border-color:var(--accent);color:var(--text)}
+  .sz-adv-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .sz-adv-toggle .s-chev{font-style:normal;transition:transform .15s ease}
+  .sz-adv-toggle[aria-expanded="true"] .s-chev{transform:rotate(180deg)}
+  .sz tr.sz-adv{display:none}
+  .sz.show-adv tr.sz-adv{display:table-row}
 
   /* ---------- basic chips ---------- */
   .chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
@@ -89,6 +102,8 @@
   .chip .k{font-size:10px;color:var(--text-3);letter-spacing:.1em;text-transform:uppercase}
   .chip .v{font-size:15px;margin-top:3px;font-weight:500}
   .chip .v small{font-size:11px;color:var(--text-2);font-weight:400}
+  body[data-locale="en"] .chip .v .cn{display:block;margin-bottom:2px}
+  body[data-locale="en"] .chip .v small{display:block;margin-top:2px;color:var(--text-3);font-size:11px;line-height:1.3;letter-spacing:0;font-weight:500}
 
   /* ---------- yongshen ---------- */
   .yong{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
@@ -107,9 +122,9 @@
                   background:linear-gradient(90deg,var(--water),var(--accent),var(--fire))}
 
   /* ---------- 四柱 table ---------- */
-  .sz{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);
+  .sz{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;background:var(--panel);
       border:1px solid var(--line);border-radius:14px;overflow:hidden}
-  .sz th,.sz td{padding:9px 6px;text-align:center;vertical-align:middle;border-bottom:1px solid var(--line)}
+  .sz th,.sz td{padding:9px 6px;text-align:center;vertical-align:middle;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
   .sz tr:last-child td{border-bottom:none}
   .sz .rowlab{width:62px;font-size:11px;color:var(--text-3);text-align:left;padding-left:14px;letter-spacing:.04em;background:var(--panel-2)}
   .sz thead th{font-size:11px;color:var(--text-2);font-weight:500;letter-spacing:.06em;padding:11px 6px}
@@ -118,8 +133,10 @@
   .gan,.zhi{font-family:var(--serif);font-size:34px;font-weight:500;line-height:1.1}
   .ss{font-size:12px;color:var(--text-2)}
   .hide-list{display:flex;flex-direction:column;gap:3px;font-size:12px}
+  .hide-list span{display:flex;align-items:baseline;justify-content:center;gap:3px;flex-wrap:wrap}
   .hide-list span b{font-family:var(--serif);font-weight:600;font-size:13px}
-  .hide-list span em{color:var(--text-3);font-style:normal;margin-left:3px;font-size:11px}
+  .hide-list span em{color:var(--text-3);font-style:normal;font-size:11px}
+  .sz td small{display:block;margin-top:3px;color:var(--text-3);font-size:10px;line-height:1.25}
   .nayin,.kong{font-size:12px;color:var(--text-2)}
   .ssha{font-size:11px;color:var(--text-2);line-height:1.7}
   .ssha .none{color:var(--text-3)}
@@ -143,7 +160,14 @@
   .cell.sel{border-color:var(--accent);background:rgba(198,182,245,.08)}
   .cell.now::after{content:"今";position:absolute;top:-7px;right:-6px;font-size:9px;background:var(--accent);
         color:#1a1430;border-radius:6px;padding:1px 5px;font-weight:700}
+  body[data-locale="en"] .cell.now::after{content:"Now"}
   .cell .gz{font-family:var(--serif);font-size:19px;font-weight:600;letter-spacing:1px}
+  .cell.en{min-width:96px}
+  .cell.en .gz{font-size:19px;line-height:1.08}
+  body[data-locale="en"] .cell .gz .cn{display:block}
+  body[data-locale="en"] .cell .gz small{display:block;margin-top:3px;color:var(--text-3);font-family:var(--font-sans);font-size:10px;line-height:1.25;letter-spacing:0;font-weight:500}
+  .cell .py{font-family:var(--font-mono);font-size:9px;color:var(--text);letter-spacing:0;margin-top:2px}
+  .cell .meaning{font-size:9px;color:var(--text-3);line-height:1.2;min-height:22px;margin-top:1px}
   .cell .meta{font-size:10px;color:var(--text-3);margin-top:3px;white-space:nowrap}
   .cell.clickless{cursor:default}.cell.clickless:hover{transform:none;border-color:var(--line)}
   .pano-empty{color:var(--text-3);font-size:12px;padding:14px}
@@ -162,14 +186,18 @@
     .field input,.field select{min-width:0;width:100%}
     .btn{width:100%}
     .lead{max-width:100%}
-    .yong{grid-template-columns:1fr} .gan,.zhi{font-size:27px}
+    .yong{grid-template-columns:1fr}
+    .sz th,.sz td{padding:8px 4px}
+    .gan,.zhi{font-size:27px}
     h1{font-size:20px} .sz .rowlab{width:46px;font-size:10px;padding-left:8px}
+    .sz td small,.hide-list span em{font-size:9px}
+    .ssha{font-size:10px}
     .hint{display:none}
   }
   @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 </style>
 </head>
-<body>
+<body data-locale="en">
 <nav class="nav" aria-label="主导航">
   <div class="nav-left">
     <button class="logo" type="button" data-home-link aria-label="返回首页">Madeshed<span class="dot">·</span></button>
@@ -245,6 +273,7 @@
   <section>
     <div class="s-head"><h2>四柱排盘</h2><span class="en">Four Pillars</span></div>
     <table class="sz" id="sztable"></table>
+    <button type="button" class="sz-adv-toggle" id="sz-adv-toggle" aria-expanded="false" aria-controls="sztable"><span class="sz-adv-label">查看专业细节（纳音 · 空亡 · 神煞）</span><i class="s-chev" aria-hidden="true">⌄</i></button>
   </section>
 
   <section>
@@ -264,6 +293,69 @@
 <script>
 (function(){
   "use strict";
+  var CHART_LOCALE_KEY='madeshed_locale_v1';
+  function chartNormalizeLocale(locale){var raw=String(locale||'').toLowerCase();return raw.indexOf('en')===0?'en':'zh-CN';}
+  function chartLocaleFromUrl(){try{var params=new URLSearchParams(location.search),raw=params.get('lang')||params.get('locale')||params.get('language');if(!raw)return null;var value=String(raw).toLowerCase();if(value==='zh'||value==='cn'||value.indexOf('zh')===0)return'zh-CN';if(value==='en'||value.indexOf('en')===0)return'en';return null;}catch(e){return null;}}
+  function chartDefaultLocale(){return'en';}
+  function chartSyncLocaleUrl(locale){try{var url=new URL(location.href),had=url.searchParams.has('lang')||url.searchParams.has('locale')||url.searchParams.has('language');if(!had)return;var l=chartNormalizeLocale(locale);url.searchParams.delete('locale');url.searchParams.delete('language');url.searchParams.set('lang',l==='en'?'en':'zh');history.replaceState(null,'',url.pathname+url.search+url.hash);}catch(e){}}
+  function chartStoredLocale(){try{var raw=localStorage.getItem(CHART_LOCALE_KEY);return raw?chartNormalizeLocale(raw):null;}catch(e){return null;}}
+  function chartLocaleIsEn(){return chartNormalizeLocale(document.body&&document.body.dataset.locale)==='en';}
+  function chartWriteLocale(locale){try{localStorage.setItem(CHART_LOCALE_KEY,chartNormalizeLocale(locale));}catch(e){}}
+  function chartEscape(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function chartSetText(selector,value){document.querySelectorAll(selector).forEach(function(el){if(!el.dataset.originalText)el.dataset.originalText=el.textContent;el.textContent=chartLocaleIsEn()?value:el.dataset.originalText;});}
+  function chartSetHtml(selector,value){document.querySelectorAll(selector).forEach(function(el){if(!el.dataset.originalHtml)el.dataset.originalHtml=el.innerHTML;el.innerHTML=chartLocaleIsEn()?value:el.dataset.originalHtml;});}
+  function chartSetAttr(selector,attr,value){document.querySelectorAll(selector).forEach(function(el){var key='originalAttr'+attr.replace(/[^a-z0-9]/gi,'');if(!el.dataset[key])el.dataset[key]=el.getAttribute(attr)||'';if(chartLocaleIsEn())el.setAttribute(attr,value);else el.setAttribute(attr,el.dataset[key]);});}
+  function elementNameEn(el){return {wood:'Wood',fire:'Fire',earth:'Earth',metal:'Metal',water:'Water'}[el]||el||'Unknown';}
+  function strengthEn(label,pct){var n=Number(pct);if(/太弱/.test(label)||n<=24)return'Very Weak';if(/偏弱/.test(label)||n<=42)return'Weak';if(/均衡/.test(label)||n<58)return'Balanced';if(/偏强/.test(label)||n<=78)return'Strong';return'Very Strong';}
+  function genderEn(v){return String(v).indexOf('女')>=0?'Female':'Male';}
+  function ziRuleEn(v){if(/晚/.test(v))return'Late Zi hour uses next-day rule';if(/早/.test(v))return'Early Zi hour';return'Not Zi hour';}
+  function tenGodEn(v){var m={'比肩':'Peer','劫财':'Rob Wealth','食神':'Eating God','伤官':'Hurting Officer','偏财':'Indirect Wealth','正财':'Direct Wealth','七杀':'Seven Killings','正官':'Direct Officer','偏印':'Indirect Resource','正印':'Direct Resource'};var s=String(v||'');if(/^元/.test(s))return s.indexOf('女')>=0?'Day Master · Female':'Day Master · Male';return m[s]||s;}
+  function shenShaEn(v){var m={'天乙贵人':'Noble Helper','文昌贵人':'Academic Star','禄神':'Prosperity Star','羊刃':'Yang Blade','将星':'General Star','华盖':'Solitary Talent','驿马':'Travel Star','桃花':'Peach Blossom','劫煞':'Robbery Sha','亡神':'Loss Spirit'};return m[v]||v;}
+  function naYinEn(v){var m={'海中金':'Sea Metal','炉中火':'Furnace Fire','大林木':'Great Forest Wood','路旁土':'Roadside Earth','剑锋金':'Sword Metal','山头火':'Mountain Fire','涧下水':'Stream Water','城头土':'City Wall Earth','白蜡金':'White Wax Metal','杨柳木':'Willow Wood','泉中水':'Spring Water','屋上土':'Roof Earth','霹雳火':'Thunder Fire','松柏木':'Pine Wood','长流水':'Long Flowing Water','沙中金':'Sand Metal','山下火':'Mountain Foot Fire','平地木':'Flatland Wood','壁上土':'Wall Earth','金箔金':'Gold Foil Metal','覆灯火':'Lamp Fire','天河水':'Milky Way Water','大驿土':'Great Post Earth','钗钏金':'Jewelry Metal','桑柘木':'Mulberry Wood','大溪水':'Great Creek Water','沙中土':'Sand Earth','天上火':'Sky Fire','石榴木':'Pomegranate Wood','大海水':'Great Sea Water'};return m[v]||'Na Yin Layer';}
+  function stemInfoEn(stem){var m={甲:['Jia','Yang','Wood'],乙:['Yi','Yin','Wood'],丙:['Bing','Yang','Fire'],丁:['Ding','Yin','Fire'],戊:['Wu','Yang','Earth'],己:['Ji','Yin','Earth'],庚:['Geng','Yang','Metal'],辛:['Xin','Yin','Metal'],壬:['Ren','Yang','Water'],癸:['Gui','Yin','Water']};var x=m[stem]||['--','',''];return{han:stem||'--',pinyin:x[0],polarity:x[1],element:x[2],label:(x[1]?x[1]+' ':'')+(x[2]||'')};}
+  function branchInfoEn(branch){var m={子:['Zi','Rat','Yang','Water'],丑:['Chou','Ox','Yin','Earth'],寅:['Yin','Tiger','Yang','Wood'],卯:['Mao','Rabbit','Yin','Wood'],辰:['Chen','Dragon','Yang','Earth'],巳:['Si','Snake','Yin','Fire'],午:['Wu','Horse','Yang','Fire'],未:['Wei','Goat','Yin','Earth'],申:['Shen','Monkey','Yang','Metal'],酉:['You','Rooster','Yin','Metal'],戌:['Xu','Dog','Yang','Earth'],亥:['Hai','Pig','Yin','Water']};var x=m[branch]||['--','--','',''];return{han:branch||'--',pinyin:x[0],animal:x[1],polarity:x[2],element:x[3],label:(x[2]?x[2]+' ':'')+(x[3]?x[3]+' ':'')+x[1]};}
+  function zodiacEn(v){var m={'鼠':'Rat','牛':'Ox','虎':'Tiger','兔':'Rabbit','龙':'Dragon','蛇':'Snake','马':'Horse','羊':'Goat','猴':'Monkey','鸡':'Rooster','狗':'Dog','猪':'Pig'};return m[v]||v;}
+  function chartPillarPinyin(gz){return stemInfoEn(String(gz||'').charAt(0)).pinyin+' '+branchInfoEn(String(gz||'').charAt(1)).pinyin;}
+  function chartPillarMeaning(gz){var s=stemInfoEn(String(gz||'').charAt(0)),b=branchInfoEn(String(gz||'').charAt(1));return s.label+' '+b.animal;}
+  function chartPillarDisplayEn(gz){var text=String(gz||'');if(!text)return'--';return '<span class="cn">'+chartEscape(text)+'</span><small>'+chartEscape(chartPillarPinyin(text))+' · '+chartEscape(chartPillarMeaning(text))+'</small>';}
+  function branchDisplayEn(b){var info=branchInfoEn(b);return '<span class="cn">'+chartEscape(b)+'</span><small>'+info.pinyin+' · '+info.label+'</small>';}
+  function applyChartEnglishLocale(){
+    var en=chartLocaleIsEn();
+    document.documentElement.lang=en?'en':'zh-CN';
+    document.title=en?'Full BaZi Chart & Luck Timeline · Madeshed':'完整排盘 · 流年大运全景 · Madeshed';
+    document.querySelectorAll('meta[name="description"]').forEach(function(m){m.setAttribute('content',en?'Full BaZi chart with Four Pillars, Ten Gods, hidden stems, Na Yin, void branches, symbolic stars, and luck-cycle timeline.':'Madeshed 完整排盘页，展示四柱、十神、藏干、神煞、大运、流年、流月与流日全景时间轴。');});
+    document.querySelectorAll('meta[property="og:title"],meta[name="twitter:title"]').forEach(function(m){m.setAttribute('content',document.title);});
+    document.querySelectorAll('meta[property="og:description"],meta[name="twitter:description"]').forEach(function(m){m.setAttribute('content',en?'Four Pillars, Ten Gods, hidden stems, Na Yin, void branches, symbolic stars, and luck-cycle timeline.':'四柱、十神、藏干、神煞、大运、流年、流月与流日全景时间轴。');});
+    setChartLocaleButtons(en?'en':'zh-CN');
+    chartSetAttr('nav','aria-label','Main navigation');
+    chartSetAttr('[data-home-link]','aria-label','Back to homepage');
+    chartSetAttr('#mobile-menu-toggle','aria-label','Open navigation menu');
+    chartSetText('.nav-links a[href="/#/daily"],.mobile-menu a[href="/#/daily"]','Daily');
+    chartSetText('.nav-links a[href="/#/dashboard"],.mobile-menu a[href="/#/dashboard"]','Chart');
+    chartSetText('.nav-links a[href="/chart-full.html"],.mobile-menu a[href="/chart-full.html"]','Forecast');
+    chartSetText('.nav-links a[href="/#/report"],.mobile-menu a[href="/#/report"]','Reports');
+    chartSetText('.nav-links a[href="/#/fortune"],.mobile-menu a[href="/#/fortune"]','Ask Master');
+    chartSetText('.nav-links a[href="/#/account"],.mobile-menu a[href="/#/account"]','Account');
+    chartSetText('.btn-signin','Login');
+    chartSetText('.eyebrow','Madeshed · Full Chart');
+    chartSetHtml('header h1','Full BaZi Chart<span class="sep">/</span>Luck Timeline');
+    chartSetText('.lead','Four Pillars, Ten Gods, hidden stems, Na Yin, void branches, core symbolic stars, favorable elements, plus a Luck → Year → Month → Day timeline. Click a Luck Cycle or Year to inspect the next layer.');
+    chartSetText('label[for="in-date"]','Birth Date');
+    chartSetText('label[for="in-time"]','Birth Time');
+    chartSetText('label[for="in-gender"]','Gender');
+    if(en){var sel=document.getElementById('in-gender');if(sel){sel.options[0].textContent='Male';sel.options[1].textContent='Female';}}else{var sel2=document.getElementById('in-gender');if(sel2){sel2.options[0].textContent='男';sel2.options[1].textContent='女';}}
+    chartSetText('#go','Generate Chart');
+    chartSetText('.hint','This page reads the saved chart from the main dashboard first. Use the inputs only when you want to inspect another birth chart.');
+    chartSetText('.sz-adv-label','Show advanced details (Na Yin, Void branches, Symbolic Stars)');
+    var heads=document.querySelectorAll('.s-head h2'),ens=document.querySelectorAll('.s-head .en');
+    var h=['Basic Information','Favorable Elements','Wealth / Investment','Four Pillars Chart','Luck / Year / Month / Day Timeline'];
+    var sub=['Overview','Natal timing support','Trading context','Four Pillars, Ten Gods, hidden stems','Timeline'];
+    heads.forEach(function(el,i){if(!el.dataset.originalText)el.dataset.originalText=el.textContent;if(en)el.textContent=h[i]||el.textContent;else el.textContent=el.dataset.originalText;});
+    ens.forEach(function(el,i){if(!el.dataset.originalText)el.dataset.originalText=el.textContent;if(en)el.textContent=sub[i]||el.textContent;else el.textContent=el.dataset.originalText;});
+    chartSetHtml('footer','<b>About the calculation:</b> Four Pillars, Ten Gods, hidden stems, Na Yin, void branches, luck cycles, annual cycles, and monthly cycles are calculated by the chart engine. Start dates can vary slightly across schools.<br><b>Symbolic stars:</b> this page shows a focused set with clear rules, not every traditional star.<br><b>Favorable elements:</b> the automatic reading is a structured approximation for self-review and timing context. Complex charts may require human review.<div class="risk-note"><b>Not investment advice:</b> Madeshed charts, scores, and timelines are decision-support and self-review tools. You are responsible for every trade and outcome.</div>');
+  }
+  function setChartLocaleButtons(locale){document.querySelectorAll('.lang button').forEach(function(btn){var isEn=btn.textContent.trim().toUpperCase()==='EN',active=(locale==='en')===isEn;btn.classList.toggle('active',active);btn.setAttribute('aria-pressed',active?'true':'false');});}
+  function chooseChartLocale(locale){var l=chartNormalizeLocale(locale);document.body.dataset.locale=l;chartWriteLocale(l);chartSyncLocaleUrl(l);applyChartEnglishLocale();compute();}
   var mobileToggle=document.getElementById('mobile-menu-toggle');
   var mobileMenu=document.getElementById('mobile-menu');
   if(mobileToggle&&mobileMenu){
@@ -277,9 +369,14 @@
   }
   var homeLogo=document.querySelector('[data-home-link]');
   if(homeLogo)homeLogo.addEventListener('click',function(){location.href='/#/';});
+  document.querySelectorAll('.lang button').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      chooseChartLocale(btn.textContent.trim().toUpperCase()==='EN'?'en':'zh-CN');
+    });
+  });
   if (typeof Solar === "undefined") {
     document.getElementById('basic').innerHTML =
-      '<div class="chip"><div class="v">排盘库未加载，请检查 lunar-javascript 脚本。</div></div>';
+      '<div class="chip"><div class="v">'+(chartLocaleIsEn()?'Chart library failed to load. Please check the lunar-javascript script.':'排盘库未加载，请检查 lunar-javascript 脚本。')+'</div></div>';
     return;
   }
 
@@ -355,7 +452,7 @@
              nowDy:'', nowYear:0, nowMonthGz:'', nowDayGz:''};
 
   function elPills(els){
-    return els.map(function(e){ return '<span class="el-pill el-'+e+'">'+EL_CN[e]+'</span>'; }).join('');
+    return els.map(function(e){ return '<span class="el-pill el-'+e+'">'+(chartLocaleIsEn()?elementNameEn(e):EL_CN[e])+'</span>'; }).join('');
   }
 
   function compute(){
@@ -429,6 +526,25 @@
       ['起运', '<small>出生后约 '+yun.getStartYear()+'年'+yun.getStartMonth()+'月'+yun.getStartDay()+'天</small>'],
       ['交运', '<small>'+startSolar.toYmd()+'</small>']
     ];
+    if(chartLocaleIsEn())return renderBasicEnglish({dm:dm,lunar:lunar,clockYmd:clockYmd,clockTime:clockTime,meta:meta,ziText:ziText,startSolar:startSolar,yun:yun,ec:ec});
+    document.getElementById('basic').innerHTML=rows.map(function(r){
+      return '<div class="chip"><div class="k">'+r[0]+'</div><div class="v">'+r[1]+'</div></div>';
+    }).join('');
+  }
+  function renderBasicEnglish(ctx){
+    var rows=[
+      ['Gender', ctx.meta&&ctx.meta.gender?genderEn(ctx.meta.gender):(state.gender?'Male':'Female')],
+      ['Solar Birth Time', ctx.clockYmd+' '+ctx.clockTime],
+      ['Lunar Calendar', '<small>Lunar date retained for calculation</small>'],
+      ['True Solar Time', '<small>'+((ctx.meta.trueSolarYmd||ctx.clockYmd)+' '+(ctx.meta.trueSolarTime||ctx.clockTime))+'</small>'],
+      ['Zi Hour Rule', '<small>'+ziRuleEn(ctx.ziText)+'</small>'],
+      ['Chinese Zodiac', zodiacEn(ctx.lunar.getYearShengXiao())],
+      ['Day Master', '<span class="'+elClass(ctx.dm)+'">'+ctx.dm+'</span><small>'+stemInfoEn(ctx.dm).pinyin+' · '+stemInfoEn(ctx.dm).label+'</small>'],
+      ['Life Palace', chartPillarDisplayEn(ctx.ec.getMingGong())],
+      ['Fetal Origin', chartPillarDisplayEn(ctx.ec.getTaiYuan())],
+      ['Luck Start', '<small>About '+ctx.yun.getStartYear()+'y '+ctx.yun.getStartMonth()+'m '+ctx.yun.getStartDay()+'d after birth</small>'],
+      ['Cycle Handover', '<small>'+ctx.startSolar.toYmd()+'</small>']
+    ];
     document.getElementById('basic').innerHTML=rows.map(function(r){
       return '<div class="chip"><div class="k">'+r[0]+'</div><div class="v">'+r[1]+'</div></div>';
     }).join('');
@@ -442,6 +558,7 @@
     var st=state.shared&&state.shared.strength?state.shared.strength:window.MadeshedBazi.calcStrength(stems,branches,hide);
     state.strength=st; state.yong=state.shared.yongShen;
     var ys=state.yong;
+    if(chartLocaleIsEn())return renderYongEnglish(st,ys);
 
     document.getElementById('yong').innerHTML=
       '<div class="box use"><div class="lab">主用神 · 强弱</div>'+
@@ -454,11 +571,24 @@
       '<div class="box ji"><div class="lab">忌神</div><div class="els">'+elPills(ys.ji)+'</div>'+
         '<div class="note">本命所忌：逢此五行之运势，易受抑制、需留意。</div></div>';
   }
+  function renderYongEnglish(st,ys){
+    document.getElementById('yong').innerHTML=
+      '<div class="box use"><div class="lab">Primary Support · Strength</div>'+
+        '<div class="els"><span class="el-pill el-'+ys.main+'">'+elementNameEn(ys.main)+'</span>'+
+        '<span style="font-size:13px;color:var(--text-2);margin-left:4px">'+strengthEn(st.label,st.pct)+' '+st.pct+'</span></div>'+
+        '<div class="strength-bar"><i style="width:'+st.pct+'%"></i></div>'+
+        '<div class="note">This element supports chart balance. Use it as timing context, not as a return forecast.</div></div>'+
+      '<div class="box xi"><div class="lab">Supportive Elements</div><div class="els">'+elPills(ys.xi)+'</div>'+
+        '<div class="note">When luck cycles or dates carry these elements, the chart context is generally easier to work with.</div></div>'+
+      '<div class="box ji"><div class="lab">Pressure Elements</div><div class="els">'+elPills(ys.ji)+'</div>'+
+        '<div class="note">When these elements dominate, use more confirmation, smaller size, and stricter discipline.</div></div>';
+  }
 
   function renderWealth(){
     var st=state.strength, dm=state.ec.getDay().charAt(0);
     state.wealth=state.shared.wealth;
     var w=state.wealth;
+    if(chartLocaleIsEn())return renderWealthEnglish(w);
     document.getElementById('wealth').innerHTML=
       '<div class="box use"><div class="lab">财星 · 投资属性</div>'+
         '<div class="els"><span class="el-pill el-'+w.wealth+'">'+EL_CN[w.wealth]+'</span>'+
@@ -468,6 +598,17 @@
         '<div class="note">'+w.note+'</div></div>'+
       '<div class="box ji"><div class="lab">投资忌神 · 破财预警</div><div class="els">'+elPills(w.ji)+'</div>'+
         '<div class="note">'+w.alert+'</div></div>';
+  }
+  function renderWealthEnglish(w){
+    document.getElementById('wealth').innerHTML=
+      '<div class="box use"><div class="lab">Wealth Element · Trading Style</div>'+
+        '<div class="els"><span class="el-pill el-'+w.wealth+'">'+elementNameEn(w.wealth)+'</span>'+
+        '<span style="font-size:13px;color:'+w.color+';margin-left:6px">'+(w.band&&/弱/.test(w.band)?'Weak Day Master / Wealth Pressure':'Wealth Signal')+'</span></div>'+
+        '<div class="note">Your wealth element is '+elementNameEn(w.wealth)+'. In trading language, this describes opportunity, volatility, spending pressure, and risk appetite rather than guaranteed profit.</div></div>'+
+      '<div class="box xi"><div class="lab">Trading Support Elements</div><div class="els">'+elPills(w.xi)+'</div>'+
+        '<div class="note">Support elements help the chart carry opportunity with better discipline and clearer judgment.</div></div>'+
+      '<div class="box ji"><div class="lab">Trading Pressure Elements · Loss Warning</div><div class="els">'+elPills(w.ji)+'</div>'+
+        '<div class="note">When pressure elements are strong, avoid chasing, leverage, and impulsive sizing.</div></div>';
   }
 
   function renderSizhu(){
@@ -479,6 +620,7 @@
     var hide=[ec.getYearHideGan(),ec.getMonthHideGan(),ec.getDayHideGan(),ec.getTimeHideGan()];
     var nayin=[ec.getYearNaYin(),ec.getMonthNaYin(),ec.getDayNaYin(),ec.getTimeNaYin()];
     var kong=[ec.getYearXunKong(),ec.getMonthXunKong(),ec.getDayXunKong(),ec.getTimeXunKong()];
+    if(chartLocaleIsEn())return renderSizhuEnglish(P,ssGan,ssZhi,hide,nayin,kong,dg,yz,dz);
 
     function dayCls(i){ return i===2?' class="day-col"':''; }
     var h='<thead><tr><th class="rowlab" style="background:var(--panel-2)"></th>'+
@@ -498,25 +640,62 @@
           return '<span><b class="'+elClass(g)+'">'+g+'</b><em>'+(ssZhi[i][j]||'')+'</em></span>';}).join('');
         return '<td'+dayCls(i)+'><div class="hide-list">'+inner+'</div></td>';}).join('')+'</tr>';
     // 纳音
-    h+='<tr><td class="rowlab">纳音</td>'+nayin.map(function(n,i){
+    h+='<tr class="sz-adv"><td class="rowlab">纳音</td>'+nayin.map(function(n,i){
         return '<td'+dayCls(i)+'><span class="nayin">'+n+'</span></td>';}).join('')+'</tr>';
     // 空亡
-    h+='<tr><td class="rowlab">空亡</td>'+kong.map(function(k,i){
+    h+='<tr class="sz-adv"><td class="rowlab">空亡</td>'+kong.map(function(k,i){
         return '<td'+dayCls(i)+'><span class="kong">'+k+'</span></td>';}).join('')+'</tr>';
     // 神煞
-    h+='<tr><td class="rowlab">神煞</td>'+P.map(function(p,i){
+    h+='<tr class="sz-adv"><td class="rowlab">神煞</td>'+P.map(function(p,i){
         var list=shenShaFor(p.charAt(1), dg, yz, dz);
         var inner=list.length? list.join('<br>') : '<span class="none">—</span>';
         return '<td'+dayCls(i)+'><div class="ssha">'+inner+'</div></td>';}).join('')+'</tr>';
     h+='</tbody>';
     document.getElementById('sztable').innerHTML=h;
   }
+  function renderSizhuEnglish(P,ssGan,ssZhi,hide,nayin,kong,dg,yz,dz){
+    function dayCls(i){ return i===2?' class="day-col"':''; }
+    var heads=['Year Pillar','Month Pillar','Day Pillar','Hour Pillar'];
+    var h='<thead><tr><th class="rowlab" style="background:var(--panel-2)"></th>'+heads.map(function(x,i){return '<th'+(i===2?' class="day"':'')+'>'+x+'</th>';}).join('')+'</tr></thead><tbody>';
+    h+='<tr><td class="rowlab">Ten God</td>'+ssGan.map(function(s,i){
+      return '<td'+dayCls(i)+'><span class="ss" style="'+(i===2?'color:var(--accent);font-weight:600':'')+'">'+chartEscape(tenGodEn(s))+'</span></td>';
+    }).join('')+'</tr>';
+    h+='<tr><td class="rowlab">Heavenly Stem</td>'+P.map(function(p,i){
+      var stem=p.charAt(0),info=stemInfoEn(stem);
+      return '<td'+dayCls(i)+'><span class="gan '+elClass(stem)+'">'+stem+'</span><small>'+info.pinyin+' · '+info.label+'</small></td>';
+    }).join('')+'</tr>';
+    h+='<tr><td class="rowlab">Earthly Branch</td>'+P.map(function(p,i){
+      var branch=p.charAt(1),info=branchInfoEn(branch);
+      return '<td'+dayCls(i)+'><span class="zhi '+elClass(branch)+'">'+branch+'</span><small>'+info.pinyin+' · '+info.label+'</small></td>';
+    }).join('')+'</tr>';
+    h+='<tr><td class="rowlab">Hidden Stems</td>'+hide.map(function(arr,i){
+      var inner=arr.map(function(g,j){
+        return '<span><b class="'+elClass(g)+'">'+g+'</b><em>'+stemInfoEn(g).pinyin+' · '+chartEscape(tenGodEn((ssZhi[i]||[])[j]||''))+'</em></span>';
+      }).join('');
+      return '<td'+dayCls(i)+'><div class="hide-list">'+inner+'</div></td>';
+    }).join('')+'</tr>';
+    h+='<tr class="sz-adv"><td class="rowlab">Na Yin</td>'+nayin.map(function(n,i){
+      return '<td'+dayCls(i)+'><span class="nayin">'+chartEscape(naYinEn(n))+'</span></td>';
+    }).join('')+'</tr>';
+    h+='<tr class="sz-adv"><td class="rowlab">Void Branches</td>'+kong.map(function(k,i){
+      var parts=String(k||'').split('').filter(Boolean).map(branchDisplayEn).join('<br>');
+      return '<td'+dayCls(i)+'><span class="kong">'+(parts||'—')+'</span></td>';
+    }).join('')+'</tr>';
+    h+='<tr class="sz-adv"><td class="rowlab">Symbolic Stars</td>'+P.map(function(p,i){
+      var list=shenShaFor(p.charAt(1), dg, yz, dz);
+      var inner=list.length? list.map(shenShaEn).join('<br>') : '<span class="none">—</span>';
+      return '<td'+dayCls(i)+'><div class="ssha">'+inner+'</div></td>';
+    }).join('')+'</tr>';
+    h+='</tbody>';
+    document.getElementById('sztable').innerHTML=h;
+  }
 
   function cellHtml(gz, meta, opt){
     opt=opt||{};
-    var cls='cell'+(opt.sel?' sel':'')+(opt.now?' now':'')+(opt.clickless?' clickless':'');
+    var cls='cell'+(chartLocaleIsEn()?' en':'')+(opt.sel?' sel':'')+(opt.now?' now':'')+(opt.clickless?' clickless':'');
     var attr=opt.data!=null? ' data-'+opt.dataKey+'="'+opt.data+'"' : '';
-    return '<div class="'+cls+'"'+attr+'><div class="gz">'+(gz?gzSpan(gz):'—')+'</div>'+
+    var body=chartLocaleIsEn()?(gz?chartPillarDisplayEn(gz):'—'):(gz?gzSpan(gz):'—');
+    return '<div class="'+cls+'"'+attr+'><div class="gz">'+body+'</div>'+
            '<div class="meta">'+meta+'</div></div>';
   }
 
@@ -526,33 +705,34 @@
     var dyCells = daYun.map(function(x,i){
       var gz=x.getGanZhi();
       var startAge=x.getStartYear()-by;
-      var meta = gz? (startAge+'岁 · '+x.getStartYear()) : ('起运前 · '+x.getStartYear());
+      var meta = chartLocaleIsEn()?(gz?('Age '+startAge+' · '+x.getStartYear()):('Before luck start · '+x.getStartYear())):(gz? (startAge+'岁 · '+x.getStartYear()) : ('起运前 · '+x.getStartYear()));
       return cellHtml(gz||'', meta, {sel:i===state.selDy, now:gz&&gz===state.nowDy,
                                      data:i, dataKey:'dy'});
     }).join('');
 
     // 2) 流年行（选中大运的 10 年）
-    var lnHtml='<div class="pano-empty">选择一个大运查看流年</div>';
+    var lnHtml='<div class="pano-empty">'+(chartLocaleIsEn()?'Select a Luck Cycle to view annual pillars':'选择一个大运查看流年')+'</div>';
     var selDyObj = daYun[state.selDy];
     if(selDyObj){
       var lnArr=selDyObj.getLiuNian();
       lnHtml = lnArr.map(function(y){
         var yr=y.getYear();
-        return cellHtml(y.getGanZhi(), (yr-by)+'岁 · '+yr,
+        return cellHtml(y.getGanZhi(), (chartLocaleIsEn()?'Age ':'')+(yr-by)+(chartLocaleIsEn()?' · ':'岁 · ')+yr,
           {sel:yr===state.selYear, now:yr===state.nowYear, data:yr, dataKey:'yr'});
       }).join('');
     }
 
     // 3) 流月行（选中流年的 12 月）
-    var lyHtml='<div class="pano-empty">选择一个流年查看流月</div>';
+    var lyHtml='<div class="pano-empty">'+(chartLocaleIsEn()?'Select a Year to view monthly pillars':'选择一个流年查看流月')+'</div>';
     if(selDyObj){
       var ln=selDyObj.getLiuNian().filter(function(y){return y.getYear()===state.selYear;})[0];
       if(ln){
         var JIE=['立春','惊蛰','清明','立夏','芒种','小暑','立秋','白露','寒露','立冬','大雪','小寒'];
+        var JIE_EN=['Start of Spring','Awakening','Clear Bright','Start of Summer','Grain Buds','Minor Heat','Start of Autumn','White Dew','Cold Dew','Start of Winter','Major Snow','Minor Cold'];
         lyHtml = ln.getLiuYue().map(function(m,idx){
           var gz=m.getGanZhi();
           var isNow=(state.selYear===state.nowYear && gz===state.nowMonthGz);
-          return cellHtml(gz, JIE[idx]||m.getMonthInChinese()+'月', {now:isNow, clickless:true});
+          return cellHtml(gz, chartLocaleIsEn()?(JIE_EN[idx]||('Month '+(idx+1))):(JIE[idx]||m.getMonthInChinese()+'月'), {now:isNow, clickless:true});
         }).join('');
       }
     }
@@ -569,10 +749,11 @@
     }
 
     document.getElementById('pano').innerHTML=
-      '<div class="pano-row"><div class="rlab">大运<small>DaYun</small></div><div class="track" id="trk-dy">'+dyCells+'</div></div>'+
-      '<div class="pano-row"><div class="rlab">流年<small>Year</small></div><div class="track" id="trk-yr">'+lnHtml+'</div></div>'+
-      '<div class="pano-row"><div class="rlab">流月<small>Month</small></div><div class="track">'+lyHtml+'</div></div>'+
-      '<div class="pano-row"><div class="rlab">流日<small>Day</small></div><div class="track" id="trk-ld">'+ldCells+'</div></div>';
+      '<div class="pano-row"><div class="rlab">'+(chartLocaleIsEn()?'Luck':'大运')+'<small>'+(chartLocaleIsEn()?'Cycle':'DaYun')+'</small></div><div class="track" id="trk-dy">'+dyCells+'</div></div>'+
+      '<div class="pano-row"><div class="rlab">'+(chartLocaleIsEn()?'Year':'流年')+'<small>Year</small></div><div class="track" id="trk-yr">'+lnHtml+'</div></div>'+
+      '<div class="pano-row"><div class="rlab">'+(chartLocaleIsEn()?'Month':'流月')+'<small>Month</small></div><div class="track">'+lyHtml+'</div></div>'+
+      '<div class="pano-row"><div class="rlab">'+(chartLocaleIsEn()?'Day':'流日')+'<small>Day</small></div><div class="track" id="trk-ld">'+ldCells+'</div></div>'+
+      (chartLocaleIsEn()?'<div class="pano-empty">Chinese = original pillar · Pinyin = pronunciation · English = element + zodiac meaning</div>':'');
 
     // 选中项滚动到可见
     ['trk-dy','trk-yr','trk-ld'].forEach(function(id){
@@ -613,6 +794,48 @@
     }catch(_){return false;}
   }
 
+  function setupCollapsibleSections(){
+    var secs=document.querySelectorAll('.wrap section');
+    secs.forEach(function(sec,idx){
+      var head=sec.querySelector('.s-head');
+      if(!head||head.dataset.collapsibleBound)return;
+      head.dataset.collapsibleBound='1';
+      var body=document.createElement('div');
+      body.className='section-body';
+      var node=head.nextSibling;
+      while(node){var next=node.nextSibling;body.appendChild(node);node=next;}
+      sec.appendChild(body);
+      head.classList.add('toggle');
+      head.setAttribute('role','button');
+      head.setAttribute('tabindex','0');
+      var open=idx===0;
+      head.setAttribute('aria-expanded',open?'true':'false');
+      body.hidden=!open;
+      var chev=document.createElement('i');
+      chev.className='s-chev';chev.setAttribute('aria-hidden','true');chev.textContent='⌄';
+      head.appendChild(chev);
+    });
+  }
+  document.addEventListener('click',function(e){
+    var adv=e.target.closest&&e.target.closest('#sz-adv-toggle');
+    if(adv){var tbl=document.getElementById('sztable'),open=adv.getAttribute('aria-expanded')==='true';adv.setAttribute('aria-expanded',String(!open));if(tbl)tbl.classList.toggle('show-adv',!open);return;}
+    var head=e.target.closest&&e.target.closest('.s-head.toggle');
+    if(!head)return;
+    var sec=head.closest('section'),body=sec&&sec.querySelector('.section-body'),open=head.getAttribute('aria-expanded')==='true';
+    head.setAttribute('aria-expanded',String(!open));
+    if(body)body.hidden=open;
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Enter'&&e.key!==' ')return;
+    var head=e.target.closest&&e.target.closest('.s-head.toggle');
+    if(!head)return;
+    e.preventDefault();head.click();
+  });
+  var initialChartLocale=chartLocaleFromUrl()||chartStoredLocale()||chartDefaultLocale();
+  if(chartLocaleFromUrl())chartWriteLocale(initialChartLocale);
+  document.body.dataset.locale=initialChartLocale;
+  setupCollapsibleSections();
+  applyChartEnglishLocale();
   applySavedProfile();
   compute(); // 首屏：优先使用主站已保存命盘
 })();

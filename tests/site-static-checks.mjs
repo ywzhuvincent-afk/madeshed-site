@@ -48,6 +48,52 @@ includesAll(chart, [
   '<meta name="twitter:card"',
 ], 'chart SEO metadata');
 
+includesAll(chart, [
+  'function chartLocaleIsEn',
+  'function applyChartEnglishLocale',
+  'function renderBasicEnglish',
+  'function renderYongEnglish',
+  'function renderWealthEnglish',
+  'function renderSizhuEnglish',
+  'function chartPillarDisplayEn',
+  'function tenGodEn',
+  'function shenShaEn',
+  'function naYinEn',
+  'Full BaZi Chart',
+  'Four Pillars, Ten Gods, hidden stems, Na Yin, void branches, core symbolic stars',
+  'Birth Date',
+  'Favorable Elements',
+  'Wealth / Investment',
+  'Four Pillars Chart',
+  'Luck / Year / Month / Day Timeline',
+  'Chinese = original pillar',
+  'Pinyin = pronunciation',
+  'English = element + zodiac meaning',
+  'Not investment advice',
+], 'chart-full English localization');
+
+includesAll(chart, [
+  'function setupCollapsibleSections()',
+  "head.classList.add('toggle')",
+  "head.setAttribute('aria-expanded',open?'true':'false')",
+  'body.hidden=!open',
+  "e.target.closest('.s-head.toggle')",
+  'setupCollapsibleSections();',
+  'id="sz-adv-toggle"',
+  'class="sz-adv-label"',
+  "e.target.closest('#sz-adv-toggle')",
+  "tbl.classList.toggle('show-adv',!open)",
+  '.sz tr.sz-adv{display:none}',
+  '.sz.show-adv tr.sz-adv{display:table-row}',
+  'Show advanced details (Na Yin, Void branches, Symbolic Stars)',
+], 'chart-full progressive disclosure: sections collapse (Basic open by default) and esoteric rows hide behind a toggle');
+
+assert.equal(
+  countMatches(chart, /<tr class="sz-adv">/g) >= 6 ? 1 : 0,
+  1,
+  'both Chinese and English four-pillar tables tag Na Yin / Void / Symbolic Stars rows as advanced (3 rows each)',
+);
+
 assert.ok(existsSync('robots.txt'), 'robots.txt should exist');
 assert.ok(existsSync('sitemap.xml'), 'sitemap.xml should exist');
 assert.ok(existsSync(baziEnginePath), 'shared bazi-engine.js should exist');
@@ -65,19 +111,137 @@ includesAll(index, [
 ], 'mobile navigation');
 
 includesAll(index, [
-  '<body class="language-pending">',
+  '<body data-locale="en">',
   'id="language-gate"',
   'data-language-choice="zh-CN"',
   'data-language-choice="en"',
   'data-locale-switch="zh-CN"',
   'data-locale-switch="en"',
   'madeshed_locale_v1',
+  'function localeFromUrl',
+  'function defaultLocale',
+  'function syncLocaleUrl',
+  'function rerenderLocaleSurfaces',
+  'function restoreChineseDailyWidgets',
+  "restoreChineseDailyWidgets();",
+  "rangeLabels={30:'近 1 月',7:'近 7 天',365:'近 1 年',all:'全部',custom:'自定义'}",
+  "cardTitles[0].textContent='按命理颜色分组'",
+  "cardTitles[1].textContent='近 30 天日历'",
+  "if(typeof refresh==='function')refresh();",
+  "if(typeof renderStoredCheckin==='function')renderStoredCheckin();",
+  "if(typeof renderDailyStats==='function')renderDailyStats();",
+  "if(typeof renderReport==='function')renderReport();",
+  "rerenderLocaleSurfaces();",
+  "url.searchParams.set('lang',l==='en'?'en':'zh')",
+  "const initialUrlLocale=localeFromUrl()",
+  "const initialLocale=initialUrlLocale||readStoredLocale()||defaultLocale()",
+  'applyLocale(initialLocale,true)',
   'window.MadeshedLocale',
   'madeshed:locale-change',
   'applyAccountLocale',
   'j.account.profile.locale',
   'window.MadeshedLocale.get()',
-], 'first visit language gate and account locale persistence');
+], 'default English homepage, Chinese entry, and account locale persistence');
+
+assert.equal(index.includes('<body class="language-pending">'), false, 'homepage should not block first visit behind the language gate');
+
+includesAll(chart, [
+  'function chartLocaleFromUrl',
+  'function chartDefaultLocale',
+  'function chartSyncLocaleUrl',
+  "url.searchParams.set('lang',l==='en'?'en':'zh')",
+  'var initialChartLocale=chartLocaleFromUrl()||chartStoredLocale()||chartDefaultLocale()',
+], 'chart full default English and URL locale entry');
+
+includesAll(index, [
+  'const EN_COPY',
+  'function localizeStaticContent',
+  'function localizeDynamicContent',
+  'function applyEnglishAfterRender',
+  'function scoreBandEn',
+  'function renderEnglishScoreDetails',
+  'function localizeEnglishMetaContent',
+  'function stemInfoEn',
+  'function branchInfoEn',
+  'function pillarLabelEn',
+  'function renderEnglishPillarDetails',
+  'function refreshPillarsForLocale',
+  'Trade with your rhythm, not your impulse.',
+  'A trading discipline dashboard powered by BaZi timing and your own behavior data.',
+  'Four Pillars / BaZi Chart',
+  'Four Pillars = Year, Month, Day, Hour',
+  'Chinese = original chart',
+  'Pinyin = pronunciation',
+  'English = element + zodiac meaning',
+  'translated into timing, risk, and discipline signals',
+  'function renderLuckCycleCell',
+  'function translateLuckCyclesForEnglish',
+  'Chinese = original luck-cycle pillar',
+  'function renderForecastPillarEnglish',
+  'function translateForecastPillarsForEnglish',
+  'Chinese = original daily pillar',
+  'Yi Hai',
+  'Yin Wood Pig',
+  'Geng Yin',
+  'Yang Metal Tiger',
+  'Xin Wei',
+  'Yang Earth Rat',
+  'Hidden Stem',
+  'Action Mode: Full Plan',
+  'Wealth Signal',
+  'Suggested Discipline',
+  'Day Master',
+  'Luck Pillar',
+  'Revenge-trade Guard',
+  'Behavioral Timing',
+  'This is not investment advice.',
+  'Scores describe timing and behavioral risk, not expected return.',
+], 'English investor locale positioning');
+
+includesAll(index, [
+  'function localizeEnglishWholeSite',
+  'function localizeEnglishDailyView',
+  'function localizeEnglishReportView',
+  'function localizeEnglishFortuneView',
+  'function localizeEnglishAccountView',
+  'function localizeEnglishLegalViews',
+  'function localizeEnglishDynamicWidgets',
+  'Daily Journal',
+  'Record what happened after the close',
+  'Pattern Review',
+  'Trading Reports',
+  'Free summary first. Detailed reports when you need deeper review.',
+  'BaZi Advisor',
+  'Ask one focused question about timing, planning, or risk.',
+  'Account Center',
+  'Risk Waiver',
+  'Not investment advice',
+  'Use scores as timing and behavior signals, not trade calls.',
+  'Action Index = timing strength + behavior risk',
+  'Base Timing',
+  'Flow Trigger',
+  'Wealth Signal',
+  'Risk Penalty',
+  'Sample size matters',
+  'Reading login session...',
+  'If this page did not sign you in automatically, return to Login and send a new link.',
+], 'full English product localization');
+
+assert.ok(
+  index.includes('function localizeEnglishWholeSite(){localizeEnglishDailyView();'),
+  'whole-site locale restore must run reversible static locale functions for Chinese too',
+);
+assert.equal(
+  index.includes('function localizeEnglishWholeSite(){if(!localeIsEn())return;'),
+  false,
+  'whole-site locale restore must not early-return before restoring Chinese static copy',
+);
+
+assert.equal(
+  index.includes('Original Chinese characters are kept for accuracy; the English layers explain pronunciation and meaning.'),
+  false,
+  'English pillar helper should teach without repeating the full chart',
+);
 
 assert.equal(index.includes('选择语言 · Choose Language'), false, 'language gate should not show explanatory title copy');
 assert.equal(index.includes('首次进入请先选择使用语言'), false, 'language gate should not show explanatory paragraph copy');
@@ -146,6 +310,16 @@ includesAll(chart, [
 
 assert.equal(index.includes('\u00a5299'), false, 'site should not show old ¥299 buyout pricing');
 assert.equal(index.includes('\u00a549'), false, 'site should not show old ¥49 PRO pricing');
+includesAll(index, [
+  "priceEn:'$5'",
+  "priceEn:'$9'",
+  "priceEn:'$29'",
+  "priceEn:'$59'",
+  'function productDisplayPrice(product)',
+  "localeIsEn()&&product.priceEn?product.priceEn:product.price",
+  "REPORT_PRODUCTS[type].priceEn",
+  "FORTUNE_PRODUCTS[type].priceEn",
+], 'English USD pricing for paid products');
 assert.equal(index.includes('Beta ·'), false, 'production landing copy should not show beta badge');
 assert.equal(index.includes('href="#terms"'), false, 'onboarding terms link should use #/terms route');
 assert.equal(index.includes('href="#privacy"'), false, 'onboarding privacy link should use #/privacy route');
@@ -170,7 +344,8 @@ includesAll(index, [
   '.m-score-num',
   '.today-score',
   'window.MadeshedBazi.calcBaziCore',
-  'flex:1 1 0;min-width:72px',
+  'class="forecast-card',
+  "min-width:'+(en?'98px':'72px')",
 ], 'shared user profile rendering');
 
 includesAll(index, [
@@ -467,6 +642,45 @@ includesAll(index, [
   '不参与调分',
   'personalBacktestNote(d.score)',
 ], 'action score explains personal backtest validation');
+
+includesAll(index, [
+  'function scoreReasonZh(dr,action)',
+  'function scoreReasonFromStateEn(state)',
+  'function scoreSignalChipsEn(state)',
+  'function scoreDetailToggleHtml(label)',
+  'class="score-reason"',
+  'class="score-signals"',
+  'class="score-chip"',
+  'data-score-toggle',
+  'class="score-detail-rows"',
+  ".addEventListener('click',function(e){var toggle=e.target.closest&&e.target.closest('[data-score-toggle]')",
+  "interactionNote:(dr.interaction&&dr.interaction.note)||''",
+  "interactionAdjust:(dr.interaction&&dr.interaction.adjust)||0",
+], 'progressive disclosure: plain-language headline stays visible, BaZi jargon collapses behind a toggle');
+
+includesAll(index, [
+  'function ensureDailyDetailBox(daily)',
+  'function renderDailyScoreDetailZh(daily,dr,action)',
+  'function renderDailyScoreDetailEn(daily,state)',
+  "box.id='daily-score-detail'",
+  'renderDailyScoreDetailZh(daily,dr,action)',
+  'renderDailyScoreDetailEn(dailyEnEl,state)',
+], 'daily page reuses the same collapsible BaZi detail pattern');
+
+includesAll(index, [
+  'if(window.madeshed&&typeof window.madeshed.refresh===\'function\')window.madeshed.refresh();else if(typeof refresh===\'function\')refresh();',
+  "if(dashTop[2])dashTop[2].textContent='市场'",
+  "const mkt=document.querySelector('.dash-hero > .dash-meta .v.up');if(mkt)mkt.textContent='▲ 开盘中'",
+], 'switching language after a chart is generated re-renders profile surfaces (refresh reachable across scope) and restores the Chinese market label');
+
+assert.ok(
+  !/meta\.textContent='仓位 '\+position\+' · 底盘 '/.test(index),
+  'daily headline should not show a raw unexplained foundation number by default',
+);
+assert.ok(
+  !/'\.today-meta'\)\.forEach\(function\(el\)\{el\.textContent=state\.positionText\+' - base '/.test(index),
+  'English daily headline should not show raw base/wealth numbers by default',
+);
 assert.ok(
   !index.includes('var spread=base<=50?28:(base<=66?34:38)'),
   'monthly trend should not keep the old extreme spread',
@@ -549,8 +763,8 @@ includesAll(index, [
   "document.querySelectorAll('.m-score-label').forEach(el=>{el.textContent='今日行动指数';});",
   "document.querySelectorAll('.score-n').forEach(el=>{el.textContent=action.score;});",
   "document.querySelectorAll('.score-l').forEach(el=>{el.textContent=action.label+' · 财运 '+dr.cScore+' · 底盘 '+action.foundation.score;});",
-  "html+='<div style=\"flex:1 1 0;min-width:72px;",
-  "行动 '+a.score",
+  "html+='<div class=\"forecast-card",
+  "+(en?'Action ':'行动 ')+a.score",
 ], 'connected action score surfaces');
 
 includesAll(index, [
