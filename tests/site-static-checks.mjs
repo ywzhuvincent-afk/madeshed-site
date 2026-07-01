@@ -64,6 +64,21 @@ includesAll(index, [
   '.hero-h h1{font-size:30px',
 ], 'mobile navigation');
 
+includesAll(index, [
+  '<body class="language-pending">',
+  'id="language-gate"',
+  'data-language-choice="zh-CN"',
+  'data-language-choice="en"',
+  'data-locale-switch="zh-CN"',
+  'data-locale-switch="en"',
+  'madeshed_locale_v1',
+  'window.MadeshedLocale',
+  'madeshed:locale-change',
+  'applyAccountLocale',
+  'j.account.profile.locale',
+  'window.MadeshedLocale.get()',
+], 'first visit language gate and account locale persistence');
+
 assert.equal(
   countMatches(index, /<a\b(?=[^>]*\bdata-route=)(?![^>]*\bhref=)[^>]*>/g),
   0,
