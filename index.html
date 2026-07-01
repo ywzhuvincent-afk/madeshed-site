@@ -256,6 +256,30 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 .score-detail-rows{display:grid;gap:8px;margin-top:12px}
 .score-detail-rows[hidden]{display:none}
 .daily-detail{margin-top:10px}
+.persona-card{background:linear-gradient(135deg,rgba(0,188,212,.08),rgba(38,166,154,.04));border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px}
+.persona-top{display:flex;align-items:flex-start;gap:14px}
+.persona-emoji{font-size:34px;line-height:1;flex:none}
+.persona-kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.persona-title{font-size:22px;font-weight:700;margin-top:3px;line-height:1.15}
+.persona-tag{font-size:13px;color:var(--text-2);margin-top:4px}
+.persona-meta{font-size:12px;color:var(--text-3);font-family:var(--font-mono);margin-top:10px}
+.persona-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:560px){.persona-cols{grid-template-columns:1fr}}
+.persona-col-h{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px}
+.persona-col.good .persona-col-h{color:var(--green)}
+.persona-col.watch .persona-col-h{color:var(--orange)}
+.persona-col ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.persona-col li{font-size:13px;line-height:1.55;color:var(--text);padding-left:16px;position:relative}
+.persona-col li::before{content:"";position:absolute;left:2px;top:8px;width:5px;height:5px;border-radius:50%;background:var(--text-3)}
+.persona-col.good li::before{background:var(--green)}
+.persona-col.watch li::before{background:var(--orange)}
+.persona-line{font-size:13px;line-height:1.6;color:var(--text-2);margin-top:12px}
+.persona-line b{color:var(--text)}
+.persona-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.persona-btn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-family:inherit;padding:8px 14px;cursor:pointer}
+.persona-btn:hover{border-color:var(--accent)}
+.persona-btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+.persona-note{font-size:11px;color:var(--text-3);line-height:1.6;margin-top:12px;padding-top:10px;border-top:1px dashed var(--border)}
 .chart{position:relative;height:340px;width:100%;min-width:0;overflow:hidden}
 .chart svg{width:100%;height:100%}
 .trend-scroll{height:100%;width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;padding-bottom:8px;scrollbar-color:rgba(0,188,212,.45) rgba(148,163,184,.12)}
@@ -742,6 +766,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   <div class="today-strip-right"><div class="num">78</div><div class="max">/100</div></div>
 </div>
 </div>
+<div id="persona-result"></div>
 <a href="/chart-full.html" style="display:block;text-align:center;margin:4px 0 22px;padding:14px;border:1px solid var(--accent,#c6b6f5);border-radius:12px;color:var(--accent,#c6b6f5);text-decoration:none;font-weight:600">完整排盘 · 流年大运全景 →</a>
 <div class="signup-card">
 <div class="badge">下一步</div><h2>保存命盘,继续体验</h2><p>当前可先进入仪表盘体验；登录后会自动尝试把命盘和每日记录同步到云端。</p>
@@ -773,6 +798,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 </div>
 <div class="dash-meta"><div><span class="k">2026.06.27</span></div><div><span class="k">星期六</span></div><div><span class="k">市场</span><span class="v up">▲ 开盘中</span></div></div>
 </div>
+
+<div id="persona-dash"></div>
 
 <div class="grid">
 <div class="card score">
@@ -1634,6 +1661,65 @@ function scoreDetailToggleHtml(label){return'<button type="button" class="score-
 function ensureDailyDetailBox(daily){var box=daily.querySelector('#daily-score-detail');if(!box){box=document.createElement('div');box.id='daily-score-detail';box.className='daily-detail';var host=daily.querySelector('.today-r')||daily.querySelector('.today');if(host)host.appendChild(box);}return box;}
 function renderDailyScoreDetailZh(daily,dr,action){var box=ensureDailyDetailBox(daily);var rows='<div class="row"><span class="k">流日干支</span><span class="v mono">'+(action.flowProfile?action.flowProfile.gz:'')+' ('+dr.tenGod+' · '+dr.role+')</span></div><div class="row"><span class="k">综合年月日</span><span class="v">'+action.foundation.label+' '+action.foundation.score+'</span></div><div class="row"><span class="k">财运</span><span class="v">'+dr.cLabel+' '+dr.cScore+'</span></div><div class="row"><span class="k">四柱互动</span><span class="v">'+(dr.interaction?dr.interaction.label:'无明显互动')+'</span></div><div class="row"><span class="k">风险扣分</span><span class="v">'+(action.riskPenalty?'-'+action.riskPenalty:'无')+'</span></div>';box.innerHTML=scoreDetailToggleHtml('查看命理依据')+'<div class="score-detail-rows" hidden>'+rows+'</div>';}
 function renderDailyScoreDetailEn(daily,state){var box=ensureDailyDetailBox(daily);var rows='<div class="row"><span class="k">Daily Pillar</span><span class="v mono">'+escapeHtml(pillarDisplayEn(state.day))+'</span></div><div class="row"><span class="k">Base Timing</span><span class="v">'+(state.foundation!=null?state.foundation:'--')+'</span></div><div class="row"><span class="k">Wealth Signal</span><span class="v">'+(state.wealth!=null?state.wealth:'--')+'</span></div><div class="row"><span class="k">Risk Penalty</span><span class="v">'+(state.riskPenalty?'-'+state.riskPenalty:'None')+'</span></div>';box.innerHTML=scoreDetailToggleHtml('Show BaZi calculation (optional)')+'<div class="score-detail-rows" hidden>'+rows+'</div>';}
+var PERSONA_ELEMENTS={
+  '木':{key:'wood',emoji:'🌲',zhTitle:'成长趋势手',enTitle:'The Growth Trend-Follower',zhTag:'顺势扩张、让利润奔跑',enTag:'Rides expansion, lets winners run',zhStr:['善抓上升趋势、拿得住盈利单','对成长机会敏感，敢于布局'],enStr:['Catches uptrends and holds winners','Senses growth setups early and commits'],zhWatch:['强势中易不断加仓、拿过头','止损偏慢，舍不得砍'],enWatch:['Adds into strength and overstays','Slow to take the stop']},
+  '火':{key:'fire',emoji:'🔥',zhTitle:'动量快枪手',enTitle:'The Momentum Striker',zhTag:'果断、抓爆发、节奏快',enTag:'Decisive, fast, momentum-driven',zhStr:['出手果断，善抓短线爆发','盘感强、反应快'],enStr:['Decisive entries; strong on momentum bursts','Fast reflexes and sharp market feel'],zhWatch:['情绪上头易冲动追单、报复性交易','频率偏高，过度交易'],enWatch:['Impulse and revenge-trades when heated','High frequency; prone to overtrading']},
+  '土':{key:'earth',emoji:'⛰️',zhTitle:'稳健守成者',enTitle:'The Steady Operator',zhTag:'耐心、稳健、风控优先',enTag:'Patient, steady, risk-first',zhStr:['守得稳、回撤控制好','不追热点，纪律性强'],enStr:['Steady; controls drawdown well','Not FOMO-driven; disciplined'],zhWatch:['太保守，易错过大行情','套牢爱死扛、期待回本'],enWatch:['Too cautious; can miss big moves','Holds losers hoping to break even']},
+  '金':{key:'metal',emoji:'⚔️',zhTitle:'纪律执行者',enTitle:'The Disciplined Executor',zhTag:'规则化、干脆、敢止损',enTag:'Rule-based, decisive, clean stops',zhStr:['执行规则不手软、止损干脆','判断清晰、不拖泥带水'],enStr:['Follows rules; cuts losses clean','Clear judgment, no dithering'],zhWatch:['过于刚性，盈利单易过早离场','控制欲强，易和盘对着干'],enWatch:['Rigid; cuts winners too early','Over-controls; can fight the tape']},
+  '水':{key:'water',emoji:'🌊',zhTitle:'灵活捕手',enTitle:'The Adaptive Opportunist',zhTag:'善变通、读盘、抓机会',enTag:'Adaptive, reads flow, opportunistic',zhStr:['应变强，善于顺势切换','直觉敏锐、机会嗅觉好'],enStr:['Adaptive; switches with the flow','Sharp intuition and a nose for setups'],zhWatch:['战线太散、同时追太多机会','策略不稳、易朝令夕改'],enWatch:['Spreads thin chasing many setups','Inconsistent; over-adjusts the plan']}
+};
+var PERSONA_POSTURE={
+  strong:{zh:'身强能担风险、敢下重手——但要防过度自信和超额仓位。',en:'Strong day master — you can carry risk and size up, but guard against overconfidence and oversizing.'},
+  weak:{zh:'身弱对压力敏感、容易被震出——宜轻仓、等确认，别追高加杠杆。',en:'Weaker day master — sensitive to pressure and easily shaken out; size down, wait for confirmation, avoid chasing and leverage.'},
+  balanced:{zh:'身强弱中和、可攻可守——但没有固定系统时容易随波逐流，建议锁定纪律。',en:'Balanced day master — flexible on offense and defense, but you can drift without a firm system, so lock in your rules.'}
+};
+function personaStrengthBucket(cat){var c=String(cat||'');if(/强/.test(c))return'strong';if(/弱/.test(c))return'weak';return'balanced';}
+function buildTradingPersona(profile){
+  if(!profile||!profile.dayElement)return null;
+  var base=PERSONA_ELEMENTS[profile.dayElement]||PERSONA_ELEMENTS['土'];
+  var bucket=personaStrengthBucket(profile.strength&&profile.strength.category),posture=PERSONA_POSTURE[bucket],en=localeIsEn();
+  var xi=(profile.yongShen&&profile.yongShen.xi)||[],xiWords=en?xi.map(function(e){return elementNameEn(e);}):((profile.yongShen&&profile.yongShen.xiCn)||[]);
+  var money=bucket==='strong'?(en?'When a real setup appears, you have room to carry size.':'真出现好机会时，你有资格下更重的仓。'):(bucket==='weak'?(en?'Protect capital first — avoid chasing and leverage.':'先求稳、护本金——最忌追高和杠杆。'):(en?'Size is fine, but guard against emotional add-ons.':'仓位没问题，但要防情绪化加码。'));
+  var elEn=elementNameEn(profile.dayElement),strEn=strengthNameEn(profile.strength),cat=(profile.strength&&profile.strength.category)||'',score=(profile.strength&&profile.strength.score)!=null?profile.strength.score:'';
+  var best=en?('Favorable elements '+(xiWords.join(', ')||'—')+': days carrying these tend to suit your style.'):('喜用五行 '+(xiWords.join('、')||'—')+'：带这些五行的日子通常更顺手。');
+  var summary=en?('My trading persona: '+base.enTitle+' ('+elEn+' day master · '+strEn+'). '+base.enTag+'.'):('我的交易人格：'+base.zhTitle+'（'+profile.dayElement+'日主 · '+cat+'）。'+base.zhTag+'。');
+  return {key:base.key,emoji:base.emoji,title:en?base.enTitle:base.zhTitle,tag:en?base.enTag:base.zhTag,meta:en?((profile.dayStem||'')+' '+elEn+' day master · '+strEn+' '+score):((profile.dayStem||'')+' '+profile.dayElement+'日主 · '+cat+' '+score),strengths:en?base.enStr:base.zhStr,watchouts:en?base.enWatch:base.zhWatch,posture:en?posture.en:posture.zh,best:best,money:money,summary:summary};
+}
+function personaCardHtml(p){
+  var en=localeIsEn();
+  var s=p.strengths.map(function(x){return '<li>'+escapeHtml(x)+'</li>';}).join(''),w=p.watchouts.map(function(x){return '<li>'+escapeHtml(x)+'</li>';}).join('');
+  return '<div class="persona-card"><div class="persona-top"><div class="persona-emoji">'+p.emoji+'</div><div><div class="persona-kicker">'+(en?'Your Trading Persona · Free':'你的交易人格 · 免费')+'</div><div class="persona-title">'+escapeHtml(p.title)+'</div><div class="persona-tag">'+escapeHtml(p.tag)+'</div></div></div>'+
+    '<div class="persona-meta">'+escapeHtml(p.meta)+'</div>'+
+    '<div class="persona-cols"><div class="persona-col good"><div class="persona-col-h">'+(en?'Strengths':'优势')+'</div><ul>'+s+'</ul></div><div class="persona-col watch"><div class="persona-col-h">'+(en?'Watch out for':'要当心')+'</div><ul>'+w+'</ul></div></div>'+
+    '<div class="persona-line">'+(en?'⏱ <b>Risk posture:</b> ':'⏱ <b>风险姿态：</b>')+escapeHtml(p.posture)+'</div>'+
+    '<div class="persona-line">'+(en?'📅 <b>Best conditions:</b> ':'📅 <b>顺手时机：</b>')+escapeHtml(p.best)+'</div>'+
+    '<div class="persona-line">'+(en?'💰 <b>Money relationship:</b> ':'💰 <b>与钱的关系：</b>')+escapeHtml(p.money)+'</div>'+
+    '<div class="persona-actions"><button type="button" class="persona-btn primary" data-persona-action="copy">'+(en?'Copy summary':'复制摘要')+'</button><button type="button" class="persona-btn" data-persona-action="save">'+(en?'Save image':'保存图片')+'</button></div>'+
+    '<div class="persona-note">'+(en?'Generated instantly from your chart — no trading data needed. The more days you log, the sharper your personal win-rate becomes.':'基于命盘即时生成，无需交易数据。记录越多，你的个人胜率统计越准。')+'</div></div>';
+}
+function renderTradingPersona(){var p=buildTradingPersona(window.__profile);['persona-result','persona-dash'].forEach(function(id){var m=document.getElementById(id);if(!m)return;m.innerHTML=p?personaCardHtml(p):'';});}
+function personaFlash(msg){var b=document.querySelector('[data-persona-action="copy"]');if(!b)return;var old=b.textContent;b.textContent=msg;setTimeout(function(){b.textContent=old;},1400);}
+function personaFallbackCopy(text){try{var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);personaFlash(localeIsEn()?'Copied':'已复制');}catch(e){}}
+function personaCopySummary(){var p=buildTradingPersona(window.__profile);if(!p)return;var text=p.summary+' — madeshed.com';if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(function(){personaFlash(localeIsEn()?'Copied':'已复制');},function(){personaFallbackCopy(text);});else personaFallbackCopy(text);}
+function personaWrapText(ctx,text,x,y,maxW,lh){text=String(text);var tokens=text.match(/[一-鿿]|[^一-鿿\s]+|\s+/g)||[text];var line='';for(var i=0;i<tokens.length;i++){var t=tokens[i],test=line+t;if(ctx.measureText(test.trim()).width>maxW&&line.trim()){ctx.fillText(line.trim(),x,y);y+=lh;line=(/^\s+$/.test(t)?'':t);}else line=test;}if(line.trim()){ctx.fillText(line.trim(),x,y);y+=lh;}return y;}
+function personaSaveImage(){
+  var p=buildTradingPersona(window.__profile);if(!p)return;var en=localeIsEn();
+  var W=1080,H=1080,c=document.createElement('canvas');c.width=W;c.height=H;var ctx=c.getContext('2d');
+  ctx.fillStyle='#0E1117';ctx.fillRect(0,0,W,H);ctx.fillStyle='#00BCD4';ctx.fillRect(0,0,W,12);ctx.textBaseline='top';
+  var pad=80,y=100;
+  ctx.fillStyle='#00BCD4';ctx.font='600 28px Inter,"Microsoft YaHei",Arial,sans-serif';ctx.fillText(en?'MADESHED · TRADING PERSONA':'MADESHED · 交易人格',pad,y);y+=64;
+  ctx.font='92px Arial';ctx.fillText(p.emoji,pad,y);y+=128;
+  ctx.fillStyle='#D9D9D9';ctx.font='700 62px Inter,"Microsoft YaHei",sans-serif';y=personaWrapText(ctx,p.title,pad,y,W-2*pad,74);
+  ctx.fillStyle='#8B949E';ctx.font='400 34px Inter,"Microsoft YaHei",sans-serif';y=personaWrapText(ctx,p.tag,pad,y+8,W-2*pad,46)+16;
+  ctx.fillStyle='#6E7681';ctx.font='400 26px monospace';ctx.fillText(p.meta,pad,y);y+=64;
+  function block(label,text,color){ctx.fillStyle=color;ctx.font='700 30px Inter,"Microsoft YaHei",sans-serif';ctx.fillText(label,pad,y);y+=44;ctx.fillStyle='#B8BEC7';ctx.font='400 30px Inter,"Microsoft YaHei",sans-serif';y=personaWrapText(ctx,text,pad,y,W-2*pad,42)+24;}
+  block(en?'Strengths':'优势',p.strengths.join(' · '),'#26A69A');
+  block(en?'Watch out for':'要当心',p.watchouts.join(' · '),'#FF8A65');
+  block(en?'Best conditions':'顺手时机',p.best,'#00BCD4');
+  ctx.fillStyle='#6E7681';ctx.font='400 28px Inter,Arial,sans-serif';ctx.fillText('madeshed.com',pad,H-72);
+  try{var url=c.toDataURL('image/png'),a=document.createElement('a');a.href=url;a.download='madeshed-persona.png';document.body.appendChild(a);a.click();document.body.removeChild(a);}catch(e){}
+}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-persona-action]');if(!b)return;e.preventDefault();var a=b.getAttribute('data-persona-action');if(a==='copy')personaCopySummary();else if(a==='save')personaSaveImage();});
 function cleanEnglishTrendSvg(){document.querySelectorAll('#trend-svg text').forEach(function(el){var t=el.textContent;t=t.replace(/\u884c\u52a8\u6307\u6570/g,'Action').replace(/\u5f53\u524d\u65f6\u6bb5/g,'Current Slot').replace(/\u65f6\u6bb5/g,'Slot').replace(/\u672c\u6708\u6307\u6570/g,'This Month').replace(/\u53f7/g,'').replace(/\u6708/g,'M').replace(/\u5206\u6570/g,'Score');el.textContent=t;});}
 const EN_PILLAR_EXAMPLE_COPY='Four Pillars / BaZi Chart · Xin Wei · Yang Earth Rat · Hidden Stem';
 function stemInfoEn(stem){var m={'\u7532':['Jia','Yang','Wood'],'\u4e59':['Yi','Yin','Wood'],'\u4e19':['Bing','Yang','Fire'],'\u4e01':['Ding','Yin','Fire'],'\u620a':['Wu','Yang','Earth'],'\u5df1':['Ji','Yin','Earth'],'\u5e9a':['Geng','Yang','Metal'],'\u8f9b':['Xin','Yin','Metal'],'\u58ec':['Ren','Yang','Water'],'\u7678':['Gui','Yin','Water']};var x=m[stem]||['--','',''];return{han:stem||'--',pinyin:x[0],polarity:x[1],element:x[2],label:(x[1]?x[1]+' ':'')+(x[2]||'')};}
@@ -2254,6 +2340,7 @@ function updateTodaySurfaces(profile,today,dr){
 function clearProfileSurfaces(today){
   window.__todayState=null;
   window.__profile=null;
+  if(typeof renderTradingPersona==='function')renderTradingPersona();
   if(typeof renderEnglishPillarSummary==='function')renderEnglishPillarSummary(null);
   if(window.__trendTimer){clearInterval(window.__trendTimer);window.__trendTimer=null;}
   const now=new Date(),W=['日','一','二','三','四','五','六'];
@@ -2317,6 +2404,7 @@ function applyProfile(profile,today){
     const pl=document.querySelector('.pillars-line');
     if(pl)pl.innerHTML='流年 <span class="cn">'+today.year+'</span><span class="sep">·</span> 流月 <span class="cn">'+today.month+'</span><span class="sep">·</span> 流日 <span class="cn">'+today.day+'</span>';
   }
+  if(typeof renderTradingPersona==='function')renderTradingPersona();
   if(typeof applyEnglishAfterRender==='function')applyEnglishAfterRender();
 }
 function handleSubmit(){

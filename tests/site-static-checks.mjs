@@ -355,6 +355,29 @@ includesAll(index, [
   'const en=localeIsEn();const dayLabel=en?(st.score!=null?scoreBandEn(st.score):',
   "const editTxt=en?'Edit':'修改'",
 ], 'the "logged today" check-in summary card renders in English, not hardcoded Chinese');
+
+includesAll(index, [
+  'var PERSONA_ELEMENTS=',
+  'function buildTradingPersona(profile)',
+  'function personaCardHtml(p)',
+  'function renderTradingPersona()',
+  'function personaCopySummary()',
+  'function personaSaveImage()',
+  'function personaStrengthBucket(cat)',
+  'id="persona-result"',
+  'id="persona-dash"',
+  'data-persona-action="copy"',
+  'data-persona-action="save"',
+  "e.target.closest('[data-persona-action]')",
+  'if(typeof renderTradingPersona===\'function\')renderTradingPersona();',
+  'Your Trading Persona · Free',
+  '你的交易人格 · 免费',
+  'The Disciplined Executor',
+  'The Momentum Striker',
+  'The Adaptive Opportunist',
+  'The Growth Trend-Follower',
+  'The Steady Operator',
+], 'instant free Trading Persona report (day-1 value + shareable card) renders on result and dashboard in both languages');
 includesAll(chart, [
   'state.shared=window.MadeshedBazi.calcBaziCore',
   'state.yong=state.shared.yongShen',
