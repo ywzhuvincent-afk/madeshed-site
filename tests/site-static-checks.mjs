@@ -96,6 +96,42 @@ assert.equal(
 
 assert.ok(existsSync('robots.txt'), 'robots.txt should exist');
 assert.ok(existsSync('sitemap.xml'), 'sitemap.xml should exist');
+
+assert.ok(existsSync('guide/trading-persona.html'), 'English SEO landing page should exist');
+assert.ok(existsSync('guide/trading-persona.zh.html'), 'Chinese SEO landing page should exist');
+const guideEn = readFileSync('guide/trading-persona.html', utf8);
+const guideZh = readFileSync('guide/trading-persona.zh.html', utf8);
+includesAll(guideEn, [
+  '<link rel="canonical" href="https://madeshed.com/guide/trading-persona.html">',
+  'hreflang="zh-Hans" href="https://madeshed.com/guide/trading-persona.zh.html"',
+  'hreflang="x-default"',
+  '"@type":"FAQPage"',
+  '"@type":"BreadcrumbList"',
+  'The Disciplined Executor',
+  'The Momentum Striker',
+  'https://madeshed.com/?lang=en#/onboarding',
+  'Not investment advice',
+], 'English landing page has crawlable content, hreflang, structured data, and app CTA');
+includesAll(guideZh, [
+  '<link rel="canonical" href="https://madeshed.com/guide/trading-persona.zh.html">',
+  'hreflang="en" href="https://madeshed.com/guide/trading-persona.html"',
+  '"@type":"FAQPage"',
+  '纪律执行者',
+  '动量快枪手',
+  'https://madeshed.com/?lang=zh#/onboarding',
+  '不构成投资建议',
+], 'Chinese landing page has crawlable content, hreflang, structured data, and app CTA');
+const sitemap = readFileSync('sitemap.xml', utf8);
+includesAll(sitemap, [
+  'https://madeshed.com/guide/trading-persona.html',
+  'https://madeshed.com/guide/trading-persona.zh.html',
+  'xhtml:link rel="alternate" hreflang="zh-Hans"',
+], 'sitemap lists both landing pages with hreflang alternates');
+includesAll(index, [
+  'data-guide-link',
+  "setLocaleText('.footer-links a[data-guide-link]','Trading Persona')",
+  "setLocaleAttr('.footer-links a[data-guide-link]','href','/guide/trading-persona.html')",
+], 'app footer links to the guide (internal crawl path), locale-aware');
 assert.ok(existsSync(baziEnginePath), 'shared bazi-engine.js should exist');
 
 includesAll(index, [

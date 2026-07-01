@@ -723,7 +723,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 </div></section>
 
 <footer><div class="footer-content"><div>© 2026 Madeshed · <span style="font-family:var(--font-cn);">命盘 × 数据</span></div>
-<div class="footer-links"><a href="#/login" data-route="/login">登录</a><a href="#/signup" data-route="/signup">注册</a><a href="#/about" data-route="/about">关于</a><a href="#/privacy" data-route="/privacy">隐私政策</a><a href="#/terms" data-route="/terms">服务条款</a><a href="#/waiver" data-route="/waiver">风险免责声明</a><a href="#/contact" data-route="/contact">联系我们</a></div></div>
+<div class="footer-links"><a href="#/login" data-route="/login">登录</a><a href="#/signup" data-route="/signup">注册</a><a href="#/about" data-route="/about">关于</a><a href="#/privacy" data-route="/privacy">隐私政策</a><a href="#/terms" data-route="/terms">服务条款</a><a href="#/waiver" data-route="/waiver">风险免责声明</a><a href="#/contact" data-route="/contact">联系我们</a><a href="/guide/trading-persona.zh.html" data-guide-link>交易人格</a></div></div>
 <div class="footer-disclaim risk-note"><strong>风险提示:</strong> Madeshed 提供的所有评分、回测、警示均为<strong>决策辅助工具</strong>,不构成任何投资建议。任何基于本工具产生的交易决策与盈亏责任,均由用户自行承担。投资有风险,入市需谨慎。</div></footer>
 </main>
 </section>
@@ -1610,6 +1610,8 @@ function localizeEnglishFooter(){
   setLocaleText('.footer-links a[data-route="/terms"]','Terms');
   setLocaleText('.footer-links a[data-route="/waiver"]','Risk Waiver');
   setLocaleText('.footer-links a[data-route="/contact"]','Contact');
+  setLocaleText('.footer-links a[data-guide-link]','Trading Persona');
+  setLocaleAttr('.footer-links a[data-guide-link]','href','/guide/trading-persona.html');
   setLocaleHtml('.footer-disclaim','<strong>Risk Notice:</strong> Madeshed is for self-review, timing awareness, and behavior analysis. It is not investment advice, financial advice, legal advice, medical advice, or a promise of trading results.');
 }
 function localizeEnglishDynamicWidgets(){
