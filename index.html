@@ -532,9 +532,34 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 .membership-card .status{font-size:12px;color:var(--text-2);line-height:1.7}
 .membership-benefits{display:grid;gap:8px;color:var(--text-2);font-size:13px;line-height:1.65}
 .membership-benefits span{display:flex;gap:8px;align-items:flex-start}
+.auth-shell{max-width:980px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.7fr);gap:18px;align-items:start}
+.auth-card{border:1px solid var(--border);background:rgba(22,27,34,.78);border-radius:12px;padding:22px;display:grid;gap:14px}
+.auth-card h2{margin:0;font-size:24px}
+.auth-card p{margin:0;color:var(--text-2);line-height:1.7}
+.auth-form{display:grid;gap:12px}
+.auth-field{display:grid;gap:7px}
+.auth-field label,.legal-checks label{font-size:12px;color:var(--text-2);font-weight:700}
+.auth-field input,.auth-field textarea{width:100%;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:8px;padding:11px 12px;font-family:inherit;font-size:14px}
+.legal-checks{display:grid;gap:9px;border:1px solid var(--border);border-radius:10px;padding:12px;background:rgba(13,17,23,.55)}
+.legal-checks label{display:flex;gap:9px;align-items:flex-start;line-height:1.6;font-weight:600}
+.legal-checks input{margin-top:3px;accent-color:var(--accent)}
+.auth-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.auth-link{color:var(--accent);text-decoration:none;font-weight:700;font-size:13px}
+.auth-message{border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text-2);background:rgba(13,17,23,.55);font-size:13px;line-height:1.7}
+.auth-message.ok{border-color:rgba(38,166,154,.45);color:var(--green);background:rgba(38,166,154,.08)}
+.auth-message.err{border-color:rgba(239,83,80,.45);color:var(--red);background:rgba(239,83,80,.08)}
+.auth-side{display:grid;gap:12px}
+.auth-step{border:1px solid var(--border);border-radius:10px;padding:14px;background:rgba(13,17,23,.45)}
+.auth-step strong{display:block;color:var(--text);margin-bottom:6px}
+.auth-step span{display:block;color:var(--text-2);font-size:12px;line-height:1.7}
+.security-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.waiver-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.waiver-item{border:1px solid var(--border);border-radius:10px;padding:16px;background:rgba(22,27,34,.65)}
+.waiver-item h3{margin:0 0 8px;font-size:16px}
+.waiver-item p{margin:0;color:var(--text-2);font-size:13px;line-height:1.75}
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 @media (max-width:980px){.report-product-grid,.generated-report-list{grid-template-columns:repeat(2,minmax(0,1fr))}.fortune-status{grid-template-columns:1fr}.master-grid,.master-grid.two{grid-template-columns:1fr}}
-@media (max-width:760px){.page-head{display:block}.page-grid,.page-grid.two,.membership-panel{grid-template-columns:1fr}.account-row{display:block}.account-row strong{display:block;margin-top:4px}.report-product-grid,.generated-report-list{grid-template-columns:1fr}.generated-report-card{grid-template-columns:1fr}.generated-report-card button{justify-self:start}.fortune-entry{display:grid}}
+@media (max-width:760px){.page-head{display:block}.page-grid,.page-grid.two,.membership-panel,.auth-shell,.security-grid,.waiver-grid{grid-template-columns:1fr}.account-row{display:block}.account-row strong{display:block;margin-top:4px}.report-product-grid,.generated-report-list{grid-template-columns:1fr}.generated-report-card{grid-template-columns:1fr}.generated-report-card button{justify-self:start}.fortune-entry{display:grid}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -632,7 +657,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 </div></section>
 
 <footer><div class="footer-content"><div>© 2026 Madeshed · <span style="font-family:var(--font-cn);">命盘 × 数据</span></div>
-<div class="footer-links"><a href="#/about" data-route="/about">关于</a><a href="#/privacy" data-route="/privacy">隐私政策</a><a href="#/terms" data-route="/terms">服务条款</a><a href="#/contact" data-route="/contact">联系我们</a></div></div>
+<div class="footer-links"><a href="#/login" data-route="/login">登录</a><a href="#/signup" data-route="/signup">注册</a><a href="#/about" data-route="/about">关于</a><a href="#/privacy" data-route="/privacy">隐私政策</a><a href="#/terms" data-route="/terms">服务条款</a><a href="#/waiver" data-route="/waiver">风险免责声明</a><a href="#/contact" data-route="/contact">联系我们</a></div></div>
 <div class="footer-disclaim risk-note"><strong>风险提示:</strong> Madeshed 提供的所有评分、回测、警示均为<strong>决策辅助工具</strong>,不构成任何投资建议。任何基于本工具产生的交易决策与盈亏责任,均由用户自行承担。投资有风险,入市需谨慎。</div></footer>
 </main>
 </section>
@@ -934,14 +959,174 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 </div>
 </section>
 
+<!-- SIGNUP -->
+<section class="view" data-view="signup">
+<div class="container page">
+<div class="page-head"><div><div class="page-kicker">Create Account</div><h1>注册会员账号</h1><p>注册后会发送确认邮件。确认邮箱并接受必要条款后，才可以购买会员、点数和付费报告。</p></div></div>
+<div class="auth-shell">
+  <div class="auth-card">
+    <h2>创建账号</h2>
+    <form class="auth-form" id="signup-form">
+      <div class="auth-field"><label for="signup-display-name">显示名称</label><input id="signup-display-name" type="text" autocomplete="name" placeholder="例如 Vincent"></div>
+      <div class="auth-field"><label for="signup-email">邮箱</label><input id="signup-email" type="email" autocomplete="email" required placeholder="you@example.com"></div>
+      <div class="auth-field"><label for="signup-password">密码</label><input id="signup-password" type="password" autocomplete="new-password" required minlength="10" placeholder="至少 10 位"></div>
+      <div class="auth-field"><label for="signup-password-confirm">确认密码</label><input id="signup-password-confirm" type="password" autocomplete="new-password" required minlength="10"></div>
+      <div class="legal-checks" aria-label="注册前必须确认的条款">
+        <label><input id="signup-accept-terms" type="checkbox" required>我已阅读并同意 <a class="auth-link" href="#/terms" data-route="/terms">服务条款</a>。</label>
+        <label><input id="signup-accept-privacy" type="checkbox" required>我已阅读并同意 <a class="auth-link" href="#/privacy" data-route="/privacy">隐私政策</a>。</label>
+        <label><input id="signup-accept-risk" type="checkbox" required>我理解 Madeshed 不构成投资、金融、法律或医疗建议，交易盈亏由我自行承担。</label>
+        <label><input id="signup-accept-ai" type="checkbox" required>我理解 AI/命理内容只用于自我观察、复盘和节奏参考，不保证任何结果。</label>
+        <label><input id="signup-accept-billing" type="checkbox" required>我理解会员为自动续费数字服务，可在 Stripe 官方门户管理付款方式、发票和取消续订。</label>
+        <label><input id="signup-accept-age" type="checkbox" required>我确认本人已满 18 岁，并具备自行承担决策风险的能力。</label>
+      </div>
+      <div class="auth-actions"><button class="report-btn primary" type="submit">注册并发送确认邮件</button><a class="auth-link" href="#/login" data-route="/login">已有账号？登录</a></div>
+    </form>
+    <div class="auth-message" id="signup-output">注册后请到邮箱点击确认链接；如果没有收到，请检查垃圾邮件或稍后重发。</div>
+  </div>
+  <div class="auth-side">
+    <div class="auth-step"><strong>1. 注册</strong><span>邮箱 + 密码创建账号，并保存你的条款同意版本。</span></div>
+    <div class="auth-step"><strong>2. 确认邮箱</strong><span>点击确认邮件后，全网站会默认使用同一份八字命盘。</span></div>
+    <div class="auth-step"><strong>3. 开通会员</strong><span>邮箱确认和 waiver 完成后，才会进入 Stripe 安全付款页。</span></div>
+  </div>
+</div>
+</div>
+</section>
+
+<!-- LOGIN -->
+<section class="view" data-view="login">
+<div class="container page">
+<div class="page-head"><div><div class="page-kicker">Login</div><h1>登录会员账号</h1><p>登录后会同步你的命盘、每日记录、会员权益、点数和问大师历史。</p></div></div>
+<div class="auth-shell">
+  <div class="auth-card">
+    <h2>邮箱密码登录</h2>
+    <form class="auth-form" id="login-form">
+      <div class="auth-field"><label for="login-email">邮箱</label><input id="login-email" type="email" autocomplete="email" required></div>
+      <div class="auth-field"><label for="login-password">密码</label><input id="login-password" type="password" autocomplete="current-password" required></div>
+      <div class="auth-actions"><button class="report-btn primary" type="submit">登录</button><a class="auth-link" href="#/forgot-password" data-route="/forgot-password">忘记密码？</a><a class="auth-link" href="#/signup" data-route="/signup">注册账号</a></div>
+    </form>
+    <div class="auth-actions"><button class="report-btn" type="button" data-auth-action="magic-link">发送 Magic Link</button><button class="report-btn" type="button" data-auth-action="resend-confirmation">重发确认邮件</button></div>
+    <div class="auth-message" id="login-output">如果你还没有确认邮箱，可以点击“重发确认邮件”。</div>
+  </div>
+  <div class="auth-side">
+    <div class="auth-step"><strong>安全提醒</strong><span>请使用自己能长期访问的邮箱；会员权益和报告解锁都会绑定在这个账号下。</span></div>
+    <div class="auth-step"><strong>Magic Link 备用</strong><span>如果忘记密码，也可以先用邮箱链接登录，再到账号安全页重设密码。</span></div>
+  </div>
+</div>
+</div>
+</section>
+
+<!-- FORGOT PASSWORD -->
+<section class="view" data-view="forgot-password">
+<div class="container page">
+<div class="auth-shell">
+  <div class="auth-card">
+    <h2>重置密码</h2>
+    <p>输入邮箱后，我们会发送一封密码重置邮件。如果账号存在，你会在邮箱里收到链接。</p>
+    <form class="auth-form" id="forgot-password-form">
+      <div class="auth-field"><label for="forgot-email">账号邮箱</label><input id="forgot-email" type="email" autocomplete="email" required></div>
+      <div class="auth-actions"><button class="report-btn primary" type="submit">发送重置邮件</button><a class="auth-link" href="#/login" data-route="/login">返回登录</a></div>
+    </form>
+    <div class="auth-message" id="forgot-password-output">为了保护隐私，页面不会提示该邮箱是否已注册。</div>
+  </div>
+</div>
+</div>
+</section>
+
+<!-- RESET PASSWORD -->
+<section class="view" data-view="reset-password">
+<div class="container page">
+<div class="auth-shell">
+  <div class="auth-card">
+    <h2>设定新密码</h2>
+    <p>请从邮件链接进入本页。新密码至少 10 位，建议不要和其他网站重复。</p>
+    <form class="auth-form" id="reset-password-form">
+      <div class="auth-field"><label for="reset-password">新密码</label><input id="reset-password" type="password" autocomplete="new-password" required minlength="10"></div>
+      <div class="auth-field"><label for="reset-password-confirm">确认新密码</label><input id="reset-password-confirm" type="password" autocomplete="new-password" required minlength="10"></div>
+      <div class="auth-actions"><button class="report-btn primary" type="submit">更新密码</button><a class="auth-link" href="#/login" data-route="/login">返回登录</a></div>
+    </form>
+    <div class="auth-message" id="reset-password-output">如果链接已过期，请重新发送重置邮件。</div>
+  </div>
+</div>
+</div>
+</section>
+
+<!-- AUTH CALLBACK -->
+<section class="view" data-view="auth-callback">
+<div class="container page">
+<div class="auth-card">
+  <h2>正在确认账号</h2>
+  <p>我们正在处理邮箱确认或登录链接。完成后会自动同步你的命盘、记录和会员权益。</p>
+  <div class="auth-message" id="auth-callback-output">请稍候...</div>
+  <div class="auth-actions"><a class="report-btn primary" href="#/dashboard" data-route="/dashboard">进入仪表盘</a><a class="report-btn" href="#/account" data-route="/account">查看账号</a></div>
+</div>
+</div>
+</section>
+
+<!-- ACCOUNT SECURITY -->
+<section class="view" data-view="account-security">
+<div class="container page">
+<div class="page-head"><div><div class="page-kicker">Security</div><h1>账号安全</h1><p>管理密码、邮箱、法律同意状态、数据导出和账号删除申请。</p></div><a class="btn-signin" href="#/account" data-route="/account">返回账号中心</a></div>
+<div class="security-grid">
+  <div class="auth-card">
+    <h2>修改密码</h2>
+    <form class="auth-form" id="account-security-form">
+      <div class="auth-field"><label for="account-new-password">新密码</label><input id="account-new-password" type="password" autocomplete="new-password" minlength="10" required></div>
+      <div class="auth-field"><label for="account-new-password-confirm">确认新密码</label><input id="account-new-password-confirm" type="password" autocomplete="new-password" minlength="10" required></div>
+      <button class="report-btn primary" type="submit">更新密码</button>
+    </form>
+    <div class="auth-message" id="account-security-output">修改后请妥善保存新密码。</div>
+  </div>
+  <div class="auth-card">
+    <h2>修改邮箱</h2>
+    <form class="auth-form" id="account-email-form">
+      <div class="auth-field"><label for="account-new-email">新邮箱</label><input id="account-new-email" type="email" autocomplete="email" required></div>
+      <button class="report-btn primary" type="submit">发送邮箱确认</button>
+    </form>
+    <div class="auth-message" id="account-email-output">修改邮箱需要点击新邮箱中的确认链接。</div>
+  </div>
+  <div class="auth-card">
+    <h2>数据导出</h2>
+    <p>导出当前浏览器保存的命盘、每日记录、报告、问大师历史和账号状态。</p>
+    <button class="report-btn primary" type="button" id="account-export-data">导出我的数据</button>
+    <div class="auth-message" id="account-export-output">导出文件为 JSON 格式。</div>
+  </div>
+  <div class="auth-card">
+    <h2>删除账号申请</h2>
+    <form class="auth-form" id="account-delete-form">
+      <div class="auth-field"><label for="account-delete-reason">原因（可选）</label><textarea id="account-delete-reason" rows="4" placeholder="你可以告诉我们为什么想删除账号"></textarea></div>
+      <button class="report-btn" type="submit">提交删除申请</button>
+    </form>
+    <div class="auth-message" id="account-delete-output">提交后我们会记录申请；正式删除前建议先导出数据。</div>
+  </div>
+</div>
+</div>
+</section>
+
+<!-- WAIVER -->
+<section class="view" data-view="waiver">
+<div class="container page">
+<div class="page-head"><div><div class="page-kicker">Risk Waiver</div><h1>风险免责声明</h1><p>这是注册和付费前必须理解的使用边界。Madeshed 是复盘和决策辅助工具，不是投资顾问、法律顾问、医生或确定性命运预测。</p></div></div>
+<div class="waiver-grid">
+  <div class="waiver-item"><h3>不构成投资建议</h3><p>所有评分、报告、问大师回答只用于观察节奏、风险和个人行为模式；不提供具体投资标的、买卖点、仓位指令或收益承诺。</p></div>
+  <div class="waiver-item"><h3>交易盈亏自负</h3><p>任何交易、杠杆、期权、加密资产或高风险行为都由用户自行判断并承担后果。历史回测和命理状态不保证未来结果。</p></div>
+  <div class="waiver-item"><h3>AI/命理内容边界</h3><p>命理咨询用于自我反思、长期规划和择时参考，不代表必然发生；重大决定应结合现实信息和专业人士意见。</p></div>
+  <div class="waiver-item"><h3>非医疗/法律服务</h3><p>涉及疾病、心理危机、法律纠纷、税务或监管问题时，请联系持牌专业人士或当地紧急服务。</p></div>
+  <div class="waiver-item"><h3>数字产品和会员</h3><p>付费报告、点数和会员属于数字服务；会员按周期自动续费，可通过 Stripe 官方门户管理付款方式、发票和取消。</p></div>
+  <div class="waiver-item"><h3>数据与隐私</h3><p>登录后命盘、记录、报告和问答会同步到 Supabase 云端；你可以在账号安全页导出数据或提交删除申请。</p></div>
+</div>
+<div class="legal-block"><h2>律师审核提示</h2><p>本页面是产品上线草案，不构成正式法律意见。正式商业投放、广告投放和跨地区收费前，建议由律师按实际运营地审核。</p></div>
+</div>
+</section>
+
 <!-- ACCOUNT -->
 <section class="view" data-view="account">
 <div class="container page">
-<div class="page-head"><div><div class="page-kicker">Account</div><h1>设置</h1><p>管理当前设备和 Supabase 账号中的命盘与记录；支付、导出和删除云端数据会在后续阶段补齐。</p></div><button class="btn-signin" data-route="/onboarding">重新生成命盘</button></div>
+<div class="page-head"><div><div class="page-kicker">Account</div><h1>账号中心</h1><p>管理命盘同步、邮箱验证、法律同意、会员权益、点数、账单和账号安全。</p></div><div class="auth-actions"><a class="btn-signin" href="#/account/security" data-route="/account/security">账号安全</a><button class="btn-signin" data-route="/onboarding">重新生成命盘</button></div></div>
 <div class="page-grid two">
   <div class="metric"><div class="k">当前命盘</div><div class="account-list" id="account-profile"></div></div>
   <div class="metric"><div class="k">本地数据</div><div class="account-list" id="account-storage"></div></div>
 </div>
+<div class="legal-block" style="margin-top:14px"><h2>账号状态</h2><div class="account-list" id="account-status-list"></div><div class="auth-actions" style="margin-top:12px"><button class="report-btn" type="button" data-auth-action="resend-confirmation">重发确认邮件</button><button class="report-btn primary" type="button" data-auth-action="accept-legal">确认必要条款</button><a class="report-btn" href="#/waiver" data-route="/waiver">查看风险免责声明</a></div><div class="auth-message" id="account-legal-output">确认必要条款会记录当前条款版本、时间和账号。</div></div>
 <div class="legal-block" style="margin-top:14px"><h2>会员与权益</h2><div class="membership-panel" id="membership-panel"></div><div class="report-output" id="membership-output"></div></div>
 <div class="legal-block" style="margin-top:14px"><h2>云端同步状态</h2><p id="cloud-sync-note">未登录，当前为本机数据。</p><button class="btn-signin" id="btn-signout" type="button" style="display:none">退出登录</button></div>
 </div>
@@ -961,6 +1146,9 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 <div class="page-head"><div><div class="page-kicker">Privacy</div><h1>隐私政策</h1><p>未登录时，数据只保存在当前浏览器；登录后，命盘和每日记录会尝试同步到 Supabase 云端。</p></div></div>
 <div class="legal-block"><h2>当前收集范围</h2><ul><li>出生日期、时间、性别等命盘输入会先保存在本机 localStorage。</li><li>每日交易结果记录会先保存在本机 localStorage。</li><li>登录后，命盘会同步到 Supabase `profiles` 表，每日记录会同步到 `checkins` 表。</li></ul></div>
 <div class="legal-block"><h2>数据控制</h2><p>当前阶段已具备账号级 RLS 隔离；后续会继续加入前台导出、删除账号和删除云端数据入口。</p></div>
+<div class="legal-block"><h2>会员账号与邮件</h2><p>注册会员账号时，我们会使用 Supabase Auth 保存邮箱、加密后的密码凭证、邮箱确认状态和登录会话。确认邮件、密码重置邮件、邮箱变更邮件会通过认证邮件系统发送；生产环境会使用自有域名 SMTP 以提升送达率。</p></div>
+<div class="legal-block"><h2>法律同意与审计记录</h2><p>当你注册、接受条款、购买会员、提交删除申请或重置密码时，系统会记录必要的账号事件、条款版本、时间、浏览器信息和经过哈希处理的 IP，用于安全、合规和客服核对。</p></div>
+<div class="legal-block"><h2>导出与删除</h2><p>账号安全页提供本地数据导出入口；删除账号申请会写入云端记录，正式删除前建议先导出命盘、交易记录、报告和问大师历史。</p></div>
 </div>
 </section>
 
@@ -970,6 +1158,9 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 <div class="page-head"><div><div class="page-kicker">Terms</div><h1>服务条款</h1><p>使用 Madeshed 即表示你理解本工具只用于自我观察和决策辅助，不构成投资建议。</p></div></div>
 <div class="legal-block"><h2>风险声明</h2><p>Madeshed 展示的评分、回测和提醒不保证任何收益。任何交易行为和盈亏责任均由用户自行承担。</p></div>
 <div class="legal-block"><h2>使用限制</h2><p>请勿把本工具作为唯一交易依据，也不要在不了解产品风险的情况下进行高杠杆或超出承受能力的交易。</p></div>
+<div class="legal-block"><h2>会员与数字服务</h2><p>最高级会员为周期性数字服务，价格、权益和续费周期以结账页显示为准；用户可通过 Stripe 官方会员门户管理付款方式、发票和取消续订。点数包、付费报告和命理咨询属于数字内容服务。</p></div>
+<div class="legal-block"><h2>AI 与命理内容边界</h2><p>全盘、流年大运、每月运程和问大师内容只用于自我观察、复盘、规划和风险提醒，不代表确定性预测，不构成投资、金融、医疗、法律或税务建议。</p></div>
+<div class="legal-block"><h2>退款与交付</h2><p>数字报告或点数一旦生成、消耗或交付，原则上不按“结果是否符合预期”退款；如出现重复扣费、系统故障或未交付，请联系 support@madeshed.com 处理。</p></div>
 </div>
 </section>
 
@@ -985,8 +1176,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 
 <script>
 // ========== ROUTER ==========
-const VIEWS = ['landing','onboarding','dashboard','daily','report','fortune','account','terms','privacy','about','contact'];
-const HASH_TO_VIEW = {'':'landing','/':'landing','/onboarding':'onboarding','/dashboard':'dashboard','/daily':'daily','/report':'report','/fortune':'fortune','/account':'account','/terms':'terms','/privacy':'privacy','/about':'about','/contact':'contact'};
+const VIEWS = ['landing','onboarding','dashboard','daily','report','fortune','signup','login','forgot-password','reset-password','auth-callback','account','account-security','waiver','terms','privacy','about','contact'];
+const HASH_TO_VIEW = {'':'landing','/':'landing','/onboarding':'onboarding','/dashboard':'dashboard','/daily':'daily','/report':'report','/fortune':'fortune','/signup':'signup','/login':'login','/forgot-password':'forgot-password','/reset-password':'reset-password','/auth/callback':'auth-callback','/account':'account','/account/security':'account-security','/waiver':'waiver','/terms':'terms','/privacy':'privacy','/about':'about','/contact':'contact'};
 const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
 const mobileMenu = document.getElementById('mobile-menu');
 
@@ -1004,6 +1195,9 @@ function router(){
   document.getElementById('nav-pro').classList.toggle('hide', isLanding);
   document.getElementById('nav-avatar').classList.toggle('hide', isLanding);
   if(typeof updateMembershipBadges==='function')updateMembershipBadges();
+  if(view==='account'&&typeof renderAccount==='function')renderAccount();
+  if(view==='account-security'&&window.renderAccountSecurity)window.renderAccountSecurity();
+  if(view==='auth-callback'&&window.renderAuthCallback)window.renderAuthCallback();
   document.querySelectorAll('#nav-links a,#mobile-menu a[data-route]').forEach(a => {
     a.classList.toggle('active', a.dataset.route === '/' + view || (view === 'landing' && a.dataset.route === '/'));
   });
@@ -1115,6 +1309,14 @@ const FORTUNE_REPORTS_KEY='madeshed_fortune_reports_v1';
 const FORTUNE_REPORT_ENDPOINT='/api/fortune-report';
 const MASTER_QUESTION_ENDPOINT='/api/master-question';
 const CREDIT_CHECKOUT_ENDPOINT='/api/create-credit-checkout-session';
+const ACCOUNT_BOOTSTRAP_ENDPOINT='/api/account-bootstrap';
+const ACCOUNT_STATUS_ENDPOINT='/api/account-status';
+const LEGAL_ACCEPTANCE_ENDPOINT='/api/legal-acceptance';
+const ACCOUNT_DELETE_ENDPOINT='/api/account-delete-request';
+const ACCOUNT_STATUS_KEY='madeshed_account_status_v1';
+const PENDING_LEGAL_KEY='madeshed_pending_legal_acceptances_v1';
+const LEGAL_DOCUMENT_VERSIONS={terms:'2026-06-30',privacy:'2026-06-30',risk_waiver:'2026-06-30',ai_disclaimer:'2026-06-30',billing_terms:'2026-06-30'};
+const LEGALLY_REQUIRED_ACCEPTANCES=Object.keys(LEGAL_DOCUMENT_VERSIONS);
 const CREDIT_PACK_PRODUCT={label:'问大师 10 点包',price:'¥99',credits:10};
 const FORTUNE_PRODUCTS={
   full:{label:'全盘解读',price:'¥69',desc:'一生格局、性格、婚姻、事业、财运、健康倾向，适合建立长期人生底盘。',featured:true},
@@ -1161,9 +1363,17 @@ function renderReportCenter(){const fs=document.getElementById('report-free-stat
 function buildDetailedReport(type,summary,profile){const product=REPORT_PRODUCTS[type]||REPORT_PRODUCTS['30'],best=summary.best,worst=summary.worst,yong=profile&&profile.yongShen,xi=yong&&yong.xi?yong.xi.map(x=>({wood:'木',fire:'火',earth:'土',metal:'金',water:'水'}[x]||x)).join('、'):'尚未生成';const sampleWarn=(summary.usingSample?'<div class="report-warning">当前为示例数据报告。真实付费报告应在用户持续记录后生成，避免用示例数据误导消费者。</div>':'')+(summary.traded<20?'<div class="report-warning">当前交易样本少于 20 条，报告会给出方向性建议，但统计结论需要继续累积数据验证。</div>':'');return '<div class="report-generated"><h2>'+product.label+' · 详细版</h2><span class="report-badge">'+product.period+'</span><span class="report-badge">'+summary.confidence+'</span><span class="report-badge">胜率 '+summary.rate+'</span>'+sampleWarn+'<h3>一、统计结论</h3><p>本周期共记录 '+summary.total+' 天，实际交易 '+summary.traded+' 次；大赚 '+summary.counts.big_win+' 次，赚 '+summary.counts.win+' 次，平 '+summary.counts.flat+' 次，亏 '+summary.counts.loss+' 次，大亏 '+summary.counts.big_loss+' 次，未交易 '+summary.counts.notrade+' 天。</p><h3>二、命理颜色表现</h3><p>当前最有利状态：'+(best?best.name+'，胜率 '+pct(best.w,best.n)+'，样本 N='+best.n:'样本不足')+'。当前最需要防守状态：'+(worst?worst.name+'，胜率 '+pct(worst.w,worst.n)+'，样本 N='+worst.n:'样本不足')+'。</p><h3>三、五行与八字分析</h3><p>你的当前命盘喜用倾向为 '+xi+'。当流日五行接近喜用时，适合按计划推进；当忌神或压力五行明显时，应减少临时交易，优先保护本金。</p><h3>四、行为风险模式</h3><ul><li>出现大亏后，当天停止交易，第二天只允许观察或小仓验证。</li><li>橙日、红日默认降仓；如果前一日已亏损，直接进入冷静模式。</li><li>大赚后不追第二笔高风险交易，避免利润回吐。</li></ul><h3>五、未来操作建议</h3><p>未来周期建议采用颜色分级仓位：浅绿日正常执行，绿日标准仓，黄日小仓验证，橙日轻仓或观望，红日默认不交易。报告用于纪律和风险管理，不构成投资建议。</p></div>';}
 function renderDetailedReport(type,locked){const out=document.getElementById('premium-report-output');if(!out)return;const profile=getReportProfile(),data=reportEntriesFor(type),summary=summarizeReportEntries(data.entries,profile);summary.usingSample=data.usingSample;out.innerHTML=buildDetailedReport(type,summary,profile)+(locked?'<div class="report-paywall"><strong>完整报告已锁定。</strong> 单次购买可解锁本报告；最高级会员可免费生成全部报告。点击“单次购买”会请求 Stripe Checkout Session。</div>':'');}
 function getPaymentOutput(){return document.querySelector('[data-view].active #membership-output')||document.querySelector('[data-view].active #premium-report-output')||document.querySelector('[data-view].active #fortune-report-output')||document.querySelector('[data-view].active #master-answer-output')||document.getElementById('membership-output')||document.getElementById('premium-report-output')||document.getElementById('fortune-report-output')||document.getElementById('master-answer-output');}
-async function beginReportCheckout(type){const out=getPaymentOutput(),product=REPORT_PRODUCTS[type]||REPORT_PRODUCTS['30'];if(!window.__cloudUser){if(out)out.innerHTML='<div class="report-paywall">请先登录后再购买报告，权益需要绑定到你的账号。</div>';return;}if(out)out.innerHTML='<div class="report-paywall">正在准备 '+product.label+' 支付页面...</div>';try{const r=await fetch(STRIPE_CHECKOUT_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify({reportType:type,returnUrl:location.href,product:product})});const j=await r.json();if(j&&j.url){location.href=j.url;return;}if(out)out.innerHTML='<div class="report-paywall">'+escapeHtml((j&&j.message)||'报告购买暂不可用。')+'</div>';}catch(e){if(out)out.innerHTML='<div class="report-paywall">报告购买接口暂不可用，当前不会扣费。</div>';}}
-async function beginFortuneReportCheckout(type){const out=getPaymentOutput(),product=FORTUNE_PRODUCTS[type]||FORTUNE_PRODUCTS.full;if(!window.__cloudUser){if(out)out.innerHTML='<div class="report-paywall">请先登录后再购买命理报告，权益需要绑定到你的账号。</div>';return;}if(out)out.innerHTML='<div class="report-paywall">正在准备 '+product.label+' 支付页面...</div>';try{const r=await fetch(STRIPE_CHECKOUT_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify({productKind:'fortune_report',fortuneReportType:type,returnUrl:location.href})});const j=await r.json();if(j&&j.url){location.href=j.url;return;}if(out)out.innerHTML='<div class="report-paywall">'+escapeHtml((j&&j.message)||'命理报告购买暂不可用。')+'</div>';}catch(e){if(out)out.innerHTML='<div class="report-paywall">命理报告购买接口暂不可用，当前不会扣费。</div>';}}
-async function beginMembershipCheckout(){const out=getPaymentOutput();if(!window.__cloudUser){if(out)out.innerHTML='<div class="report-paywall">请先登录后再开通会员，会员权益需要绑定到你的账号。</div>';return;}if(out)out.innerHTML='<div class="report-paywall">正在准备最高级会员订阅页面...</div>';try{const r=await fetch(MEMBERSHIP_CHECKOUT_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify({tier:'ultimate',returnUrl:location.href})});const j=await r.json();if(j&&j.url){location.href=j.url;return;}if(out)out.innerHTML='<div class="report-paywall">'+escapeHtml((j&&j.message)||'会员订阅暂不可用。')+'</div>';}catch(e){if(out)out.innerHTML='<div class="report-paywall">会员订阅接口暂不可用，当前不会扣费。</div>';}}
+function readAccountStatus(){try{return JSON.parse(localStorage.getItem(ACCOUNT_STATUS_KEY)||'null');}catch(e){return null;}}
+function saveAccountStatus(status){window.__accountStatus=status||null;try{if(status)localStorage.setItem(ACCOUNT_STATUS_KEY,JSON.stringify(status));else localStorage.removeItem(ACCOUNT_STATUS_KEY);}catch(e){}}
+function legalLabel(type){return{terms:'服务条款',privacy:'隐私政策',risk_waiver:'风险免责声明',ai_disclaimer:'AI/命理免责声明',billing_terms:'会员扣费条款'}[type]||type;}
+function hasVerifiedEmail(){const s=window.__accountStatus||readAccountStatus(),u=window.__cloudUser;return !!((s&&s.emailConfirmed)||(u&&(u.email_confirmed_at||u.confirmed_at)));}
+function hasRequiredLegalAcceptances(){const s=window.__accountStatus||readAccountStatus();return !!(s&&s.legalComplete);}
+function paidActionMessage(status){if(!window.__cloudUser)return'请先登录后再继续。会员权益、点数和付费报告必须绑定到你的账号。';if(!status||!status.emailConfirmed)return'请先到邮箱点击确认链接，确认邮箱后才能购买会员、点数或付费报告。';if(!status.legalComplete){const missing=(status.missingLegal||LEGALLY_REQUIRED_ACCEPTANCES).map(legalLabel).join('、');return'请先阅读并接受必要条款：'+missing+'。';}return'';}
+async function refreshAccountStatus(){if(!window.__cloudUser)return null;try{const r=await fetch(ACCOUNT_STATUS_ENDPOINT,{method:'GET',headers:await cloudJsonHeaders()});const j=await r.json();if(r.ok&&j&&j.account){saveAccountStatus(j.account);if(typeof renderAccount==='function')renderAccount();return j.account;}return readAccountStatus();}catch(e){return readAccountStatus();}}
+async function ensurePaidActionAllowed(out){if(!window.__cloudUser){if(out)out.innerHTML='<div class="report-paywall">'+paidActionMessage(null)+' <a class="auth-link" href="#/login">去登录</a></div>';go('/login');return false;}const status=await refreshAccountStatus();const msg=paidActionMessage(status);if(msg){if(out)out.innerHTML='<div class="report-paywall">'+escapeHtml(msg)+' <a class="auth-link" href="#/account">查看账号状态</a></div>';return false;}return true;}
+async function beginReportCheckout(type){const out=getPaymentOutput(),product=REPORT_PRODUCTS[type]||REPORT_PRODUCTS['30'];if(!(await ensurePaidActionAllowed(out)))return;if(out)out.innerHTML='<div class="report-paywall">正在准备 '+product.label+' 支付页面...</div>';try{const r=await fetch(STRIPE_CHECKOUT_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify({reportType:type,returnUrl:location.href,product:product})});const j=await r.json();if(j&&j.url){location.href=j.url;return;}if(out)out.innerHTML='<div class="report-paywall">'+escapeHtml((j&&j.message)||'报告购买暂不可用。')+'</div>';}catch(e){if(out)out.innerHTML='<div class="report-paywall">报告购买接口暂不可用，当前不会扣费。</div>';}}
+async function beginFortuneReportCheckout(type){const out=getPaymentOutput(),product=FORTUNE_PRODUCTS[type]||FORTUNE_PRODUCTS.full;if(!(await ensurePaidActionAllowed(out)))return;if(out)out.innerHTML='<div class="report-paywall">正在准备 '+product.label+' 支付页面...</div>';try{const r=await fetch(STRIPE_CHECKOUT_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify({productKind:'fortune_report',fortuneReportType:type,returnUrl:location.href})});const j=await r.json();if(j&&j.url){location.href=j.url;return;}if(out)out.innerHTML='<div class="report-paywall">'+escapeHtml((j&&j.message)||'命理报告购买暂不可用。')+'</div>';}catch(e){if(out)out.innerHTML='<div class="report-paywall">命理报告购买接口暂不可用，当前不会扣费。</div>';}}
+async function beginMembershipCheckout(){const out=getPaymentOutput();if(!(await ensurePaidActionAllowed(out)))return;if(out)out.innerHTML='<div class="report-paywall">正在准备最高级会员订阅页面...</div>';try{const r=await fetch(MEMBERSHIP_CHECKOUT_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify({tier:'ultimate',returnUrl:location.href})});const j=await r.json();if(j&&j.url){location.href=j.url;return;}if(out)out.innerHTML='<div class="report-paywall">'+escapeHtml((j&&j.message)||'会员订阅暂不可用。')+'</div>';}catch(e){if(out)out.innerHTML='<div class="report-paywall">会员订阅接口暂不可用，当前不会扣费。</div>';}}
 async function beginCustomerPortal(){const out=getPaymentOutput()||document.getElementById('cloud-sync-note');if(!window.__cloudUser){if(out)out.innerHTML='<div class="report-paywall">请先登录后再管理会员。</div>';return;}try{const r=await fetch(CUSTOMER_PORTAL_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify({returnUrl:location.href})});const j=await r.json();if(j&&j.url){location.href=j.url;return;}if(out)out.innerHTML='<div class="report-paywall">'+escapeHtml((j&&j.message)||'会员管理暂不可用。')+'</div>';}catch(e){if(out)out.innerHTML='<div class="report-paywall">会员管理接口暂不可用。</div>';}}
 function getFortuneProfile(){return getReportProfile();}
 function loadCreditState(){try{const x=JSON.parse(localStorage.getItem(FORTUNE_CREDITS_KEY)||'{}');return x&&typeof x==='object'?Object.assign({balance:0,grants:{}},x):{balance:0,grants:{}};}catch(e){return{balance:0,grants:{}};}}
@@ -1188,7 +1398,7 @@ function renderFortuneProducts(){const box=document.getElementById('fortune-prod
 function renderMasterForm(){const cat=document.getElementById('master-question-category'),hor=document.getElementById('master-question-horizon');if(cat&&!cat.options.length)cat.innerHTML=Object.keys(MASTER_CATEGORY_LABELS).map(k=>'<option value="'+k+'">'+MASTER_CATEGORY_LABELS[k]+'</option>').join('');if(hor&&!hor.options.length)hor.innerHTML=Object.keys(MASTER_HORIZON_LABELS).map(k=>'<option value="'+k+'">'+MASTER_HORIZON_LABELS[k]+'</option>').join('');}
 function renderMasterHistory(){const box=document.getElementById('master-history-list');if(!box)return;const items=loadMasterHistory();if(!items.length){box.innerHTML='<div class="report-paywall">还没有问大师历史。提交问题后，结论、命理依据、关键时间窗口、风险点和建议行动会保存在这里。</div>';return;}box.innerHTML=items.map(function(x){return '<div class="master-history-item"><div class="meta">'+escapeHtml(x.createdAt||'')+' · '+escapeHtml(MASTER_CATEGORY_LABELS[x.category]||x.category)+' · '+escapeHtml(x.depth==='deep'?'深度':'普通')+'</div><div class="q">'+escapeHtml(x.question)+'</div><div class="a">'+(x.answerHtml||'')+'</div></div>';}).join('');}
 function renderFortuneCenter(){document.querySelectorAll('#fortune-tabs [data-fortune-tab]').forEach(b=>b.classList.toggle('active',b.dataset.fortuneTab===fortuneTab));const productPanel=document.querySelector('[data-fortune-panel="products"]'),askPanel=document.querySelector('[data-fortune-panel="ask"]'),historyPanel=document.querySelector('[data-fortune-panel="history"]');if(productPanel)productPanel.classList.toggle('active',['full','dayun','month'].indexOf(fortuneTab)>=0);if(askPanel)askPanel.classList.toggle('active',fortuneTab==='ask');if(historyPanel)historyPanel.classList.toggle('active',fortuneTab==='history');const balance=document.getElementById('fortune-credit-balance');if(balance)balance.textContent=getCreditBalance()+' 点';renderFortuneProducts();renderMasterForm();renderMasterHistory();}
-async function beginCreditCheckout(){const out=getPaymentOutput();if(!window.__cloudUser){if(out)out.innerHTML='<div class="report-paywall">请先登录后再购买点数，点数账本需要绑定到你的账号。</div>';return;}if(out)out.innerHTML='<div class="report-paywall">正在准备 '+CREDIT_PACK_PRODUCT.label+' 支付页面...</div>';try{const r=await fetch(CREDIT_CHECKOUT_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify({product:CREDIT_PACK_PRODUCT,returnUrl:location.href})});const j=await r.json();if(j&&j.url){location.href=j.url;return;}if(j&&j.message&&out)out.innerHTML='<div class="report-paywall">'+escapeHtml(j.message)+'</div>';else if(out)out.innerHTML='<div class="report-paywall">点数购买接口已预留；Stripe 配置完成后会跳转 Checkout。</div>';}catch(e){if(out)out.innerHTML='<div class="report-paywall">点数购买接口暂不可用，当前不会扣费。</div>';}}
+async function beginCreditCheckout(){const out=getPaymentOutput();if(!(await ensurePaidActionAllowed(out)))return;if(out)out.innerHTML='<div class="report-paywall">正在准备 '+CREDIT_PACK_PRODUCT.label+' 支付页面...</div>';try{const r=await fetch(CREDIT_CHECKOUT_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify({product:CREDIT_PACK_PRODUCT,returnUrl:location.href})});const j=await r.json();if(j&&j.url){location.href=j.url;return;}if(j&&j.message&&out)out.innerHTML='<div class="report-paywall">'+escapeHtml(j.message)+'</div>';else if(out)out.innerHTML='<div class="report-paywall">点数购买接口已预留；Stripe 配置完成后会跳转 Checkout。</div>';}catch(e){if(out)out.innerHTML='<div class="report-paywall">点数购买接口暂不可用，当前不会扣费。</div>';}}
 async function submitMasterQuestion(){const out=document.getElementById('master-answer-output');if(!out)return;const profile=getFortuneProfile(),category=document.getElementById('master-question-category')?.value||'custom',horizon=document.getElementById('master-question-horizon')?.value||'short',depth=document.getElementById('master-question-depth')?.value||'normal',question=(document.getElementById('master-question-text')?.value||'').trim(),targetDate=document.getElementById('master-target-date')?.value||null,targetMonth=document.getElementById('master-target-month')?.value||null,cost=depth==='deep'?3:1;if(!profile){out.innerHTML='<div class="report-paywall">请先生成八字命盘。登录后，全网站会默认使用这一份命盘，除非你自行修改。</div>';return;}if(!window.__cloudUser){out.innerHTML='<div class="report-paywall">请先登录再使用问大师。问题、答案和点数账本需要绑定到你的账号。</div>';return;}if(question.length<6){out.innerHTML='<div class="report-paywall">请把问题写得再具体一点，例如时间范围、想做的决定、担心的风险。</div>';return;}if(!isUltimateMember()&&getCreditBalance()<cost){out.innerHTML='<div class="report-paywall"><strong>点数余额不足。</strong> '+(depth==='deep'?'深度分析需要 3 点。':'普通问题需要 1 点。')+' 可以购买 10 点包，或开通最高级会员。</div>';return;}out.innerHTML='<div class="report-paywall">正在整理八字、大运、流年与问题上下文...</div>';const payload={category,horizon,question,targetDate,targetMonth,depth,profile,context:buildFortuneContext(profile)};try{const r=await fetch(MASTER_QUESTION_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify(payload)});const j=await r.json();if(!r.ok){out.innerHTML='<div class="report-paywall">'+escapeHtml((j&&j.message)||'问大师服务暂不可用，本次不消耗点数。')+'</div>';return;}const spent=Number(j.creditsSpent)||0;if(spent>0)adjustCredits(-spent,'master-question');const answer=j.answerHtml||'<div class="report-generated"><h2>问大师回答</h2><p>服务端已返回，但没有正文。</p></div>';out.innerHTML=answer;const items=loadMasterHistory();items.unshift({category,horizon,depth,question,targetDate,targetMonth,creditsSpent:spent,answerHtml:answer,createdAt:new Date().toLocaleString('zh-CN')});saveMasterHistory(items);renderFortuneCenter();}catch(e){out.innerHTML='<div class="report-paywall">问大师接口暂不可用，本次不消耗点数。</div>';}}
 function tradedCount(entries){return entries.filter(e=>isTradeOutcome(e.outcome)).length;}
 function syncRangeButtons(){document.querySelectorAll('#stats-range-controls [data-range]').forEach(b=>b.classList.toggle('active',b.dataset.range===statsRange.type));const cr=document.getElementById('stats-custom-range');if(cr)cr.classList.toggle('show',statsRange.type==='custom');document.querySelectorAll('#history-range-controls [data-history-range]').forEach(b=>b.classList.toggle('active',b.dataset.historyRange===historyRange.type));const hr=document.getElementById('history-custom-range');if(hr)hr.classList.toggle('show',historyRange.type==='custom');}
@@ -1230,7 +1440,10 @@ function renderStoredCheckin(){const item=loadCheckins().find(x=>x.date===curren
 function renderReport(){const box=document.getElementById('report-summary'),note=document.getElementById('report-insight');if(!box)return;const items=loadCheckins();const traded=items.filter(x=>isTradeOutcome(x));const wins=traded.filter(x=>isWinOutcome(x)).length;const bigWins=traded.filter(x=>canonicalOutcome(x)==='big_win').length,bigLosses=traded.filter(x=>canonicalOutcome(x)==='big_loss').length;const rate=traded.length?Math.round(wins/traded.length*100)+'%':'—';const signedIn=!!window.__cloudUser;let profile=null;try{profile=JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');}catch(e){}const chart=profile&&profile.pillarsStr?Object.values(profile.pillarsStr).join(' · '):'未生成';const storageNote=signedIn?'当前浏览器 + Supabase 云端。':'保存在当前浏览器，登录后同步到云端。';box.innerHTML='<div class="metric"><div class="k">个人真实记录</div><div class="v">'+items.length+'</div><div class="d">'+storageNote+'</div></div><div class="metric"><div class="k">胜率</div><div class="v">'+rate+'</div><div class="d">'+(traded.length?('交易样本 '+traded.length+' 条 · 大赚 '+bigWins+' · 大亏 '+bigLosses):'至少 5 条交易后更有参考价值')+'</div></div><div class="metric"><div class="k">当前命盘</div><div class="v" style="font-size:18px;line-height:1.6">'+chart+'</div><div class="d">与 Dashboard / Daily / Forecast 共用同一份命盘。</div></div>';if(note)note.textContent=items.length?(signedIn?'已开始积累你的个人真实记录，并会自动尝试同步到云端。':'已开始积累你的个人真实记录；登录后会自动尝试同步到云端。'):'还没有足够记录。每天收盘后点一次结果，系统会逐步生成个人胜率、红灯日规避、亏损后追单等模式。';renderReportCenter();}
 function updateMembershipBadges(){const m=readMembership(),active=isUltimateMember(),badge=document.getElementById('nav-pro');if(badge){badge.textContent=active?'ULTIMATE':'FREE';badge.classList.toggle('hide',document.body.classList.contains('is-landing'));}}
 function renderMembershipCenter(){const box=document.getElementById('membership-panel');if(!box)return;const m=readMembership(),active=isUltimateMember(),signedIn=!!window.__cloudUser,credits=getCreditBalance(),primary=active?'管理会员':'开通最高级会员',action=active?'portal':'subscribe';box.innerHTML='<div class="membership-card featured"><div class="tier">'+membershipTierText(m)+'</div><div class="status">'+membershipStatusText(m)+' · '+membershipPeriodText(m)+'</div><div class="account-list"><div class="account-row"><span>问大师点数</span><strong>'+credits+' 点</strong></div><div class="account-row"><span>账号绑定</span><strong>'+(signedIn?(window.__cloudUser.email||'已登录'):'未登录')+'</strong></div><div class="account-row"><span>报告权益</span><strong>'+(active?'固定报告免费':'需单次解锁')+'</strong></div></div><div class="report-actions"><button class="report-btn primary" type="button" data-membership-action="'+action+'">'+primary+'</button>'+(active?'<button class="report-btn" type="button" data-fortune-action="buy-credits">购买点数包</button>':'<button class="report-btn" type="button" data-fortune-action="buy-credits">购买 10 点包</button>')+'</div></div><div class="membership-card"><div class="tier">最高级会员权益</div><div class="membership-benefits"><span>✓ 全盘、流年大运、每月运程固定报告免费生成</span><span>✓ 7 天、月度、年度、全部历史详细交易报告免费生成</span><span>✓ 每月自动赠送 30 点问大师额度</span><span>✓ Stripe 官方订阅管理，可更新付款方式或取消续订</span></div></div>';updateMembershipBadges();}
+function renderAccountStatusList(){const box=document.getElementById('account-status-list');if(!box)return;const s=window.__accountStatus||readAccountStatus(),signedIn=!!window.__cloudUser,email=s&&s.email?s.email:(window.__cloudUser&&window.__cloudUser.email)||'未登录',emailOk=hasVerifiedEmail(),legalOk=hasRequiredLegalAcceptances(),missing=s&&s.missingLegal&&s.missingLegal.length?s.missingLegal.map(legalLabel).join('、'):'已完整',deleteStatus=s&&s.deleteRequest?s.deleteRequest.status:'无申请';box.innerHTML='<div class="account-row"><span>登录状态</span><strong>'+(signedIn?'已登录':'未登录')+'</strong></div><div class="account-row"><span>账号邮箱</span><strong>'+escapeHtml(email)+'</strong></div><div class="account-row"><span>邮箱验证</span><strong>'+(emailOk?'已验证':'未验证')+'</strong></div><div class="account-row"><span>法律同意</span><strong>'+(legalOk?'已完成':'缺少：'+missing)+'</strong></div><div class="account-row"><span>会员购买条件</span><strong>'+((emailOk&&legalOk)?'已满足':'需先完成邮箱验证和 waiver')+'</strong></div><div class="account-row"><span>删除申请</span><strong>'+deleteStatus+'</strong></div>';}
 function renderAccount(){const prof=document.getElementById('account-profile'),store=document.getElementById('account-storage'),note=document.getElementById('cloud-sync-note'),signout=document.getElementById('btn-signout');if(!prof||!store)return;let p=null;try{p=JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');}catch(e){}const meta=p&&p.inputMeta?p.inputMeta:null;const zi=meta&&meta.ziSegment==='late'?'晚子时换日':(meta&&meta.ziSegment==='early'?'早子时':'非子时');const calendar=meta&&meta.usedCalendar==='lunar'?'农历输入':'公历输入';const rows=p?[['出生日期',p.birth],['出生时间',p.time],['历法',calendar],['真太阳时',meta?(meta.trueSolarYmd+' '+meta.trueSolarTime+' ('+(meta.trueSolarOffsetMinutes>=0?'+':'')+meta.trueSolarOffsetMinutes+' 分)'):'未校正'],['子时判定',zi],['性别',p.gender==='M'?'男':'女'],['四柱',p.pillarsStr?Object.values(p.pillarsStr).join(' · '):'已保存']]:[['命盘','尚未生成']];prof.innerHTML=rows.map(r=>'<div class="account-row"><span>'+r[0]+'</span><strong>'+r[1]+'</strong></div>').join('');const checkins=loadCheckins(),signedIn=!!window.__cloudUser,cloud=signedIn?window.__cloudUser.email:'未登录',status=window.__cloudStatus&&window.__cloudStatus.text?window.__cloudStatus.text:'未登录，当前为本机数据',location=signedIn?'当前浏览器 + Supabase 云端':'当前浏览器（登录后同步到 Supabase）';store.innerHTML='<div class="account-row"><span>个人真实记录</span><strong>'+checkins.length+' 条</strong></div><div class="account-row"><span>数据位置</span><strong>'+location+'</strong></div><div class="account-row"><span>云端账号</span><strong>'+cloud+'</strong></div><div class="account-row"><span>云端同步</span><strong>'+status+'</strong></div>';if(note)note.textContent=status;if(signout)signout.style.display=signedIn?'inline-flex':'none';renderMembershipCenter();}
+const renderAccountBase=renderAccount;
+renderAccount=function(){renderAccountBase();renderAccountStatusList();};
 
 bindCheckinForm();
 document.addEventListener('click',function(e){const outcome=e.target.closest('#checkin-card .outcome-btn');if(outcome){e.preventDefault();selectCheckinOutcome(outcome.dataset.outcome,null);return;}const save=e.target.closest('#checkin-card [data-checkin-action="save"]');if(save){e.preventDefault();const card=document.getElementById('checkin-card'),raw=card&&card.dataset.pendingOutcome;if(!raw){alert('请先选择今天的交易结果');return;}const input=card.querySelector('#checkin-pnl');recordCheckin(raw,buildMagnitude(raw,input&&input.value));return;}const cancel=e.target.closest('#checkin-card [data-checkin-action="cancel"]');if(cancel){e.preventDefault();const item=loadCheckins().find(x=>x.date===currentCheckinKey());if(item)showRecordedSummary(item.outcome,item.mag);else renderCheckinForm();return;}const edit=e.target.closest('.edit-link');if(edit&&edit.closest('#checkin-card')){e.preventDefault();const item=loadCheckins().find(x=>x.date===currentCheckinKey());renderCheckinForm(item);}});
@@ -1259,6 +1472,26 @@ const CLOUD_SYNC_STATE='madeshed_cloud_sync_v1';
     window.supa=window.supabase.createClient(window.SUPA_URL,window.SUPA_KEY);
     function getLocalProfile(){try{return JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');}catch(e){return null;}}
     function setCloudStatus(text,kind){window.__cloudStatus={text:text,kind:kind||'info',at:new Date().toISOString()};try{localStorage.setItem(CLOUD_SYNC_STATE,JSON.stringify(window.__cloudStatus));}catch(e){}if(typeof renderAccount==='function')renderAccount();}
+    function authRedirectUrl(path){return location.origin+'/#/'+path.replace(/^\//,'');}
+    function authOutput(id,message,kind){const el=document.getElementById(id);if(!el)return;el.className='auth-message '+(kind||'');el.innerHTML=message;}
+    function passwordPair(id1,id2){const a=(document.getElementById(id1)?.value||'').trim(),b=(document.getElementById(id2)?.value||'').trim();if(a.length<10)return{error:'密码至少需要 10 位。'};if(a!==b)return{error:'两次输入的密码不一致。'};return{password:a};}
+    function pendingLegalPayload(){try{return JSON.parse(localStorage.getItem(PENDING_LEGAL_KEY)||'null');}catch(e){return null;}}
+    function setPendingLegal(payload){try{localStorage.setItem(PENDING_LEGAL_KEY,JSON.stringify(payload));}catch(e){}}
+    function clearPendingLegal(){try{localStorage.removeItem(PENDING_LEGAL_KEY);}catch(e){}}
+    async function acceptLegalDocuments(source,documents){if(!window.__cloudUser)return{skipped:true};const docs=documents&&documents.length?documents:LEGALLY_REQUIRED_ACCEPTANCES;const r=await fetch(LEGAL_ACCEPTANCE_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify({documents:docs,source:source||'account_flow'})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.message||'保存法律同意失败');await refreshAccountStatus();return j;}
+    async function bootstrapAccountProfile(user,extra){if(!user)return null;const pending=pendingLegalPayload()||{};const payload=Object.assign({display_name:pending.displayName||'',locale:navigator.language||'zh-CN',timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'America/Vancouver',marketing_opt_in:!!pending.marketingOptIn,onboarding_status:'active'},extra||{});const r=await fetch(ACCOUNT_BOOTSTRAP_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify(payload)});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.message||'账号初始化失败');if(pending.documents&&pending.documents.length){await acceptLegalDocuments('signup_pending',pending.documents);clearPendingLegal();}await refreshAccountStatus();return j;}
+    function signupLegalChecked(){return['signup-accept-terms','signup-accept-privacy','signup-accept-risk','signup-accept-ai','signup-accept-billing','signup-accept-age'].every(id=>document.getElementById(id)?.checked);}
+    async function signUpWithPassword(){const email=(document.getElementById('signup-email')?.value||'').trim(),displayName=(document.getElementById('signup-display-name')?.value||'').trim(),pair=passwordPair('signup-password','signup-password-confirm');if(!email||!email.includes('@')){authOutput('signup-output','请输入有效邮箱。','err');return;}if(pair.error){authOutput('signup-output',pair.error,'err');return;}if(!signupLegalChecked()){authOutput('signup-output','注册前必须确认服务条款、隐私政策、风险免责声明、AI/命理免责声明、会员扣费条款和 18+ 声明。','err');return;}authOutput('signup-output','正在创建账号并发送确认邮件...','');setPendingLegal({email:email,documents:LEGALLY_REQUIRED_ACCEPTANCES,versions:LEGAL_DOCUMENT_VERSIONS,displayName:displayName,marketingOptIn:false,createdAt:new Date().toISOString()});const r=await window.supa.auth.signUp({email:email,password:pair.password,options:{emailRedirectTo:authRedirectUrl('auth/callback'),data:{display_name:displayName}}});if(r.error){authOutput('signup-output','注册失败：'+escapeHtml(r.error.message),'err');return;}if(r.data&&r.data.session){window.__cloudUser=r.data.user;await bootstrapAccountProfile(r.data.user,{display_name:displayName});authOutput('signup-output','账号已创建并登录，法律同意记录已保存。','ok');go('/dashboard');return;}authOutput('signup-output','确认邮件已发送到 '+escapeHtml(email)+'。请点击邮件中的确认链接完成注册；没有收到可以回到登录页重发确认邮件。','ok');}
+    async function signInWithPassword(){const email=(document.getElementById('login-email')?.value||'').trim(),password=(document.getElementById('login-password')?.value||'').trim();if(!email||!password){authOutput('login-output','请输入邮箱和密码。','err');return;}authOutput('login-output','正在登录...','');const r=await window.supa.auth.signInWithPassword({email,password});if(r.error){authOutput('login-output','登录失败：'+escapeHtml(r.error.message)+'。如果邮箱还未确认，请点击“重发确认邮件”。','err');return;}if(r.data&&r.data.session){await bootstrapCloudSync(r.data.session);authOutput('login-output','登录成功，正在进入仪表盘。','ok');go('/dashboard');}}
+    async function sendMagicLink(){const email=(document.getElementById('login-email')?.value||document.getElementById('signup-email')?.value||'').trim();if(!email||!email.includes('@')){authOutput('login-output','请先填写邮箱，再发送 Magic Link。','err');return;}authOutput('login-output','正在发送 Magic Link...','');const r=await window.supa.auth.signInWithOtp({email,options:{emailRedirectTo:authRedirectUrl('auth/callback'),shouldCreateUser:false}});if(r.error){authOutput('login-output','发送失败：'+escapeHtml(r.error.message),'err');return;}authOutput('login-output','登录链接已发送，请查收邮箱。','ok');}
+    async function resendSignupConfirmation(){const pending=pendingLegalPayload()||{},email=(document.getElementById('login-email')?.value||document.getElementById('signup-email')?.value||pending.email||prompt('请输入需要重发确认邮件的邮箱')||'').trim();if(!email||!email.includes('@'))return;authOutput('login-output','正在重发确认邮件...','');const r=await window.supa.auth.resend({type:'signup',email,options:{emailRedirectTo:authRedirectUrl('auth/callback')}});if(r.error){authOutput('login-output','重发失败：'+escapeHtml(r.error.message),'err');return;}authOutput('login-output','确认邮件已重新发送。请检查收件箱和垃圾邮件。','ok');}
+    async function sendPasswordReset(){const email=(document.getElementById('forgot-email')?.value||'').trim();if(!email||!email.includes('@')){authOutput('forgot-password-output','请输入有效邮箱。','err');return;}authOutput('forgot-password-output','正在发送重置邮件...','');await window.supa.auth.resetPasswordForEmail(email,{redirectTo:authRedirectUrl('reset-password')});authOutput('forgot-password-output','如果该邮箱存在账号，你会收到密码重置邮件。请检查收件箱和垃圾邮件。','ok');}
+    async function updateAccountPassword(formPrefix){const pair=formPrefix==='account'?passwordPair('account-new-password','account-new-password-confirm'):passwordPair('reset-password','reset-password-confirm'),output=formPrefix==='account'?'account-security-output':'reset-password-output';if(pair.error){authOutput(output,pair.error,'err');return;}authOutput(output,'正在更新密码...','');const r=await window.supa.auth.updateUser({password:pair.password});if(r.error){authOutput(output,'更新失败：'+escapeHtml(r.error.message),'err');return;}authOutput(output,'密码已更新。下次登录请使用新密码。','ok');}
+    async function updateAccountEmail(){const email=(document.getElementById('account-new-email')?.value||'').trim();if(!email||!email.includes('@')){authOutput('account-email-output','请输入有效邮箱。','err');return;}authOutput('account-email-output','正在发送新邮箱确认邮件...','');const r=await window.supa.auth.updateUser({email});if(r.error){authOutput('account-email-output','发送失败：'+escapeHtml(r.error.message),'err');return;}authOutput('account-email-output','确认邮件已发送到新邮箱。点击确认后邮箱才会更新。','ok');}
+    function exportAccountData(){const data={exportedAt:new Date().toISOString(),profile:getLocalProfile(),checkins:typeof loadCheckins==='function'?loadCheckins():[],generatedReports:typeof loadGeneratedReports==='function'?loadGeneratedReports():[],fortuneReports:typeof loadFortuneReports==='function'?loadFortuneReports():{},masterHistory:typeof loadMasterHistory==='function'?loadMasterHistory():[],accountStatus:window.__accountStatus||readAccountStatus(),membership:readMembership(),credits:loadCreditState()};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='madeshed-account-export-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);authOutput('account-export-output','数据导出已开始下载。','ok');}
+    async function submitAccountDeleteRequest(){if(!window.__cloudUser){authOutput('account-delete-output','请先登录后再提交删除申请。','err');return;}const reason=(document.getElementById('account-delete-reason')?.value||'').trim();authOutput('account-delete-output','正在提交删除申请...','');const r=await fetch(ACCOUNT_DELETE_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify({reason})});const j=await r.json().catch(()=>({}));if(!r.ok){authOutput('account-delete-output',escapeHtml(j.message||'提交失败，请稍后再试。'),'err');return;}await refreshAccountStatus();authOutput('account-delete-output','删除申请已记录。正式删除前建议先导出数据。','ok');}
+    function renderAccountSecurity(){if(!window.__cloudUser){authOutput('account-security-output','请先登录后再管理账号安全。','err');return;}refreshAccountStatus();}
+    async function renderAuthCallback(){authOutput('auth-callback-output','正在读取登录会话...','');const r=await window.supa.auth.getSession();if(r.data&&r.data.session){await bootstrapCloudSync(r.data.session);authOutput('auth-callback-output','账号已确认/登录成功，云端数据正在同步。','ok');return;}authOutput('auth-callback-output','如果页面没有自动登录，请回到登录页重新发送链接。','err');}
     function withMadeshed(cb){if(window.madeshed)return cb(window.madeshed);let n=0,t=setInterval(function(){if(window.madeshed||n++>30){clearInterval(t);if(window.madeshed)cb(window.madeshed);}},200);}
     function remoteCheckin(row){const p=row&&row.payload&&typeof row.payload==='object'?row.payload:{};return{date:row.checkin_date,outcome:outcomeFromRemote(row),mag:p.mag||row.magnitude||null,label:p.label||row.label||null,score:Number.isFinite(p.score)?p.score:row.score,day:p.day||row.day_ganzhi||null,createdAt:p.createdAt||row.created_at,updatedAt:p.updatedAt||row.updated_at};}
     function mergeCheckins(local,remote){const map={};(local||[]).concat(remote||[]).forEach(function(x){if(!x||!x.date)return;const prev=map[x.date];const px=prev?Date.parse(prev.updatedAt||prev.createdAt||0):0;const nx=Date.parse(x.updatedAt||x.createdAt||0);if(!prev||nx>=px)map[x.date]=x;});return Object.values(map).sort(function(a,b){return String(a.date).localeCompare(String(b.date));});}
@@ -1274,28 +1507,51 @@ const CLOUD_SYNC_STATE='madeshed_cloud_sync_v1';
     async function syncFortuneCloudToLocal(){const user=window.__cloudUser;if(!window.supa||!user)return{skipped:true};let ok=true;const credits=await window.supa.from(CLOUD_CREDIT_LEDGER_TABLE).select('amount').eq('user_id',user.id);if(!credits.error&&Array.isArray(credits.data)){const balance=credits.data.reduce(function(sum,row){return sum+(Number(row.amount)||0);},0);localStorage.setItem('madeshed_fortune_credits_v1',JSON.stringify({balance:Math.max(0,balance),grants:{},updatedAt:new Date().toISOString(),source:'cloud'}));}else if(credits.error&&credits.error.code!=='PGRST116'){ok=false;}const fortuneReports=await window.supa.from(CLOUD_FORTUNE_REPORTS_TABLE).select('report_type,report_html,access_level,updated_at').eq('user_id',user.id);if(!fortuneReports.error&&Array.isArray(fortuneReports.data)){const saved={};fortuneReports.data.forEach(function(x){if(x&&x.report_type)saved[x.report_type]={reportType:x.report_type,reportHtml:x.report_html||'',accessLevel:x.access_level||'preview',updatedAt:x.updated_at||new Date().toISOString()};});if(Object.keys(saved).length)localStorage.setItem('madeshed_fortune_reports_v1',JSON.stringify(saved));else localStorage.removeItem('madeshed_fortune_reports_v1');}else if(fortuneReports.error&&fortuneReports.error.code!=='PGRST116'){ok=false;}const history=await window.supa.from(CLOUD_MASTER_QUESTIONS_TABLE).select('category,horizon,depth,target_date,target_month,question,credits_spent,answer_html,created_at').eq('user_id',user.id).order('created_at',{ascending:false}).limit(50);if(!history.error&&Array.isArray(history.data)){localStorage.setItem('madeshed_master_history_v1',JSON.stringify(history.data.map(function(x){return{category:x.category,horizon:x.horizon,depth:x.depth,targetDate:x.target_date,targetMonth:x.target_month,question:x.question,creditsSpent:x.credits_spent,answerHtml:x.answer_html,createdAt:x.created_at};})));}else if(history.error&&history.error.code!=='PGRST116'){ok=false;}if(typeof renderFortuneCenter==='function')renderFortuneCenter();if(typeof renderAccount==='function')renderAccount();return{ok:ok};}
     async function syncCheckinsToCloud(){const user=window.__cloudUser;if(!window.supa||!user)return{skipped:true};const items=typeof loadCheckins==='function'?loadCheckins():[];if(!items.length)return{ok:true};const payload=items.map(function(x){return{user_id:user.id,checkin_date:x.date,outcome:storageOutcome(x.outcome),magnitude:x.mag||null,label:x.label||null,score:Number.isFinite(x.score)?x.score:null,day_ganzhi:x.day||null,payload:Object.assign({},x,{outcome:x.outcome}),created_at:x.createdAt||new Date().toISOString()};});const r=await window.supa.from(CLOUD_CHECKINS_TABLE).upsert(payload,{onConflict:'user_id,checkin_date'});if(r.error){setCloudStatus('记录云端同步失败: '+r.error.message,'error');return{ok:false,error:r.error};}setCloudStatus('每日记录已同步到云端','ok');return{ok:true};}
     async function syncCloudToLocal(){const user=window.__cloudUser;if(!window.supa||!user)return{skipped:true};let ok=true;const localProfile=getLocalProfile();const pr=await window.supa.from(CLOUD_PROFILE_TABLE).select('profile,updated_at').eq('user_id',user.id).maybeSingle();if(pr.error){setCloudStatus('读取云端命盘失败: '+pr.error.message,'error');ok=false;}else{const chosen=resolveProfileSync(localProfile,pr.data&&pr.data.profile,pr.data&&pr.data.updated_at);if(chosen&&chosen.source==='cloud'){withMadeshed(function(m){m.refresh();});if(typeof renderReport==='function')renderReport();if(typeof renderAccount==='function')renderAccount();}}const cr=await window.supa.from(CLOUD_CHECKINS_TABLE).select('*').eq('user_id',user.id);if(cr.error){setCloudStatus('读取云端记录失败: '+cr.error.message,'error');ok=false;}else if(Array.isArray(cr.data)&&typeof saveCheckins==='function'){saveCheckins(mergeCheckins(loadCheckins(),cr.data.map(remoteCheckin)));if(typeof renderDailyStats==='function')renderDailyStats();renderReport();renderAccount();renderStoredCheckin();}return{ok:ok};}
-    async function bootstrapCloudSync(session){if(!session||!session.user)return;showLoggedIn(session.user.email,session.user);setCloudStatus('正在同步云端数据...','syncing');const results=[];results.push(await syncCloudToLocal());results.push(await syncReportAccessToLocal());results.push(await syncGeneratedReportsFromCloud());results.push(await syncFortuneCloudToLocal());if(typeof autoGenerateDueReports==='function')autoGenerateDueReports();const profile=getLocalProfile();if(profile)results.push(await syncProfileToCloud(profile));results.push(await syncCheckinsToCloud());results.push(await syncGeneratedReportsToCloud());if(results.every(function(x){return x.ok||x.skipped;}))setCloudStatus('云端同步完成','ok');}
-    async function signOut(){if(!window.supa)return;await window.supa.auth.signOut();window.__cloudUser=null;delete document.body.dataset.user;localStorage.removeItem('madeshed_membership_v1');localStorage.removeItem('madeshed_report_access_v1');document.querySelectorAll('[data-auth-action="signin"]').forEach(function(btn){btn.textContent='登录';});setCloudStatus('已退出登录，本机数据仍保留，会员权益需重新登录后同步','info');if(typeof renderAccount==='function')renderAccount();if(typeof renderFortuneCenter==='function')renderFortuneCenter();}
+    async function bootstrapCloudSync(session){if(!session||!session.user)return;showLoggedIn(session.user.email,session.user);setCloudStatus('正在同步云端数据...','syncing');const results=[];try{results.push(await bootstrapAccountProfile(session.user));}catch(e){setCloudStatus('账号状态同步失败: '+e.message,'error');}results.push(await syncCloudToLocal());results.push(await syncReportAccessToLocal());results.push(await syncGeneratedReportsFromCloud());results.push(await syncFortuneCloudToLocal());if(typeof autoGenerateDueReports==='function')autoGenerateDueReports();const profile=getLocalProfile();if(profile)results.push(await syncProfileToCloud(profile));results.push(await syncCheckinsToCloud());results.push(await syncGeneratedReportsToCloud());if(results.every(function(x){return x&& (x.ok||x.skipped||x.profile||x.acceptances);}))setCloudStatus('云端同步完成','ok');}
+    async function signOut(){if(!window.supa)return;await window.supa.auth.signOut();window.__cloudUser=null;delete document.body.dataset.user;localStorage.removeItem('madeshed_membership_v1');localStorage.removeItem('madeshed_report_access_v1');saveAccountStatus(null);document.querySelectorAll('[data-auth-action="signin"]').forEach(function(btn){btn.textContent='登录';});setCloudStatus('已退出登录，本机数据仍保留，会员权益需重新登录后同步','info');if(typeof renderAccount==='function')renderAccount();if(typeof renderFortuneCenter==='function')renderFortuneCenter();}
     window.syncProfileToCloud=syncProfileToCloud;
     window.syncCheckinsToCloud=syncCheckinsToCloud;
     window.syncGeneratedReportsToCloud=syncGeneratedReportsToCloud;
     window.syncFortuneCloudToLocal=syncFortuneCloudToLocal;
     window.syncCloudToLocal=syncCloudToLocal;
     window.bootstrapCloudSync=bootstrapCloudSync;
+    window.signUpWithPassword=signUpWithPassword;
+    window.signInWithPassword=signInWithPassword;
+    window.sendPasswordReset=sendPasswordReset;
+    window.updateAccountPassword=updateAccountPassword;
+    window.updateAccountEmail=updateAccountEmail;
+    window.resendSignupConfirmation=resendSignupConfirmation;
+    window.exportAccountData=exportAccountData;
+    window.submitAccountDeleteRequest=submitAccountDeleteRequest;
+    window.hasVerifiedEmail=hasVerifiedEmail;
+    window.hasRequiredLegalAcceptances=hasRequiredLegalAcceptances;
+    window.ensurePaidActionAllowed=ensurePaidActionAllowed;
+    window.renderAccountSecurity=renderAccountSecurity;
+    window.renderAuthCallback=renderAuthCallback;
     window.signOut=signOut;
-    window.signIn=async function(){
-      const email=prompt('输入邮箱注册/登录(我们会发登录链接到你邮箱):');
-      if(!email||!email.includes('@'))return;
-      setCloudStatus('正在发送登录链接...','syncing');
-      const r=await window.supa.auth.signInWithOtp({email,options:{emailRedirectTo:'https://madeshed.com/#/dashboard'}});
-      if(r.error){setCloudStatus('登录链接发送失败: '+r.error.message,'error');alert('出错: '+r.error.message);}
-      else{setCloudStatus('登录链接已发送，请查收邮箱','ok');alert('✅ 已发送登录链接到 '+email+'\n请查收邮件,点击链接完成登录');}
-    };
+    window.signIn=function(){go('/login');};
     document.addEventListener('click',function(e){
       const out=e.target.closest('#btn-signout');
       if(out){e.preventDefault();window.signOut();return;}
+      const exportBtn=e.target.closest('#account-export-data');
+      if(exportBtn){e.preventDefault();exportAccountData();return;}
+      const magic=e.target.closest('[data-auth-action="magic-link"]');
+      if(magic){e.preventDefault();sendMagicLink();return;}
+      const resend=e.target.closest('[data-auth-action="resend-confirmation"]');
+      if(resend){e.preventDefault();resendSignupConfirmation();return;}
+      const accept=e.target.closest('[data-auth-action="accept-legal"]');
+      if(accept){e.preventDefault();try{authOutput('account-legal-output','正在保存必要条款确认...','');await acceptLegalDocuments('account_center',LEGALLY_REQUIRED_ACCEPTANCES);authOutput('account-legal-output','必要条款确认已保存。','ok');}catch(err){authOutput('account-legal-output',escapeHtml(err.message||'保存失败，请稍后再试。'),'err');}return;}
       const t=e.target.closest('[data-auth-action="signin"],[data-provider="email"]');
       if(t){e.preventDefault();window.signIn();}
+    });
+    document.addEventListener('submit',function(e){
+      if(e.target&&e.target.id==='signup-form'){e.preventDefault();signUpWithPassword();return;}
+      if(e.target&&e.target.id==='login-form'){e.preventDefault();signInWithPassword();return;}
+      if(e.target&&e.target.id==='forgot-password-form'){e.preventDefault();sendPasswordReset();return;}
+      if(e.target&&e.target.id==='reset-password-form'){e.preventDefault();updateAccountPassword('reset');return;}
+      if(e.target&&e.target.id==='account-security-form'){e.preventDefault();updateAccountPassword('account');return;}
+      if(e.target&&e.target.id==='account-email-form'){e.preventDefault();updateAccountEmail();return;}
+      if(e.target&&e.target.id==='account-delete-form'){e.preventDefault();submitAccountDeleteRequest();return;}
     });
     function showLoggedIn(email,user){
       window.__cloudUser=user||window.__cloudUser;
@@ -1306,10 +1562,12 @@ const CLOUD_SYNC_STATE='madeshed_cloud_sync_v1';
     window.supa.auth.getSession().then(function(r){
       if(r.data.session)bootstrapCloudSync(r.data.session);
       else setCloudStatus('未登录，当前为本机数据','info');
+      if((location.hash||'').indexOf('/auth/callback')>=0&&window.renderAuthCallback)window.renderAuthCallback();
     });
     window.supa.auth.onAuthStateChange(function(event,session){
+      if(event==='PASSWORD_RECOVERY')go('/reset-password');
       if(event==='SIGNED_IN'&&session)bootstrapCloudSync(session);
-      if(event==='SIGNED_OUT'){window.__cloudUser=null;delete document.body.dataset.user;document.querySelectorAll('[data-auth-action="signin"]').forEach(function(btn){btn.textContent='登录';});setCloudStatus('已退出登录，本机数据仍保留','info');}
+      if(event==='SIGNED_OUT'){window.__cloudUser=null;delete document.body.dataset.user;saveAccountStatus(null);document.querySelectorAll('[data-auth-action="signin"]').forEach(function(btn){btn.textContent='登录';});setCloudStatus('已退出登录，本机数据仍保留','info');}
     });
   };
   document.head.appendChild(s);

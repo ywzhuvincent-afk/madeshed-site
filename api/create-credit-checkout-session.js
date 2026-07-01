@@ -1,4 +1,4 @@
-import { getUserFromRequest, hasSupabaseService } from './_supabase.js';
+import { getUserFromRequest, hasSupabaseService, requireAccountReadyForPaidAction } from './_supabase.js';
 
 const CREDIT_PACK_PRODUCT = {
   credits: 10,
@@ -26,6 +26,8 @@ export default async function handler(req, res) {
   }
   const auth = await getUserFromRequest(req);
   if (!auth.user) return send(res, 401, { error: auth.error || 'unauthorized', message: '请先登录后再购买点数。' });
+  const readiness = await requireAccountReadyForPaidAction(req, auth.user);
+  if (!readiness.ok) return send(res, readiness.status, readiness.body);
   if (!secret || !priceId) {
     return send(res, 503, { error: 'stripe_not_configured', message: '点数购买暂未配置 Stripe。' });
   }

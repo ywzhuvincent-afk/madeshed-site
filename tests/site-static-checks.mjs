@@ -184,19 +184,71 @@ includesAll(chart, [
 includesAll(index, [
   "'report'",
   "'account'",
+  "'signup'",
+  "'login'",
+  "'forgot-password'",
+  "'reset-password'",
+  "'auth-callback'",
+  "'account-security'",
+  "'waiver'",
   "'terms'",
   "'privacy'",
   "'about'",
   "'contact'",
   'data-view="report"',
   'data-view="account"',
+  'data-view="signup"',
+  'data-view="login"',
+  'data-view="forgot-password"',
+  'data-view="reset-password"',
+  'data-view="auth-callback"',
+  'data-view="account-security"',
+  'data-view="waiver"',
   'data-view="terms"',
   'data-view="privacy"',
   'data-view="about"',
   'data-view="contact"',
   'href="#/report"',
   'href="#/account"',
+  'href="#/login"',
+  'href="#/signup"',
+  'href="#/waiver"',
 ], 'production routes');
+
+includesAll(index, [
+  'id="signup-form"',
+  'id="signup-email"',
+  'id="signup-password"',
+  'id="signup-password-confirm"',
+  'id="signup-display-name"',
+  'id="signup-accept-terms"',
+  'id="signup-accept-privacy"',
+  'id="signup-accept-risk"',
+  'id="signup-accept-ai"',
+  'id="signup-accept-billing"',
+  'id="signup-accept-age"',
+  'id="login-form"',
+  'id="forgot-password-form"',
+  'id="reset-password-form"',
+  'id="account-security-form"',
+  'id="account-email-form"',
+  'id="account-delete-form"',
+  'id="account-export-data"',
+  'function signUpWithPassword',
+  'function signInWithPassword',
+  'function sendPasswordReset',
+  'function updateAccountPassword',
+  'function updateAccountEmail',
+  'function resendSignupConfirmation',
+  'function exportAccountData',
+  'function submitAccountDeleteRequest',
+  'function hasVerifiedEmail',
+  'function hasRequiredLegalAcceptances',
+  'function ensurePaidActionAllowed',
+  'LEGALLY_REQUIRED_ACCEPTANCES',
+  'data-auth-action="accept-legal"',
+  'id="account-legal-output"',
+], 'complete account auth frontend');
 
 includesAll(index, [
   "const CHECKINS='madeshed_checkins_v1'",
@@ -547,12 +599,20 @@ assert.ok(existsSync(supabaseSchemaPath), 'supabase/schema.sql should exist');
 includesAll(supabaseSchema, [
   'create table if not exists public.profiles',
   'create table if not exists public.checkins',
+  'create table if not exists public.account_profiles',
+  'create table if not exists public.legal_acceptances',
+  'create table if not exists public.account_events',
+  'create table if not exists public.account_delete_requests',
   'create table if not exists public.report_entitlements',
   'create table if not exists public.memberships',
   'create table if not exists public.membership_events',
   'create table if not exists public.generated_reports',
   'alter table public.profiles enable row level security',
   'alter table public.checkins enable row level security',
+  'alter table public.account_profiles enable row level security',
+  'alter table public.legal_acceptances enable row level security',
+  'alter table public.account_events enable row level security',
+  'alter table public.account_delete_requests enable row level security',
   'alter table public.report_entitlements enable row level security',
   'alter table public.memberships enable row level security',
   'alter table public.membership_events enable row level security',
@@ -560,13 +620,27 @@ includesAll(supabaseSchema, [
   'auth.uid() = user_id',
   'profiles_select_own',
   'checkins_select_own',
+  'account_profiles_select_own',
+  'legal_acceptances_select_own',
+  'account_events_select_own',
+  'account_delete_requests_select_own',
   'report_entitlements_select_own',
   'memberships_select_own',
   'membership_events_select_own',
   'generated_reports_select_own',
   'unique (user_id, checkin_date)',
   'unique (user_id, report_key)',
+  'unique (user_id, document_type)',
 ], 'Supabase schema and RLS');
+
+includesAll(supabaseSchema, [
+  "check (document_type in ('terms', 'privacy', 'risk_waiver', 'ai_disclaimer', 'billing_terms'))",
+  "check (event_type in ('signup', 'login', 'email_confirmed', 'password_reset_requested', 'password_updated', 'email_change_requested', 'legal_acceptance', 'signout', 'delete_requested'))",
+  "check (status in ('requested', 'processing', 'completed', 'canceled'))",
+  'ip_hash text',
+  'user_agent text',
+  'marketing_opt_in boolean not null default false',
+], 'account compliance schema');
 
 includesAll(supabaseSchema, [
   'create or replace function public.upsert_auto_generated_reports',
@@ -647,6 +721,10 @@ includesAll(supabaseSchema, [
 ], 'fortune schema and RLS');
 
 [
+  'api/account-bootstrap.js',
+  'api/account-status.js',
+  'api/legal-acceptance.js',
+  'api/account-delete-request.js',
   'api/fortune-report.js',
   'api/master-question.js',
   'api/master-history.js',
@@ -657,6 +735,10 @@ includesAll(supabaseSchema, [
   'api/stripe-webhook.js',
 ].forEach((file) => assert.ok(existsSync(file), `${file} should exist`));
 
+const accountBootstrapApi = readFileSync('api/account-bootstrap.js', utf8);
+const accountStatusApi = readFileSync('api/account-status.js', utf8);
+const legalAcceptanceApi = readFileSync('api/legal-acceptance.js', utf8);
+const accountDeleteApi = readFileSync('api/account-delete-request.js', utf8);
 const fortuneReportApi = readFileSync('api/fortune-report.js', utf8);
 const masterQuestionApi = readFileSync('api/master-question.js', utf8);
 const masterHistoryApi = readFileSync('api/master-history.js', utf8);
@@ -665,6 +747,37 @@ const membershipCheckoutApi = readFileSync('api/create-membership-checkout-sessi
 const reportCheckoutApi = readFileSync('api/create-report-checkout-session.js', utf8);
 const customerPortalApi = readFileSync('api/create-customer-portal-session.js', utf8);
 const stripeWebhookApi = readFileSync('api/stripe-webhook.js', utf8);
+
+includesAll(accountBootstrapApi, [
+  'account_profiles',
+  'account_events',
+  'email_confirmed_at',
+  'display_name',
+  'marketing_opt_in',
+], 'account bootstrap API');
+
+includesAll(accountStatusApi, [
+  'account_profiles',
+  'legal_acceptances',
+  'memberships',
+  'credit_ledger',
+  'emailConfirmed',
+  'legalComplete',
+], 'account status API');
+
+includesAll(legalAcceptanceApi, [
+  'legal_acceptances',
+  'account_events',
+  'LEGAL_DOCUMENT_TYPES',
+  'ip_hash',
+  'user_agent',
+], 'legal acceptance API');
+
+includesAll(accountDeleteApi, [
+  'account_delete_requests',
+  'delete_requested',
+  'account_events',
+], 'account delete request API');
 
 includesAll(fortuneReportApi, [
   'FORTUNE_REPORT_TYPES',
@@ -706,6 +819,7 @@ includesAll(membershipCheckoutApi, [
   "mode', 'subscription'",
   'STRIPE_ULTIMATE_PRICE_ID',
   'STRIPE_MEMBERSHIP_PRICE_ID',
+  'requireAccountReadyForPaidAction',
   'metadata[user_id]',
   'subscription_data[metadata][tier]',
 ], 'membership checkout API');
@@ -714,9 +828,14 @@ includesAll(reportCheckoutApi, [
   'checkout/sessions',
   'STRIPE_REPORT_30_PRICE_ID',
   'STRIPE_FORTUNE_FULL_PRICE_ID',
+  'requireAccountReadyForPaidAction',
   'metadata[product]',
   'fortune_report',
 ], 'report checkout API');
+
+includesAll(creditCheckoutApi, [
+  'requireAccountReadyForPaidAction',
+], 'credit checkout account gate');
 
 includesAll(customerPortalApi, [
   'billing_portal/sessions',

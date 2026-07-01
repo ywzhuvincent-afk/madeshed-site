@@ -40,6 +40,53 @@ create table if not exists public.checkins (
   unique (user_id, checkin_date)
 );
 
+create table if not exists public.account_profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  display_name text,
+  locale text not null default 'zh-CN',
+  timezone text not null default 'America/Vancouver',
+  marketing_opt_in boolean not null default false,
+  onboarding_status text not null default 'started',
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.legal_acceptances (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  document_type text not null check (document_type in ('terms', 'privacy', 'risk_waiver', 'ai_disclaimer', 'billing_terms')),
+  document_version text not null,
+  accepted_at timestamptz not null default now(),
+  ip_hash text,
+  user_agent text,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, document_type)
+);
+
+create table if not exists public.account_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete set null,
+  event_type text not null check (event_type in ('signup', 'login', 'email_confirmed', 'password_reset_requested', 'password_updated', 'email_change_requested', 'legal_acceptance', 'signout', 'delete_requested')),
+  ip_hash text,
+  user_agent text,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.account_delete_requests (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  reason text,
+  status text not null default 'requested' check (status in ('requested', 'processing', 'completed', 'canceled')),
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.memberships (
   user_id uuid primary key references auth.users(id) on delete cascade,
   tier text not null default 'free' check (tier in ('free', 'pro', 'ultimate')),
@@ -147,6 +194,21 @@ create trigger checkins_set_updated_at
 before update on public.checkins
 for each row execute function public.set_updated_at();
 
+drop trigger if exists account_profiles_set_updated_at on public.account_profiles;
+create trigger account_profiles_set_updated_at
+before update on public.account_profiles
+for each row execute function public.set_updated_at();
+
+drop trigger if exists legal_acceptances_set_updated_at on public.legal_acceptances;
+create trigger legal_acceptances_set_updated_at
+before update on public.legal_acceptances
+for each row execute function public.set_updated_at();
+
+drop trigger if exists account_delete_requests_set_updated_at on public.account_delete_requests;
+create trigger account_delete_requests_set_updated_at
+before update on public.account_delete_requests
+for each row execute function public.set_updated_at();
+
 drop trigger if exists memberships_set_updated_at on public.memberships;
 create trigger memberships_set_updated_at
 before update on public.memberships
@@ -179,6 +241,10 @@ for each row execute function public.set_updated_at();
 
 alter table public.profiles enable row level security;
 alter table public.checkins enable row level security;
+alter table public.account_profiles enable row level security;
+alter table public.legal_acceptances enable row level security;
+alter table public.account_events enable row level security;
+alter table public.account_delete_requests enable row level security;
 alter table public.report_entitlements enable row level security;
 alter table public.memberships enable row level security;
 alter table public.membership_events enable row level security;
@@ -236,6 +302,69 @@ create policy checkins_delete_own
 on public.checkins for delete
 to authenticated
 using (auth.uid() = user_id);
+
+drop policy if exists account_profiles_select_own on public.account_profiles;
+create policy account_profiles_select_own
+on public.account_profiles for select
+to authenticated
+using (auth.uid() = user_id);
+
+drop policy if exists account_profiles_insert_own on public.account_profiles;
+create policy account_profiles_insert_own
+on public.account_profiles for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+drop policy if exists account_profiles_update_own on public.account_profiles;
+create policy account_profiles_update_own
+on public.account_profiles for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+drop policy if exists legal_acceptances_select_own on public.legal_acceptances;
+create policy legal_acceptances_select_own
+on public.legal_acceptances for select
+to authenticated
+using (auth.uid() = user_id);
+
+drop policy if exists legal_acceptances_insert_own on public.legal_acceptances;
+create policy legal_acceptances_insert_own
+on public.legal_acceptances for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+drop policy if exists legal_acceptances_update_own on public.legal_acceptances;
+create policy legal_acceptances_update_own
+on public.legal_acceptances for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+drop policy if exists account_events_select_own on public.account_events;
+create policy account_events_select_own
+on public.account_events for select
+to authenticated
+using (auth.uid() = user_id);
+
+drop policy if exists account_delete_requests_select_own on public.account_delete_requests;
+create policy account_delete_requests_select_own
+on public.account_delete_requests for select
+to authenticated
+using (auth.uid() = user_id);
+
+drop policy if exists account_delete_requests_insert_own on public.account_delete_requests;
+create policy account_delete_requests_insert_own
+on public.account_delete_requests for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+drop policy if exists account_delete_requests_update_own on public.account_delete_requests;
+create policy account_delete_requests_update_own
+on public.account_delete_requests for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
 
 drop policy if exists memberships_select_own on public.memberships;
 create policy memberships_select_own
@@ -319,6 +448,10 @@ with check (auth.uid() = user_id);
 
 grant select, insert, update, delete on public.profiles to authenticated;
 grant select, insert, update, delete on public.checkins to authenticated;
+grant select, insert, update on public.account_profiles to authenticated;
+grant select, insert, update on public.legal_acceptances to authenticated;
+grant select on public.account_events to authenticated;
+grant select, insert, update on public.account_delete_requests to authenticated;
 grant select on public.memberships to authenticated;
 grant select on public.membership_events to authenticated;
 grant select on public.report_entitlements to authenticated;

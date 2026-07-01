@@ -1,4 +1,4 @@
-import { getUserFromRequest, hasSupabaseService } from './_supabase.js';
+import { getUserFromRequest, hasSupabaseService, requireAccountReadyForPaidAction } from './_supabase.js';
 import { priceFromEnv, siteOrigin, stripeFormRequest } from './_stripe.js';
 
 const REPORT_PRODUCTS = {
@@ -37,6 +37,8 @@ export default async function handler(req, res) {
   if (!auth.user) {
     return send(res, 401, { error: auth.error || 'unauthorized', message: '请先登录后再购买报告。' });
   }
+  const readiness = await requireAccountReadyForPaidAction(req, auth.user);
+  if (!readiness.ok) return send(res, readiness.status, readiness.body);
 
   const item = productFor(req.body || {});
   if (!item) return send(res, 400, { error: 'invalid_report_type', message: '报告类型无效。' });
