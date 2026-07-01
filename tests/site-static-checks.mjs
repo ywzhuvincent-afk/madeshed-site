@@ -338,6 +338,23 @@ assert.equal(
 includesAll(chart, [
   '(st.category||st.label)',
 ], 'chart-full shows the same strength category word as the dashboard (中和, not 均衡)');
+
+includesAll(index, [
+  'dyList.innerHTML=profile.daYun.map((dy,i)=>{const isC=i===profile.currentDayunIdx;',
+], 'dashboard rebuilds the luck-cycle timeline from the profile instead of only updating pre-existing cells (fixes empty timeline after a clear/generate race)');
+
+includesAll(index, [
+  "['.pricing-card.featured .price','Free']",
+  "['.pricing-card:not(.featured) .currency','$']",
+  "['.pricing-card:not(.featured) .price','19']",
+  "['.pricing-card:not(.featured) .period','/ mo']",
+  "body[data-locale=\"en\"] .pricing-card.featured::before{content:'Recommended'}",
+], 'landing pricing card amount and recommended badge are localized to English (no ¥/开始/月/推荐 leak)');
+
+includesAll(index, [
+  'const en=localeIsEn();const dayLabel=en?(st.score!=null?scoreBandEn(st.score):',
+  "const editTxt=en?'Edit':'修改'",
+], 'the "logged today" check-in summary card renders in English, not hardcoded Chinese');
 includesAll(chart, [
   'state.shared=window.MadeshedBazi.calcBaziCore',
   'state.yong=state.shared.yongShen',

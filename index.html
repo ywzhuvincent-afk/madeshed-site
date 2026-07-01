@@ -111,6 +111,7 @@ body.is-landing::before{content:'';position:fixed;top:-200px;right:-200px;width:
 .pricing-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:32px;position:relative}
 .pricing-card.featured{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset,0 16px 48px rgba(0,188,212,.1)}
 .pricing-card.featured::before{content:'推荐';position:absolute;top:-12px;right:24px;background:var(--accent);color:var(--bg);font-size:11px;font-weight:700;padding:4px 12px;border-radius:12px}
+body[data-locale="en"] .pricing-card.featured::before{content:'Recommended'}
 .pricing-label{font-size:12px;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:12px}
 .pricing-name{font-size:22px;font-weight:700;margin-bottom:8px}
 .pricing-amount{display:flex;align-items:baseline;gap:4px;margin:20px 0}
@@ -1263,6 +1264,12 @@ const EN_COPY={
     ['.pricing-card:not(.featured) .pricing-name','Reports + AI Reflection'],
     ['.pricing-card:not(.featured) .pricing-desc','For traders who journal consistently and want timing, behavior, and risk patterns explained in plain English.'],
     ['.pricing-card:not(.featured) .pricing-cta','Start Ultimate'],
+    ['.pricing-card.featured .currency',''],
+    ['.pricing-card.featured .price','Free'],
+    ['.pricing-card.featured .period',''],
+    ['.pricing-card:not(.featured) .currency','$'],
+    ['.pricing-card:not(.featured) .price','19'],
+    ['.pricing-card:not(.featured) .period','/ mo'],
     ['footer .footer-content>div:first-child','© 2026 Madeshed · BaZi × Trading Data'],
     ['.footer-disclaim strong','Risk Notice:'],
     ['[data-view="onboarding"] .hero-h h1','Generate your BaZi chart in 1 minute'],
@@ -1944,7 +1951,7 @@ document.addEventListener('click',function(e){const ma=e.target.closest('[data-m
 document.addEventListener('submit',function(e){if(e.target&&e.target.id==='master-question-form'){e.preventDefault();submitMasterQuestion();}});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeHistoryModal();});
 
-function showRecordedSummary(o,m){const card=document.getElementById('checkin-card');if(!card)return;card.classList.add('recorded');const outcome=canonicalOutcome({outcome:o,mag:m}),metaInfo=OUTCOME_META[outcome]||OUTCOME_META.notrade;const cls=metaInfo.tone==='win'?'win':(metaInfo.tone==='loss'?'loss':'');const st=window.__todayState||{};const meta=(st.compactDate||'今天')+' · '+(st.label||'今日')+'日';card.innerHTML=`<div class="checkin-h"><div class="checkin-t">今日已记录 · DONE</div><div class="checkin-time">刚刚 · 2 秒</div></div><div class="recorded-summary"><div class="left"><div class="icon">${metaInfo.icon}</div><div class="info"><div class="label">${meta}</div><div class="value ${cls}">${metaInfo.label}${m?' · '+m:''}</div></div></div><button class="edit-link" type="button">修改</button></div>`;}
+function showRecordedSummary(o,m){const card=document.getElementById('checkin-card');if(!card)return;card.classList.add('recorded');const outcome=canonicalOutcome({outcome:o,mag:m}),metaInfo=OUTCOME_META[outcome]||OUTCOME_META.notrade;const cls=metaInfo.tone==='win'?'win':(metaInfo.tone==='loss'?'loss':'');const st=window.__todayState||{};const en=localeIsEn();const dayLabel=en?(st.score!=null?scoreBandEn(st.score):'Today'):((st.label||'今日')+'日');const meta=(st.compactDate||(en?'Today':'今天'))+' · '+dayLabel;const outLabel=en?enOutcomeLabel(outcome):metaInfo.label;const headT=en?'Logged Today · DONE':'今日已记录 · DONE';const headTime=en?'Just now':'刚刚 · 2 秒';const editTxt=en?'Edit':'修改';card.innerHTML=`<div class="checkin-h"><div class="checkin-t">${headT}</div><div class="checkin-time">${headTime}</div></div><div class="recorded-summary"><div class="left"><div class="icon">${metaInfo.icon}</div><div class="info"><div class="label">${meta}</div><div class="value ${cls}">${outLabel}${m?' · '+m:''}</div></div></div><button class="edit-link" type="button">${editTxt}</button></div>`;}
 </script>
 <script>
 window.SUPA_URL='https://tkltasrbhjqwurybcyxo.supabase.co';
@@ -2303,7 +2310,7 @@ function applyProfile(profile,today){
     if(items[3]){const v=items[3].querySelector('.v');const c=(profile.currentDayunIdx>=0&&profile.daYun[profile.currentDayunIdx])?profile.daYun[profile.currentDayunIdx]:null;if(v)v.innerHTML=c?'<span class="cn">'+c.pillar+'</span> · 第 '+(profile.currentDayunIdx+1)+' 柱':'尚未起运';}
   }
   const dyList=document.querySelector('.dy-list');
-  if(dyList&&profile.daYun.length){const cells=dyList.querySelectorAll('.dy');cells.forEach((cell,i)=>{const dy=profile.daYun[i];if(!dy)return;const isC=i===profile.currentDayunIdx;cell.className='dy'+(isC?' current':'')+(localeIsEn()?' en':'');cell.innerHTML=renderLuckCycleCell(dy,isC);});}
+  if(dyList&&profile.daYun.length){const cells=dyList.querySelectorAll('.dy');if(cells.length>=profile.daYun.length){cells.forEach((cell,i)=>{const dy=profile.daYun[i];if(!dy)return;const isC=i===profile.currentDayunIdx;cell.className='dy'+(isC?' current':'')+(localeIsEn()?' en':'');cell.innerHTML=renderLuckCycleCell(dy,isC);});}else{dyList.innerHTML=profile.daYun.map((dy,i)=>{const isC=i===profile.currentDayunIdx;return '<div class="dy'+(isC?' current':'')+(localeIsEn()?' en':'')+'">'+renderLuckCycleCell(dy,isC)+'</div>';}).join('');}}
   if(today){
     const sd=document.querySelector('.score-d');
     var dr=dailyRead(profile,today),foundation=dr?foundationRead(profile,today):null,action=dr?actionRead(profile,today,dr,foundation):null;var sn=document.querySelector('.score-n'),sl=document.querySelector('.score-l');if(dr&&sd){if(sn)sn.textContent=action.score;if(sl)sl.textContent=action.label+' · 财运 '+dr.cScore+' · 底盘 '+foundation.score;sd.innerHTML='<div class="row"><span class="k">流日干支</span><span class="v mono">'+today.day+' ('+dr.role+')</span></div><div class="row"><span class="k">今日行动指数</span><span class="v">'+action.label+' '+action.score+'</span></div><div class="row"><span class="k">综合年月日</span><span class="v">'+foundation.label+' '+foundation.score+'</span></div><div class="row"><span class="k">流日触发</span><span class="v">'+action.flowLabel+' '+action.flowScore+'</span></div><div class="row"><span class="k">财运</span><span class="v">'+dr.cLabel+' '+dr.cScore+'</span></div><div class="row"><span class="k">风险扣分</span><span class="v">'+(action.riskPenalty?'-'+action.riskPenalty:'无')+'</span></div><div class="row"><span class="k">操作建议</span><span class="v">'+dr.advice+'</span></div>';}else if(sd){const rows=sd.querySelectorAll('.row');if(rows[0]){const v=rows[0].querySelector('.v');if(v)v.textContent=today.day;}}if(dr)updateTodaySurfaces(profile,today,dr);try{renderLuck(profile,today);window.__profile=profile;renderTrend(window.__trendMode||'day');renderForecast(profile);fixLayout();}catch(e){}
