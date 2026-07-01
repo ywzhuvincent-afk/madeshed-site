@@ -563,7 +563,7 @@
     document.getElementById('yong').innerHTML=
       '<div class="box use"><div class="lab">主用神 · 强弱</div>'+
         '<div class="els"><span class="el-pill el-'+ys.main+'">'+EL_CN[ys.main]+'</span>'+
-        '<span style="font-size:13px;color:var(--text-2);margin-left:4px">'+st.label+' '+st.pct+'</span></div>'+
+        '<span style="font-size:13px;color:var(--text-2);margin-left:4px">'+(st.category||st.label)+' '+st.pct+'</span></div>'+
         '<div class="strength-bar"><i style="width:'+st.pct+'%"></i></div>'+
         '<div class="note">'+ys.note+'</div></div>'+
       '<div class="box xi"><div class="lab">喜神</div><div class="els">'+elPills(ys.xi)+'</div>'+

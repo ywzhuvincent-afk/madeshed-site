@@ -324,6 +324,20 @@ assert.equal(index.includes('Beta ·'), false, 'production landing copy should n
 assert.equal(index.includes('href="#terms"'), false, 'onboarding terms link should use #/terms route');
 assert.equal(index.includes('href="#privacy"'), false, 'onboarding privacy link should use #/privacy route');
 assert.equal(chart.includes('function calcYongShen(dgStem, strengthPct, monthBranch)'), false, 'chart page should not keep a second yongshen algorithm');
+includesAll(index, [
+  "var cat=strength&&typeof strength==='object'?(strength.category||strength.label):null",
+  "'中和':'Balanced'",
+  "n<=24?'Very Weak':(n<=42?'Weak':(n<58?'Balanced':(n<=78?'Strong':'Very Strong')))",
+  'strengthNameEn(p.strength)',
+], 'dashboard English strength label derives from the shared engine category (matches chart-full, not divergent score thresholds)');
+assert.equal(
+  index.includes('strengthNameEn(p.strength&&p.strength.score)'),
+  false,
+  'dashboard should not label strength from score alone with thresholds that disagree with the engine',
+);
+includesAll(chart, [
+  '(st.category||st.label)',
+], 'chart-full shows the same strength category word as the dashboard (中和, not 均衡)');
 includesAll(chart, [
   'state.shared=window.MadeshedBazi.calcBaziCore',
   'state.yong=state.shared.yongShen',
