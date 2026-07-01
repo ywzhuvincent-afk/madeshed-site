@@ -115,6 +115,25 @@ includesAll(chart, [
   "p.gender==='M'?'1':'0'",
 ], 'chart saved profile integration');
 
+assert.equal(index.includes('\u00a5299'), false, 'site should not show old ¥299 buyout pricing');
+assert.equal(index.includes('\u00a549'), false, 'site should not show old ¥49 PRO pricing');
+assert.equal(index.includes('Beta ·'), false, 'production landing copy should not show beta badge');
+assert.equal(index.includes('href="#terms"'), false, 'onboarding terms link should use #/terms route');
+assert.equal(index.includes('href="#privacy"'), false, 'onboarding privacy link should use #/privacy route');
+assert.equal(chart.includes('function calcYongShen(dgStem, strengthPct, monthBranch)'), false, 'chart page should not keep a second yongshen algorithm');
+includesAll(chart, [
+  'state.shared=window.MadeshedBazi.calcBaziCore',
+  'state.yong=state.shared.yongShen',
+  'state.wealth=state.shared.wealth',
+  'state.shared.inputMeta',
+], 'chart uses shared bazi engine as single source of truth');
+includesAll(index, [
+  'id="refund-support"',
+  'data-refund-action="contact"',
+  'const legalText=!signedIn',
+  'const membershipText=!signedIn',
+], 'account center refund support and logged-out legal status copy');
+
 includesAll(index, [
   "document.querySelectorAll('.pillars,.result-pillars,.m-pillars')",
   'function updateTodaySurfaces(profile,today,dr)',
