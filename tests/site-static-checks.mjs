@@ -101,12 +101,20 @@ includesAll(chart, [
 ], 'chart trust and accessibility copy');
 
 includesAll(chart, [
-  'class="site-nav"',
-  'aria-label="返回主仪表盘"',
-  'href="/#/dashboard"',
+  'class="nav"',
+  'class="logo"',
+  'class="nav-right"',
+  'class="mobile-menu-toggle"',
+  'id="mobile-menu"',
   'href="/#/daily"',
-  'href="/#/"',
-], 'chart navigation');
+  'href="/#/dashboard"',
+  'href="/chart-full.html"',
+  'href="/#/report"',
+  'href="/#/fortune"',
+  'href="/#/account"',
+], 'chart navigation matches homepage pattern');
+assert.equal(chart.includes('class="site-nav"'), false, 'chart page should not use standalone header navigation');
+assert.equal(chart.includes('返回主仪表盘'), false, 'chart page should not add a separate dashboard back button in nav');
 
 includesAll(chart, [
   'function applySavedProfile()',
