@@ -1294,9 +1294,9 @@ const REPORT_ACCESS_KEY='madeshed_report_access_v1';
 const MEMBERSHIP_KEY='madeshed_membership_v1';
 const GENERATED_REPORTS_KEY='madeshed_generated_reports_v1';
 const AUTO_REPORT_TYPES=['7','30','365','all'];
-const STRIPE_CHECKOUT_ENDPOINT='/api/create-report-checkout-session';
-const MEMBERSHIP_CHECKOUT_ENDPOINT='/api/create-membership-checkout-session';
-const CUSTOMER_PORTAL_ENDPOINT='/api/create-customer-portal-session';
+const STRIPE_CHECKOUT_ENDPOINT='/api/checkout?action=report';
+const MEMBERSHIP_CHECKOUT_ENDPOINT='/api/checkout?action=membership';
+const CUSTOMER_PORTAL_ENDPOINT='/api/checkout?action=portal';
 const REPORT_PRODUCTS={
   '7':{label:'7 天报告',period:'近 7 天',price:'¥29',days:7,desc:'短期状态、连续亏损、追单风险和下周纪律建议。'},
   '30':{label:'月度报告',period:'近 1 月',price:'¥79',days:30,featured:true,desc:'核心付费报告，结合胜率、五行、十神、八字强弱和下月策略。'},
@@ -1308,11 +1308,11 @@ const MASTER_HISTORY_KEY='madeshed_master_history_v1';
 const FORTUNE_REPORTS_KEY='madeshed_fortune_reports_v1';
 const FORTUNE_REPORT_ENDPOINT='/api/fortune-report';
 const MASTER_QUESTION_ENDPOINT='/api/master-question';
-const CREDIT_CHECKOUT_ENDPOINT='/api/create-credit-checkout-session';
-const ACCOUNT_BOOTSTRAP_ENDPOINT='/api/account-bootstrap';
-const ACCOUNT_STATUS_ENDPOINT='/api/account-status';
-const LEGAL_ACCEPTANCE_ENDPOINT='/api/legal-acceptance';
-const ACCOUNT_DELETE_ENDPOINT='/api/account-delete-request';
+const CREDIT_CHECKOUT_ENDPOINT='/api/checkout?action=credit';
+const ACCOUNT_BOOTSTRAP_ENDPOINT='/api/account?action=bootstrap';
+const ACCOUNT_STATUS_ENDPOINT='/api/account?action=status';
+const LEGAL_ACCEPTANCE_ENDPOINT='/api/account?action=legal';
+const ACCOUNT_DELETE_ENDPOINT='/api/account?action=delete';
 const ACCOUNT_STATUS_KEY='madeshed_account_status_v1';
 const PENDING_LEGAL_KEY='madeshed_pending_legal_acceptances_v1';
 const LEGAL_DOCUMENT_VERSIONS={terms:'2026-06-30',privacy:'2026-06-30',risk_waiver:'2026-06-30',ai_disclaimer:'2026-06-30',billing_terms:'2026-06-30'};

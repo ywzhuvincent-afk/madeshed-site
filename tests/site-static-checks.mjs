@@ -721,62 +721,51 @@ includesAll(supabaseSchema, [
 ], 'fortune schema and RLS');
 
 [
-  'api/account-bootstrap.js',
-  'api/account-status.js',
-  'api/legal-acceptance.js',
-  'api/account-delete-request.js',
+  'api/account.js',
   'api/fortune-report.js',
   'api/master-question.js',
   'api/master-history.js',
-  'api/create-credit-checkout-session.js',
-  'api/create-membership-checkout-session.js',
-  'api/create-report-checkout-session.js',
-  'api/create-customer-portal-session.js',
+  'api/checkout.js',
   'api/stripe-webhook.js',
 ].forEach((file) => assert.ok(existsSync(file), `${file} should exist`));
 
-const accountBootstrapApi = readFileSync('api/account-bootstrap.js', utf8);
-const accountStatusApi = readFileSync('api/account-status.js', utf8);
-const legalAcceptanceApi = readFileSync('api/legal-acceptance.js', utf8);
-const accountDeleteApi = readFileSync('api/account-delete-request.js', utf8);
+const accountApi = readFileSync('api/account.js', utf8);
 const fortuneReportApi = readFileSync('api/fortune-report.js', utf8);
 const masterQuestionApi = readFileSync('api/master-question.js', utf8);
 const masterHistoryApi = readFileSync('api/master-history.js', utf8);
-const creditCheckoutApi = readFileSync('api/create-credit-checkout-session.js', utf8);
-const membershipCheckoutApi = readFileSync('api/create-membership-checkout-session.js', utf8);
-const reportCheckoutApi = readFileSync('api/create-report-checkout-session.js', utf8);
-const customerPortalApi = readFileSync('api/create-customer-portal-session.js', utf8);
+const checkoutApi = readFileSync('api/checkout.js', utf8);
 const stripeWebhookApi = readFileSync('api/stripe-webhook.js', utf8);
 
-includesAll(accountBootstrapApi, [
+includesAll(accountApi, [
+  "action === 'bootstrap'",
+  "action === 'status'",
+  "action === 'legal'",
+  "action === 'delete'",
   'account_profiles',
-  'account_events',
+  'logAccountEvent',
   'email_confirmed_at',
   'display_name',
   'marketing_opt_in',
 ], 'account bootstrap API');
 
-includesAll(accountStatusApi, [
-  'account_profiles',
-  'legal_acceptances',
-  'memberships',
-  'credit_ledger',
+includesAll(accountApi, [
+  'accountStatusForUser',
   'emailConfirmed',
   'legalComplete',
 ], 'account status API');
 
-includesAll(legalAcceptanceApi, [
+includesAll(accountApi, [
   'legal_acceptances',
-  'account_events',
+  'logAccountEvent',
   'LEGAL_DOCUMENT_TYPES',
   'ip_hash',
   'user_agent',
 ], 'legal acceptance API');
 
-includesAll(accountDeleteApi, [
+includesAll(accountApi, [
   'account_delete_requests',
   'delete_requested',
-  'account_events',
+  'logAccountEvent',
 ], 'account delete request API');
 
 includesAll(fortuneReportApi, [
@@ -806,7 +795,11 @@ includesAll(masterHistoryApi, [
   'history',
 ], 'master history API');
 
-includesAll(creditCheckoutApi, [
+includesAll(checkoutApi, [
+  "action === 'credit'",
+  "action === 'membership'",
+  "action === 'report'",
+  "action === 'portal'",
   'checkout.sessions',
   "mode:'payment'",
   'CREDIT_PACK_PRODUCT',
@@ -814,7 +807,7 @@ includesAll(creditCheckoutApi, [
   'STRIPE_CREDIT_PRICE_ID',
 ], 'credit checkout API');
 
-includesAll(membershipCheckoutApi, [
+includesAll(checkoutApi, [
   'checkout/sessions',
   "mode', 'subscription'",
   'STRIPE_ULTIMATE_PRICE_ID',
@@ -824,7 +817,7 @@ includesAll(membershipCheckoutApi, [
   'subscription_data[metadata][tier]',
 ], 'membership checkout API');
 
-includesAll(reportCheckoutApi, [
+includesAll(checkoutApi, [
   'checkout/sessions',
   'STRIPE_REPORT_30_PRICE_ID',
   'STRIPE_FORTUNE_FULL_PRICE_ID',
@@ -833,11 +826,11 @@ includesAll(reportCheckoutApi, [
   'fortune_report',
 ], 'report checkout API');
 
-includesAll(creditCheckoutApi, [
+includesAll(checkoutApi, [
   'requireAccountReadyForPaidAction',
 ], 'credit checkout account gate');
 
-includesAll(customerPortalApi, [
+includesAll(checkoutApi, [
   'billing_portal/sessions',
   'stripe_customer_id',
   'membership_not_found',

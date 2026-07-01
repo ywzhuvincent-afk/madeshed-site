@@ -1,0 +1,11 @@
+.env
+.env.*
+.env.local
+.git
+.vercel
+audit
+supabase/.temp
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
