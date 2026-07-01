@@ -900,6 +900,13 @@ includesAll(stripeWebhookApi, [
   'STRIPE_WEBHOOK_SECRET',
   'stripe_webhook_secret_required',
   'checkout.session.completed',
+  'refund.created',
+  'charge.refunded',
+  'handleRefund',
+  'markTradeReportRefunded',
+  'markFortuneReportRefunded',
+  'reverseCreditPack',
+  'markMembershipRefunded',
   'customer.subscription.updated',
   'invoice.paid',
   'credit_ledger',
@@ -910,6 +917,21 @@ includesAll(stripeWebhookApi, [
 ], 'stripe webhook API');
 
 assert.ok(!stripeWebhookApi.includes('if (secret &&'), 'stripe webhook must not accept unsigned production events when secret is missing');
+
+includesAll(stripeWebhookApi, [
+  "entry_type: 'refund'",
+  "status: 'refunded'",
+  "status: 'canceled'",
+  'refund_id',
+  'payment_intent',
+  'checkout/sessions',
+], 'stripe refund reversal handling');
+
+includesAll(index, [
+  '重复扣费、系统故障或未交付',
+  'support@madeshed.com',
+  'Stripe 退款邮件',
+], 'consumer refund policy copy');
 
 includesAll(index, [
   "const TRADE_REPORT_ENDPOINT='/api/report'",

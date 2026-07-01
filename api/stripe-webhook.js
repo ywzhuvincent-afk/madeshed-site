@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { hasSupabaseService, supabaseInsert, supabaseSelect } from './_supabase.js';
+import { hasSupabaseService, supabaseInsert, supabaseSelect, supabaseUpdate } from './_supabase.js';
 import { stripeGet } from './_stripe.js';
 
 function send(res, status, body) {
@@ -227,6 +227,168 @@ async function handleFortuneReport(session, metadata) {
   }, { upsert: true, onConflict: 'user_id,report_key' });
 }
 
+async function checkoutSessionForPaymentIntent(paymentIntent) {
+  if (!paymentIntent) return null;
+  const data = await stripeGet(`checkout/sessions?payment_intent=${encodeURIComponent(paymentIntent)}&limit=1`);
+  return data && data.data && data.data[0] ? data.data[0] : null;
+}
+
+async function chargeForRefund(refund) {
+  const chargeId = refund && refund.charge;
+  if (!chargeId || typeof chargeId !== 'string') return null;
+  return stripeGet(`charges/${encodeURIComponent(chargeId)}`);
+}
+
+function latestRefundFromCharge(charge) {
+  const refunds = charge && charge.refunds && Array.isArray(charge.refunds.data) ? charge.refunds.data : [];
+  return refunds[0] || null;
+}
+
+async function resolveRefundContext(event) {
+  const object = event.data && event.data.object ? event.data.object : {};
+  const refund = event.type === 'refund.created' || event.type === 'refund.updated' ? object : latestRefundFromCharge(object);
+  const charge = event.type === 'charge.refunded' ? object : await chargeForRefund(refund);
+  const payment_intent = refund?.payment_intent || charge?.payment_intent || null;
+  const session = await checkoutSessionForPaymentIntent(payment_intent);
+  const metadata = session?.metadata || {};
+  const invoice = charge?.invoice ? await stripeGet(`invoices/${encodeURIComponent(charge.invoice)}`) : null;
+  const subscriptionId = session?.subscription || subscriptionIdFromInvoice(invoice || {});
+  let membership = null;
+  if (subscriptionId) membership = await membershipForSubscription(subscriptionId);
+  if (!membership && charge?.customer) membership = await membershipForCustomer(charge.customer);
+  const product = metadata.product || (subscriptionId ? 'membership' : '');
+  const userId = metadata.user_id || membership?.user_id || null;
+  const refund_id = refund?.id || `${charge?.id || event.id}-refund`;
+  const amountRefunded = Number(refund?.amount || charge?.amount_refunded || 0);
+  const amountTotal = Number(session?.amount_total || charge?.amount || 0);
+  return {
+    product,
+    userId,
+    refund_id,
+    payment_intent,
+    charge_id: charge?.id || refund?.charge || null,
+    customer_id: session?.customer || charge?.customer || membership?.stripe_customer_id || null,
+    subscription_id: subscriptionId || membership?.stripe_subscription_id || null,
+    session_id: session?.id || null,
+    report_type: metadata.report_type || null,
+    fortune_report_type: metadata.fortune_report_type || null,
+    credits: Number(metadata.credits) || 10,
+    amount_refunded: amountRefunded,
+    amount_total: amountTotal,
+    full_refund: amountTotal > 0 ? amountRefunded >= amountTotal : Boolean(charge?.refunded),
+    session,
+    charge,
+    refund
+  };
+}
+
+async function reverseCreditPack(ctx) {
+  if (!hasSupabaseService() || !ctx.userId) return { reversed: false };
+  const existing = await supabaseSelect(
+    'credit_ledger',
+    `reference_id=eq.${encodeURIComponent(ctx.refund_id)}&entry_type=eq.refund&select=id&limit=1`
+  );
+  if (existing.length) return { reversed: false, duplicate: true };
+  const purchased = ctx.session_id
+    ? await supabaseSelect('credit_ledger', `stripe_session_id=eq.${encodeURIComponent(ctx.session_id)}&entry_type=eq.purchase&select=amount&limit=1`)
+    : [];
+  const purchasedCredits = Math.max(1, Number(purchased[0]?.amount) || ctx.credits || 10);
+  const ratio = ctx.amount_total > 0 && ctx.amount_refunded > 0 ? Math.min(1, ctx.amount_refunded / ctx.amount_total) : 1;
+  const creditsToReverse = Math.max(1, Math.round(purchasedCredits * ratio));
+  const balance = await creditBalance(ctx.userId);
+  await supabaseInsert('credit_ledger', {
+    user_id: ctx.userId,
+    entry_type: 'refund',
+    amount: -creditsToReverse,
+    balance_after: balance - creditsToReverse,
+    reference_type: 'stripe_refund',
+    reference_id: ctx.refund_id,
+    stripe_session_id: ctx.session_id || '',
+    payload: {
+      product: 'credit_pack',
+      refund_id: ctx.refund_id,
+      payment_intent: ctx.payment_intent,
+      charge_id: ctx.charge_id,
+      amount_refunded: ctx.amount_refunded,
+      amount_total: ctx.amount_total
+    }
+  });
+  return { reversed: true, credits: creditsToReverse };
+}
+
+async function markTradeReportRefunded(ctx) {
+  if (!hasSupabaseService() || !ctx.userId) return { updated: false };
+  const query = ctx.session_id
+    ? `stripe_session_id=eq.${encodeURIComponent(ctx.session_id)}`
+    : `user_id=eq.${encodeURIComponent(ctx.userId)}&report_type=eq.${encodeURIComponent(ctx.report_type || '30')}`;
+  await supabaseUpdate('report_entitlements', query, {
+    status: 'refunded',
+    payload: {
+      refund_id: ctx.refund_id,
+      payment_intent: ctx.payment_intent,
+      charge_id: ctx.charge_id,
+      amount_refunded: ctx.amount_refunded,
+      amount_total: ctx.amount_total
+    }
+  });
+  return { updated: true, reportType: ctx.report_type };
+}
+
+async function markFortuneReportRefunded(ctx) {
+  if (!hasSupabaseService() || !ctx.userId || !ctx.fortune_report_type) return { updated: false };
+  await supabaseUpdate(
+    'fortune_reports',
+    `user_id=eq.${encodeURIComponent(ctx.userId)}&report_type=eq.${encodeURIComponent(ctx.fortune_report_type)}`,
+    {
+      access_level: 'preview',
+      context: {
+        refunded: true,
+        refund_id: ctx.refund_id,
+        payment_intent: ctx.payment_intent,
+        charge_id: ctx.charge_id,
+        amount_refunded: ctx.amount_refunded,
+        amount_total: ctx.amount_total
+      }
+    }
+  );
+  return { updated: true, reportType: ctx.fortune_report_type };
+}
+
+async function markMembershipRefunded(ctx) {
+  if (!hasSupabaseService() || !ctx.userId) return { updated: false };
+  await supabaseUpdate('memberships', `user_id=eq.${encodeURIComponent(ctx.userId)}`, {
+    status: 'canceled',
+    payload: {
+      refunded: true,
+      refund_id: ctx.refund_id,
+      payment_intent: ctx.payment_intent,
+      charge_id: ctx.charge_id,
+      subscription_id: ctx.subscription_id,
+      customer_id: ctx.customer_id,
+      amount_refunded: ctx.amount_refunded,
+      amount_total: ctx.amount_total
+    }
+  });
+  const existing = await supabaseSelect(
+    'credit_ledger',
+    `reference_id=eq.${encodeURIComponent(ctx.refund_id)}&entry_type=eq.refund&select=id&limit=1`
+  );
+  if (!existing.length) {
+    const balance = await creditBalance(ctx.userId);
+    await supabaseInsert('credit_ledger', {
+      user_id: ctx.userId,
+      entry_type: 'refund',
+      amount: -30,
+      balance_after: balance - 30,
+      reference_type: 'stripe_refund',
+      reference_id: ctx.refund_id,
+      stripe_session_id: ctx.session_id || '',
+      payload: { product: 'membership', refund_id: ctx.refund_id, payment_intent: ctx.payment_intent }
+    });
+  }
+  return { updated: true, status: 'canceled' };
+}
+
 async function handleCheckoutCompleted(session) {
   const metadata = session.metadata || {};
   const product = metadata.product;
@@ -235,6 +397,23 @@ async function handleCheckoutCompleted(session) {
   if (product === 'report') await handleTradeReport(session, metadata);
   if (product === 'fortune_report') await handleFortuneReport(session, metadata);
   return { userId: metadata.user_id || null, product };
+}
+
+async function handleRefund(event) {
+  const ctx = await resolveRefundContext(event);
+  let action = { handled: false, reason: 'unmatched_refund' };
+  if (ctx.product === 'credit_pack') action = await reverseCreditPack(ctx);
+  if (ctx.product === 'report') action = await markTradeReportRefunded(ctx);
+  if (ctx.product === 'fortune_report') action = await markFortuneReportRefunded(ctx);
+  if (ctx.product === 'membership') action = await markMembershipRefunded(ctx);
+  return {
+    userId: ctx.userId,
+    product: ctx.product || 'unknown',
+    refund_id: ctx.refund_id,
+    payment_intent: ctx.payment_intent,
+    full_refund: ctx.full_refund,
+    action
+  };
 }
 
 async function handleInvoicePaid(invoice) {
@@ -283,6 +462,8 @@ export default async function handler(req, res) {
       });
     } else if (event.type === 'invoice.paid') {
       result = await handleInvoicePaid(object);
+    } else if (event.type === 'refund.created' || event.type === 'refund.updated' || event.type === 'charge.refunded') {
+      result = await handleRefund(event);
     }
     await logMembershipEvent(event, result && result.userId);
   } catch (error) {
