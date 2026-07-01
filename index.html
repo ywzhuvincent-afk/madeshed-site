@@ -560,14 +560,11 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 .language-gate{display:none;min-height:100vh;place-items:center;padding:32px;background:radial-gradient(circle at 50% 0%,rgba(0,188,212,.12),transparent 38%),var(--bg)}
 .language-pending .language-gate{display:grid}
 .language-pending .nav,.language-pending .view{display:none!important}
-.language-card{width:min(520px,100%);border:1px solid var(--border);border-radius:12px;background:rgba(22,27,34,.94);box-shadow:0 24px 80px rgba(0,0,0,.35);padding:28px}
-.language-brand{font-family:var(--font-cn);font-size:24px;font-weight:700;margin-bottom:18px}.language-brand .dot{color:var(--accent)}
-.language-card h1{font-size:24px;margin-bottom:8px}.language-card p{color:var(--text-2);line-height:1.8;margin-bottom:18px}
+.language-card{width:min(420px,100%);border:1px solid var(--border);border-radius:12px;background:rgba(22,27,34,.94);box-shadow:0 24px 80px rgba(0,0,0,.35);padding:30px}
+.language-brand{font-family:var(--font-cn);font-size:30px;font-weight:700;text-align:center;margin-bottom:24px}.language-brand .dot{color:var(--accent)}
 .language-options{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.language-choice{border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);padding:18px 14px;text-align:left;cursor:pointer;font-family:inherit}
+.language-choice{border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);padding:18px 14px;text-align:center;cursor:pointer;font-family:inherit;font-size:18px;font-weight:800}
 .language-choice:hover,.language-choice:focus-visible{border-color:var(--accent)}
-.language-choice strong{display:block;font-size:18px;margin-bottom:4px}.language-choice span{display:block;color:var(--text-2);font-size:12px}
-.language-note{margin-top:14px;color:var(--text-3);font-size:12px;line-height:1.7}
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 @media (max-width:980px){.report-product-grid,.generated-report-list{grid-template-columns:repeat(2,minmax(0,1fr))}.fortune-status{grid-template-columns:1fr}.master-grid,.master-grid.two{grid-template-columns:1fr}}
 @media (max-width:760px){.page-head{display:block}.page-grid,.page-grid.two,.membership-panel,.auth-shell,.security-grid,.waiver-grid,.language-options{grid-template-columns:1fr}.account-row{display:block}.account-row strong{display:block;margin-top:4px}.report-product-grid,.generated-report-list{grid-template-columns:1fr}.generated-report-card{grid-template-columns:1fr}.generated-report-card button{justify-self:start}.fortune-entry{display:grid}.language-card{padding:24px 20px}}
@@ -576,16 +573,13 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 </head>
 <body class="language-pending">
 
-<section class="language-gate" id="language-gate" aria-labelledby="language-title">
+<section class="language-gate" id="language-gate" aria-label="Choose language">
   <div class="language-card">
     <div class="language-brand">Madeshed<span class="dot">·</span></div>
-    <h1 id="language-title">选择语言 · Choose Language</h1>
-    <p>首次进入请先选择使用语言。登录后，Madeshed 会把这个选择保存到你的账号；下次登录会自动恢复上一次语言。</p>
-    <div class="language-options" role="group" aria-label="选择网站语言">
-      <button class="language-choice" type="button" data-language-choice="zh-CN"><strong>中文</strong><span>进入中文界面</span></button>
-      <button class="language-choice" type="button" data-language-choice="en"><strong>English</strong><span>Continue in English</span></button>
+    <div class="language-options" role="group" aria-label="Choose language">
+      <button class="language-choice" type="button" data-language-choice="zh-CN">中文</button>
+      <button class="language-choice" type="button" data-language-choice="en">English</button>
     </div>
-    <div class="language-note">不会使用 IP 强制切换语言；账号设置优先，本机保存其次，浏览器语言只作首次建议。</div>
   </div>
 </section>
 

@@ -79,6 +79,12 @@ includesAll(index, [
   'window.MadeshedLocale.get()',
 ], 'first visit language gate and account locale persistence');
 
+assert.equal(index.includes('选择语言 · Choose Language'), false, 'language gate should not show explanatory title copy');
+assert.equal(index.includes('首次进入请先选择使用语言'), false, 'language gate should not show explanatory paragraph copy');
+assert.equal(index.includes('不会使用 IP 强制切换语言'), false, 'language gate should not show bottom note copy');
+assert.equal(index.includes('进入中文界面'), false, 'language gate buttons should be label-only');
+assert.equal(index.includes('Continue in English'), false, 'language gate buttons should be label-only');
+
 assert.equal(
   countMatches(index, /<a\b(?=[^>]*\bdata-route=)(?![^>]*\bhref=)[^>]*>/g),
   0,
