@@ -33,7 +33,7 @@
   };
   // 调候用神表（穷通宝鉴通行本，日主×月支 → 调候用神天干，按优先序）
   var TIAOHOU = {
-    甲:{寅:'丙癸',卯:'庚丁',辰:'庚丁壬',巳:'癸丁庚',午:'癸庚丁',未:'癸庚丁',申:'庚丁壬',酉:'庚丙丁',戌:'庚甲丁',亥:'庚丁丙',子:'丁庚丙',丑:'丁庚丙'},
+    甲:{寅:'丙癸',卯:'庚丁',辰:'庚丁壬',巳:'癸丁庚',午:'癸庚丁',未:'癸庚丁',申:'丁庚壬',酉:'丁丙庚',戌:'庚甲丁',亥:'庚丁丙',子:'丁庚丙',丑:'丁庚丙'},
     乙:{寅:'丙癸',卯:'丙癸',辰:'癸丙戊',巳:'癸',午:'癸丙',未:'癸丙',申:'丙癸己',酉:'癸丙丁',戌:'癸辛',亥:'丙戊',子:'丙',丑:'丙'},
     丙:{寅:'壬庚',卯:'壬己',辰:'壬甲',巳:'壬庚癸',午:'壬庚',未:'壬庚',申:'壬戊',酉:'壬癸',戌:'甲壬',亥:'甲戊庚壬',子:'壬戊己',丑:'壬甲'},
     丁:{寅:'甲庚',卯:'庚甲',辰:'甲庚',巳:'甲庚',午:'壬庚癸',未:'甲壬庚',申:'甲庚丙戊',酉:'甲庚丙戊',戌:'甲庚戊',亥:'甲庚',子:'甲庚',丑:'甲庚'},
@@ -325,20 +325,31 @@
       xi=[gen,D]; ji=[child,wealth,officer]; main=gen;
       note='日主偏弱，宜生宜扶：以印星生身、比劫帮身为喜；忌财官食伤再耗。';
     }else{
-      xi=[wealth,child]; ji=[]; main=wealth;
-      note='日主中和，喜忌平缓，以调候与流通为主。';
+      // 中和：以月令旺神为纲——当令者旺，旺者宜制化，弱者宜扶通
+      var M=BRANCH_EN[monthBranch], rel;
+      if(M===D)rel='比劫'; else if(M===gen)rel='印'; else if(M===child)rel='食伤'; else if(M===wealth)rel='财'; else rel='官杀';
+      if(rel==='官杀'){ xi=[child,gen]; ji=[officer,wealth]; main=child;
+        note='日主中和而月令官杀当令：先以食伤制官、印星化杀通关；忌官杀再旺、财星生杀。'; }
+      else if(rel==='财'){ xi=[D,gen]; ji=[wealth,child]; main=D;
+        note='日主中和而月令财星当令：喜比劫护身担财、印星生身；忌财食再旺盗泄日主。'; }
+      else if(rel==='印'){ xi=[wealth,child]; ji=[gen,D]; main=wealth;
+        note='日主中和而月令印星当令：喜财星制印、食伤流通；忌印比再助致偏枯。'; }
+      else if(rel==='比劫'){ xi=[officer,child,wealth]; ji=[D,gen]; main=officer;
+        note='日主中和而月令比劫当令：喜官杀制劫、食伤泄秀、财星为养；忌印比再助。'; }
+      else { xi=[gen,D]; ji=[child,wealth]; main=gen;
+        note='日主中和而月令食伤当令：喜印星制伤生身、比劫帮身；忌食伤财星再泄。'; }
     }
-    // 调候融合（穷通宝鉴120格）：普通格局下调候用神并入喜方；与扶抑冲突时保留扶抑但注明
+    // 调候（穷通宝鉴120格）：调候表描述的是"配置需求"（如丁制庚、庚劈甲），
+    // 只有与扶抑/月令喜忌不冲突时才升级为行运喜神；冲突时仅注明配置之意，绝不覆盖忌神。
     var thNote='';
     if(structure.type==='normal' && th.elsEn.length){
       var thPrimary=th.elsEn[0];
-      if(ji.indexOf(thPrimary)<0){
-        if(xi.indexOf(thPrimary)<0) xi.push(thPrimary);
-        if(xi.indexOf(thPrimary)>=0) main=(strengthPct>=58||strengthPct<=42)?(xi.indexOf(thPrimary)===0?thPrimary:main):thPrimary;
-        if(strengthPct>42&&strengthPct<58) main=thPrimary;
-        thNote='调候：'+monthBranch+'月'+dgStem+'日，穷通宝鉴取 '+th.stems.join('')+'（'+th.els.join('')+'）为调候用神。';
+      if(ji.indexOf(thPrimary)>=0){
+        thNote='调候：'+monthBranch+'月'+dgStem+'日，穷通宝鉴取 '+th.stems.join('')+'；唯 '+th.els[0]+' 为本局忌神，取其制化配置之意（非行运喜神），行运喜忌仍以上述为准。';
       }else{
-        thNote='调候用神 '+th.els[0]+' 与扶抑喜忌相冲，以扶抑为主、调候为辅（'+th.stems.join('')+'）。';
+        if(xi.indexOf(thPrimary)<0) xi.push(thPrimary);
+        if(strengthPct>42&&strengthPct<58&&xi.indexOf(thPrimary)>=0) main=thPrimary;
+        thNote='调候：'+monthBranch+'月'+dgStem+'日，穷通宝鉴取 '+th.stems.join('')+'（'+th.els.join('')+'）为调候用神。';
       }
     }
     xi=uniq(xi); ji=uniq(ji);
@@ -347,25 +358,29 @@
       structure:structure,tiaohou:{stems:th.stems,els:th.els,elsEn:th.elsEn}};
   }
 
-  function calcWealth(dgStem, strengthPct){
+  function calcWealth(dgStem, strengthPct, yong){
     var D=STEM_EN[dgStem], gen=genOf(D), child=GEN_NEXT[D], wealth=CTRL_NEXT[D];
     var YANG={甲:1,丙:1,戊:1,庚:1,壬:1}, isYang=!!YANG[dgStem];
     var ES={wood:['甲','乙'],fire:['丙','丁'],earth:['戊','己'],metal:['庚','辛'],water:['壬','癸']};
     var pian=ES[wealth][isYang?0:1], zheng=ES[wealth][isYang?1:0];
-    var xi, ji, band, color, note, alert;
+    var band, color, note, alert;
     if(strengthPct>=58){
-      band='身强 · 担得起财'; color='#4ade80'; xi=[wealth,child]; ji=[D,gen];
+      band='身强 · 担得起财'; color='#4ade80';
       note='日主偏旺、担得起财，行财星与食伤之运，财气较易流通。';
       alert='防比劫旺导致争财、冲动加仓或分润。';
     }else if(strengthPct<=42){
-      band='身弱 · 财多身弱'; color='#f87171'; xi=[D,gen]; ji=[wealth,child];
+      band='身弱 · 财多身弱'; color='#f87171';
       note='日主偏弱、担财吃力，宜先得印比帮扶。';
       alert='逢财星旺时最忌追高与加杠杆。';
     }else{
-      band='中和 · 财可担、宜节制'; color='#fbbf24'; xi=[wealth,child]; ji=[D];
-      note='日主中和，财可担但宜节制。';
-      alert='仍需防比劫旺时的情绪化加码。';
+      band='中和 · 财可担、宜节制'; color='#fbbf24';
+      note='日主中和，财可担但宜节制；喜忌随月令旺神取制化。';
+      alert='流日逢劫财（同类五行争财）时防情绪化加码。';
     }
+    // 投资喜忌与命格喜忌统一同源（yongShen），不再各算一套
+    var xi=(yong&&yong.xi&&yong.xi.length)?yong.xi.slice(0,3):[wealth,child];
+    var ji=(yong&&yong.ji&&yong.ji.length)?yong.ji.slice(0,3):[D];
+    if(yong&&yong.structure&&yong.structure.type==='follow-weak')alert='从弱格顺势而行：生扶日主之运反主破财，切忌逆势重仓。';
     return {wealth:wealth,wealthCn:EL_CN[wealth],pian:pian,zheng:zheng,xi:uniq(xi),ji:uniq(ji),note:note,alert:alert,band:band,color:color};
   }
 
@@ -405,7 +420,7 @@
     try{ kongWang=String(ec.getDayXunKong()||'').split('').filter(Boolean); }catch(e){}
     var strength=calcStrength(stems,branches,hidden,{daysAfterJie:daysAfterJie});
     var yong=calcYongShen(stems[2],strength.pct,branches[1],stems,branches,strength);
-    var wealth=calcWealth(stems[2],strength.pct);
+    var wealth=calcWealth(stems[2],strength.pct,yong);
     var dy=buildDaYun(ec,input.gender,built.normalized.solarYmd);
     var dayEl=STEM_EL[stems[2]], monthEl=BRANCH_EL[branches[1]];
     return {
