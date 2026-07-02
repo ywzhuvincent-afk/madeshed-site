@@ -95,10 +95,17 @@ export function monthGanzhi(year, month) {
   return loadBaziEngine().gzMonth(year, month);
 }
 
-export function scoreFromProfileAndGanzhi(profile, ganzhi) {
+export function scoreFromProfileAndGanzhi(profile, ganzhi, ctx = {}) {
   const engine = loadBaziEngine();
-  const read = engine.dailyRead(profile, { day: ganzhi });
+  // 统一分数源：主体走引擎增强版（藏干加权+调候表+通根+全互动+空亡+岁运），
+  // 财运维度沿用引擎 dailyRead 的十神映射。
+  const enhanced = engine.readDayEnhanced
+    ? engine.readDayEnhanced(profile, { day: ganzhi, year: ctx.year, month: ctx.month, dayun: ctx.dayun })
+    : null;
+  const simple = engine.dailyRead(profile, { day: ganzhi });
+  const read = enhanced ? { ...simple, ...enhanced, cScore: simple?.cScore, cLabel: simple?.cLabel } : simple;
   const base = engine.chartScore(profile, ganzhi);
-  const score = Math.max(24, Math.min(92, Math.round(base * 0.54 + (read?.zScore || 60) * 0.26 + (read?.cScore || 55) * 0.2)));
+  const z = (enhanced && enhanced.zScore) || (simple && simple.zScore) || 60;
+  const score = Math.max(24, Math.min(92, Math.round(base * 0.54 + z * 0.26 + (simple?.cScore || 55) * 0.2)));
   return { score, read, base };
 }

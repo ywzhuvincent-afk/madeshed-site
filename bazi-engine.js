@@ -16,6 +16,83 @@
   };
   var DEFAULT_CITY = {name:'北京',en:'Beijing',country:'中国',lng:116.41,tz:8};
 
+  /* ===== v2 专业数据表 ===== */
+  var YANG_STEMS = {甲:1,丙:1,戊:1,庚:1,壬:1};
+  var WUHE = {甲己:'土',己甲:'土',乙庚:'金',庚乙:'金',丙辛:'水',辛丙:'水',丁壬:'木',壬丁:'木',戊癸:'火',癸戊:'火'};
+  var GAN_CHONG = {甲庚:1,庚甲:1,乙辛:1,辛乙:1,丙壬:1,壬丙:1,丁癸:1,癸丁:1};
+  var SANHE = [{set:['申','子','辰'],el:'水'},{set:['寅','午','戌'],el:'火'},{set:['巳','酉','丑'],el:'金'},{set:['亥','卯','未'],el:'木'}];
+  var SANHUI = [{set:['寅','卯','辰'],el:'木'},{set:['巳','午','未'],el:'火'},{set:['申','酉','戌'],el:'金'},{set:['亥','子','丑'],el:'水'}];
+  var LIUHE = {子丑:'土',丑子:'土',寅亥:'木',亥寅:'木',卯戌:'火',戌卯:'火',辰酉:'金',酉辰:'金',巳申:'水',申巳:'水',午未:'土',未午:'土'};
+  var WET_EARTH = {辰:1,丑:1}, DRY_EARTH = {未:1,戌:1};
+  // 人元司令分野（节后日数 → 当令藏干）
+  var SILING = {
+    寅:[[7,'戊'],[7,'丙'],[16,'甲']], 卯:[[10,'甲'],[20,'乙']], 辰:[[9,'乙'],[3,'癸'],[18,'戊']],
+    巳:[[5,'戊'],[9,'庚'],[16,'丙']], 午:[[10,'丙'],[9,'己'],[11,'丁']], 未:[[9,'丁'],[3,'乙'],[18,'己']],
+    申:[[7,'戊'],[7,'壬'],[16,'庚']], 酉:[[10,'庚'],[20,'辛']], 戌:[[9,'辛'],[3,'丁'],[18,'戊']],
+    亥:[[7,'戊'],[5,'甲'],[18,'壬']], 子:[[10,'壬'],[20,'癸']], 丑:[[9,'癸'],[3,'辛'],[18,'己']]
+  };
+  // 调候用神表（穷通宝鉴通行本，日主×月支 → 调候用神天干，按优先序）
+  var TIAOHOU = {
+    甲:{寅:'丙癸',卯:'庚丁',辰:'庚丁壬',巳:'癸丁庚',午:'癸庚丁',未:'癸庚丁',申:'庚丁壬',酉:'庚丙丁',戌:'庚甲丁',亥:'庚丁丙',子:'丁庚丙',丑:'丁庚丙'},
+    乙:{寅:'丙癸',卯:'丙癸',辰:'癸丙戊',巳:'癸',午:'癸丙',未:'癸丙',申:'丙癸己',酉:'癸丙丁',戌:'癸辛',亥:'丙戊',子:'丙',丑:'丙'},
+    丙:{寅:'壬庚',卯:'壬己',辰:'壬甲',巳:'壬庚癸',午:'壬庚',未:'壬庚',申:'壬戊',酉:'壬癸',戌:'甲壬',亥:'甲戊庚壬',子:'壬戊己',丑:'壬甲'},
+    丁:{寅:'甲庚',卯:'庚甲',辰:'甲庚',巳:'甲庚',午:'壬庚癸',未:'甲壬庚',申:'甲庚丙戊',酉:'甲庚丙戊',戌:'甲庚戊',亥:'甲庚',子:'甲庚',丑:'甲庚'},
+    戊:{寅:'丙甲癸',卯:'丙甲癸',辰:'甲丙癸',巳:'甲丙癸',午:'壬甲丙',未:'癸丙甲',申:'丙癸甲',酉:'丙癸',戌:'甲丙癸',亥:'甲丙',子:'丙甲',丑:'丙甲'},
+    己:{寅:'丙庚甲',卯:'甲癸丙',辰:'丙癸甲',巳:'癸丙',午:'癸丙',未:'癸丙',申:'丙癸',酉:'丙癸',戌:'甲丙癸',亥:'丙甲戊',子:'丙甲戊',丑:'丙甲戊'},
+    庚:{寅:'丙甲戊',卯:'丁甲丙',辰:'甲丁壬',巳:'壬戊丙',午:'壬癸',未:'丁甲',申:'丁甲',酉:'丁甲丙',戌:'甲壬',亥:'丁丙',子:'丁甲丙',丑:'丙丁甲'},
+    辛:{寅:'己壬庚',卯:'壬甲',辰:'壬甲',巳:'壬甲癸',午:'壬己癸',未:'壬庚甲',申:'壬甲戊',酉:'壬甲',戌:'壬甲',亥:'壬丙',子:'丙戊壬',丑:'丙壬戊'},
+    壬:{寅:'庚丙戊',卯:'戊辛庚',辰:'甲庚',巳:'壬辛庚',午:'癸庚辛',未:'辛甲',申:'戊丁',酉:'甲庚',戌:'甲丙',亥:'戊丙庚',子:'戊丙',丑:'丙丁甲'},
+    癸:{寅:'辛丙',卯:'庚辛',辰:'丙辛甲',巳:'辛',午:'庚辛',未:'庚辛',申:'丁',酉:'辛丙',戌:'辛甲',亥:'庚辛戊',子:'丙辛',丑:'丙丁'}
+  };
+
+  function siLingStem(monthBranch, daysAfterJie){
+    var segs=SILING[monthBranch]; if(!segs) return null;
+    var d=Math.max(0,Number(daysAfterJie)||0), acc=0;
+    for(var i=0;i<segs.length;i++){ acc+=segs[i][0]; if(d<acc) return segs[i][1]; }
+    return segs[segs.length-1][1];
+  }
+  function tiaohouFor(dayStem, monthBranch){
+    var raw=(TIAOHOU[dayStem]||{})[monthBranch]||'';
+    var stems=raw.split(''), els=uniq(stems.map(function(s){return STEM_EL[s];}));
+    return {stems:stems, els:els, elsEn:els.map(function(e){return CN_TO_EN[e];})};
+  }
+  function tenGodFor(dayStem, otherStem){
+    var D=STEM_EL[dayStem], O=STEM_EL[otherStem]; if(!D||!O) return null;
+    var samePolarity=!!YANG_STEMS[dayStem]===!!YANG_STEMS[otherStem];
+    var SHENG={木:'火',火:'土',土:'金',金:'水',水:'木'}, KE={木:'土',土:'水',水:'火',火:'金',金:'木'};
+    if(O===D) return samePolarity?'比肩':'劫财';
+    if(SHENG[O]===D) return samePolarity?'偏印':'正印';
+    if(SHENG[D]===O) return samePolarity?'食神':'伤官';
+    if(KE[D]===O) return samePolarity?'偏财':'正财';
+    if(KE[O]===D) return samePolarity?'七杀':'正官';
+    return null;
+  }
+  function detectCombos(branches){
+    var out=[], present={}, counts={};
+    branches.forEach(function(b){ if(b){present[b]=1; counts[b]=(counts[b]||0)+1;} });
+    SANHUI.forEach(function(g){ if(g.set.every(function(b){return present[b];})) out.push({kind:'三会',el:g.el,members:g.set.join('')}); });
+    SANHE.forEach(function(g){
+      var have=g.set.filter(function(b){return present[b];});
+      if(have.length===3){ out.push({kind:'三合',el:g.el,members:g.set.join('')}); }
+      else if(have.length===2 && have.indexOf(g.set[1])>=0){ out.push({kind:'半合',el:g.el,members:have.join('')}); }
+    });
+    var seen={};
+    branches.forEach(function(a,i){ branches.forEach(function(b,j){
+      if(i>=j||!a||!b) return; var key=a+b;
+      if(LIUHE[key] && !seen[a+'/'+b]){ seen[a+'/'+b]=1; out.push({kind:'六合',el:LIUHE[key],members:a+b}); }
+    }); });
+    return out;
+  }
+  function stemCombos(stems){
+    var out=[];
+    stems.forEach(function(a,i){ stems.forEach(function(b,j){
+      if(i>=j||!a||!b) return;
+      if(WUHE[a+b]) out.push({kind:'五合',el:WUHE[a+b],members:a+b,idx:[i,j]});
+      else if(GAN_CHONG[a+b]) out.push({kind:'天干冲',members:a+b,idx:[i,j]});
+    }); });
+    return out;
+  }
+
   function genOf(el){ for(var k in GEN_NEXT){ if(GEN_NEXT[k]===el) return k; } return null; }
   function ctrlOf(el){ for(var k in CTRL_NEXT){ if(CTRL_NEXT[k]===el) return k; } return null; }
   function uniq(arr){ var out=[]; arr.forEach(function(x){ if(x && out.indexOf(x)<0) out.push(x); }); return out; }
@@ -134,23 +211,86 @@
     return {solar:global.Solar.fromYmdHms(p.y,p.m,p.d,p.h,p.mi,0),normalized:norm};
   }
 
-  function calcStrength(stems, branches, hideGans){
-    var D=STEM_EN[stems[2]], gen=genOf(D), support=0, total=0;
+  function calcStrength(stems, branches, hideGans, opts){
+    opts=opts||{};
+    var D=STEM_EN[stems[2]], Dcn=STEM_EL[stems[2]], gen=genOf(D), support=0, total=0;
     var counts={木:0,火:0,土:0,金:0,水:0};
-    function countStem(s){ var cn=STEM_EL[s]; if(cn) counts[cn]++; }
-    function countBranch(b){ var cn=BRANCH_EL[b]; if(cn) counts[cn]++; }
-    stems.forEach(countStem); branches.forEach(countBranch);
+    stems.forEach(function(s){ var cn=STEM_EL[s]; if(cn) counts[cn]++; });
+    branches.forEach(function(b){ var cn=BRANCH_EL[b]; if(cn) counts[cn]++; });
     function add(el,w){ total+=w; if(el===D||el===gen) support+=w; }
+    // 天干五合绊：相邻两干相合（不含日主）则力量互绊打折；化神当令则化气增力
     var stemW=[1,1.2,0,1];
+    var monthMainEl=BRANCH_EN[branches[1]];
+    stemCombos(stems).forEach(function(c){
+      if(c.kind!=='五合') return;
+      if(c.idx.indexOf(2)>=0) return; // 日主之合在格局层处理
+      if(Math.abs(c.idx[0]-c.idx[1])!==1) return; // 只按紧贴论合
+      if(CN_TO_EN[c.el]===monthMainEl){ add(CN_TO_EN[c.el],0.6); } // 化神当令：合化增力
+      else { c.idx.forEach(function(i){ if(i!==2) stemW[i]*=0.6; }); } // 合而不化：互绊
+    });
     stems.forEach(function(s,i){ if(i===2){support+=1.4; total+=1.4; return;} add(STEM_EN[s],stemW[i]); });
+    // 地支本气：燥湿土区分（湿土辰丑生金有力、燥土未戌脆金助火）
     var brW=[1.1,3.0,1.4,1.1];
-    branches.forEach(function(b,i){ add(BRANCH_EN[b],brW[i]); });
+    branches.forEach(function(b,i){
+      var el=BRANCH_EN[b], w=brW[i];
+      if(el==='earth'){
+        if(D==='metal' && DRY_EARTH[b]) w*=0.55;      // 燥土难生金
+        if(D==='fire' && WET_EARTH[b]) { total+=0.4; } // 湿土晦火额外耗力
+      }
+      add(el,w);
+    });
+    // 藏干：司令分野——当令藏干加重，余支按主中余递减
+    var siLing=opts.daysAfterJie!=null?siLingStem(branches[1],opts.daysAfterJie):null;
     (hideGans||branches.map(function(b){return HIDDEN_STEMS[b]||[];})).forEach(function(arr,i){
-      arr.forEach(function(g,j){ add(STEM_EN[g],(j===0?0.5:0.25)*(i===1?1.6:1)); });
+      arr.forEach(function(g,j){
+        var w=(j===0?0.5:0.25);
+        if(i===1) w*=(siLing&&g===siLing)?2.2:1.2;
+        add(STEM_EN[g],w);
+      });
+    });
+    // 地支合会入算：三会>三合>半合>六合，会局五行按整体增力
+    var combos=detectCombos(branches);
+    combos.forEach(function(c){
+      var w=c.kind==='三会'?2.4:(c.kind==='三合'?1.8:(c.kind==='半合'?0.7:0.5));
+      add(CN_TO_EN[c.el],w);
     });
     var pct=Math.round(support/total*100);
     var label=pct<=24?'太弱':pct<=42?'偏弱':pct<58?'均衡':pct<=78?'偏强':'太强';
-    return {pct:pct,score:pct,label:label,category:label==='均衡'?'中和':label,strong:pct>=50,counts:counts};
+    return {pct:pct,score:pct,label:label,category:label==='均衡'?'中和':label,strong:pct>=50,counts:counts,siLing:siLing,combos:combos};
+  }
+  // 日主得根强度：本气根1分、中气0.5、余气0.3（从格判定核心依据）
+  function dayMasterRootScore(dayStem, branches){
+    var D=STEM_EL[dayStem], score=0;
+    branches.forEach(function(b){
+      var hid=HIDDEN_STEMS[b]||[];
+      hid.forEach(function(g,j){ if(STEM_EL[g]===D) score+=(j===0?1:(j===1?0.5:0.3)); });
+    });
+    return score;
+  }
+  function detectSpecialStructure(stems, branches, strength){
+    var dayStem=stems[2], D=STEM_EL[dayStem], DEn=STEM_EN[dayStem];
+    var gen=genOf(DEn), genCn=EL_CN[gen];
+    var rootScore=dayMasterRootScore(dayStem, branches);
+    var yinRoot=0; branches.forEach(function(b){ (HIDDEN_STEMS[b]||[]).forEach(function(g,j){ if(STEM_EL[g]===genCn) yinRoot+=(j===0?1:(j===1?0.5:0.3)); }); });
+    var yinTouGan=stems.filter(function(s,i){ return i!==2 && STEM_EL[s]===genCn; }).length;
+    var counts=strength.counts||{};
+    if(strength.pct<=22 && rootScore<=0.3 && yinTouGan===0){
+      // 从弱候选：日主无根、印星不透。找独旺一方顺势而从
+      var drainEls=['木','火','土','金','水'].filter(function(e){ return e!==D && e!==genCn; });
+      drainEls.sort(function(a,b){ return (counts[b]||0)-(counts[a]||0); });
+      var dominant=drainEls[0];
+      var confidence=(yinRoot<=0.5)?'likely':'candidate';
+      return {type:'follow-weak',label:'从弱格'+(confidence==='likely'?'':'（候选）'),confidence:confidence,dominant:dominant,rootScore:rootScore,
+        note:confidence==='likely'
+          ?'日主无根无印、克泄一方独旺，按弃命从势取用：顺从旺势（'+dominant+'）为喜，生扶日主反而不利。'
+          :'此盘接近从弱特殊格局（日主近乎无根），自动判定存在不确定性，建议人工复核；当前按从势倾向给出参考。'};
+    }
+    if(strength.pct>=86 && ((counts[EL_CN[CTRL_NEXT[DEn]]]||0)+(counts[EL_CN[ctrlOf(DEn)]]||0))<=0.5){
+      var names={木:'曲直',火:'炎上',土:'稼穑',金:'从革',水:'润下'};
+      return {type:'dominant',label:(names[D]||'专旺')+'格（候选）',confidence:'candidate',dominant:D,rootScore:rootScore,
+        note:'一行得气、旺之极者，宜顺不宜逆：喜比劫印绶助其旺、食伤泄其秀，最忌官杀强行克制（逆旺神）。'};
+    }
+    return {type:'normal',label:'普通格局',confidence:'normal',dominant:null,rootScore:rootScore,note:''};
   }
 
   function seasonOf(monthBranch){
@@ -160,27 +300,51 @@
     return 'winter';
   }
 
-  function calcYongShen(dgStem, strengthPct, monthBranch){
+  function calcYongShen(dgStem, strengthPct, monthBranch, stems, branches, strengthObj){
     var D=STEM_EN[dgStem], gen=genOf(D), child=GEN_NEXT[D], wealth=CTRL_NEXT[D], officer=ctrlOf(D);
-    var season=seasonOf(monthBranch), xi=[], ji=[], main, note='';
-    if(strengthPct>=58){
-      xi=[child,wealth,officer]; ji=[gen,D];
-      main=season==='summer'?'water':(season==='winter'?'fire':child);
+    var th=tiaohouFor(dgStem, monthBranch);
+    var structure={type:'normal',label:'普通格局',confidence:'normal',note:'',dominant:null};
+    if(stems&&branches&&strengthObj) structure=detectSpecialStructure(stems,branches,strengthObj);
+    var xi=[], ji=[], main, note='';
+    if(structure.type==='follow-weak'){
+      // 从弱：顺从旺势，旺神与生旺神者为喜；印比生扶反为忌
+      var domEn=CN_TO_EN[structure.dominant];
+      var feeder=genOf(domEn); // 生旺神者
+      xi=[domEn]; if(feeder&&feeder!==D&&feeder!==gen) xi.push(feeder);
+      ji=[gen,D];
+      main=domEn;
+      note=structure.note;
+    }else if(structure.type==='dominant'){
+      // 专旺：顺其旺势，比劫印绶食伤为喜，官杀逆旺最忌
+      xi=[D,gen,child]; ji=[officer]; main=D;
+      note=structure.note;
+    }else if(strengthPct>=58){
+      xi=[child,wealth,officer]; ji=[gen,D]; main=child;
       note='日主偏旺，宜泄宜耗宜克：用食伤泄秀、财星耗身、官杀制身；忌印比生扶。';
-      if(season==='summer'&&xi.indexOf('water')<0) xi.unshift('water');
-      if(season==='winter'&&xi.indexOf('fire')<0) xi.unshift('fire');
     }else if(strengthPct<=42){
       xi=[gen,D]; ji=[child,wealth,officer]; main=gen;
       note='日主偏弱，宜生宜扶：以印星生身、比劫帮身为喜；忌财官食伤再耗。';
     }else{
-      if(season==='summer'){ xi=['water','metal']; ji=['fire']; main='water'; }
-      else if(season==='winter'){ xi=['fire','wood']; ji=['water']; main='fire'; }
-      else if(season==='spring'){ xi=['fire','metal']; ji=[]; main='fire'; }
-      else { xi=['fire','water']; ji=[]; main='fire'; }
-      note='日主中和，以调候为主。';
+      xi=[wealth,child]; ji=[]; main=wealth;
+      note='日主中和，喜忌平缓，以调候与流通为主。';
+    }
+    // 调候融合（穷通宝鉴120格）：普通格局下调候用神并入喜方；与扶抑冲突时保留扶抑但注明
+    var thNote='';
+    if(structure.type==='normal' && th.elsEn.length){
+      var thPrimary=th.elsEn[0];
+      if(ji.indexOf(thPrimary)<0){
+        if(xi.indexOf(thPrimary)<0) xi.push(thPrimary);
+        if(xi.indexOf(thPrimary)>=0) main=(strengthPct>=58||strengthPct<=42)?(xi.indexOf(thPrimary)===0?thPrimary:main):thPrimary;
+        if(strengthPct>42&&strengthPct<58) main=thPrimary;
+        thNote='调候：'+monthBranch+'月'+dgStem+'日，穷通宝鉴取 '+th.stems.join('')+'（'+th.els.join('')+'）为调候用神。';
+      }else{
+        thNote='调候用神 '+th.els[0]+' 与扶抑喜忌相冲，以扶抑为主、调候为辅（'+th.stems.join('')+'）。';
+      }
     }
     xi=uniq(xi); ji=uniq(ji);
-    return {xi:xi,ji:ji,main:main,note:note,xiCn:xi.map(function(e){return EL_CN[e];}),jiCn:ji.map(function(e){return EL_CN[e];}),mainCn:EL_CN[main]};
+    return {xi:xi,ji:ji,main:main,note:note+(thNote?' '+thNote:''),
+      xiCn:xi.map(function(e){return EL_CN[e];}),jiCn:ji.map(function(e){return EL_CN[e];}),mainCn:EL_CN[main],
+      structure:structure,tiaohou:{stems:th.stems,els:th.els,elsEn:th.elsEn}};
   }
 
   function calcWealth(dgStem, strengthPct){
@@ -232,8 +396,15 @@
     var stems=[y[0],mo[0],d[0],t[0]], branches=[y[1],mo[1],d[1],t[1]];
     var pillars=[y,mo,d,t].map(function(s){return {stem:s[0],branch:s[1]};});
     var hidden=branches.map(function(b){return HIDDEN_STEMS[b]||[];});
-    var strength=calcStrength(stems,branches,hidden);
-    var yong=calcYongShen(stems[2],strength.pct,branches[1]);
+    var daysAfterJie=null, kongWang=[];
+    try{
+      var jie=lunar.getPrevJie(); var js=jie&&jie.getSolar&&jie.getSolar();
+      if(js){ var jd=Date.UTC(js.getYear(),js.getMonth()-1,js.getDay()), bd=Date.UTC(built.normalized.baziParts.y,built.normalized.baziParts.m-1,built.normalized.baziParts.d);
+        daysAfterJie=Math.max(0,Math.round((bd-jd)/86400000)); }
+    }catch(e){}
+    try{ kongWang=String(ec.getDayXunKong()||'').split('').filter(Boolean); }catch(e){}
+    var strength=calcStrength(stems,branches,hidden,{daysAfterJie:daysAfterJie});
+    var yong=calcYongShen(stems[2],strength.pct,branches[1],stems,branches,strength);
     var wealth=calcWealth(stems[2],strength.pct);
     var dy=buildDaYun(ec,input.gender,built.normalized.solarYmd);
     var dayEl=STEM_EL[stems[2]], monthEl=BRANCH_EL[branches[1]];
@@ -255,6 +426,11 @@
       wealth:wealth,
       daYun:dy.daYun,
       currentDayunIdx:dy.currentDayunIdx,
+      daysAfterJie:daysAfterJie,
+      siLing:strength.siLing||null,
+      kongWang:kongWang,
+      structure:yong.structure,
+      tiaohou:yong.tiaohou,
       inputMeta:built.normalized,
       usedCalendar:built.normalized.usedCalendar,
       trueSolarTime:built.normalized.trueSolarTime,
@@ -264,6 +440,16 @@
   }
 
   function zForEl(profile,elCn){
+    // v2 连续分级：主用神80 / 喜73 / 中性60 / 忌45 / 逆旺神38（专旺格官杀）
+    var ys=profile.yongShen;
+    if(ys&&ys.xiCn){
+      if(ys.mainCn===elCn) return 80;
+      if(ys.xiCn.indexOf(elCn)>=0) return 73;
+      if(ys.structure&&ys.structure.type==='dominant'&&ys.jiCn.indexOf(elCn)>=0) return 38;
+      if(ys.jiCn&&ys.jiCn.indexOf(elCn)>=0) return 45;
+      return 60;
+    }
+    // 兼容旧 profile（无 yongShen 对象时按扶抑口径）
     var dayEl=profile.dayElement, cat=profile.strength.category;
     var SHENG={木:'火',火:'土',土:'金',金:'水',水:'木'};
     var KE={木:'土',土:'水',水:'火',火:'金',金:'木'};
@@ -274,6 +460,99 @@
     else if(weak){xi=[yin,dayEl];ji=[shi,cai,guan];}
     else{xi=[cai,shi];ji=[dayEl];}
     return xi.indexOf(elCn)>=0?78:(ji.indexOf(elCn)>=0?42:60);
+  }
+
+  /* ===== v2 流日/岁运互动分析 ===== */
+  function isXiEl(profile, elCn){ return zForEl(profile, elCn)>=70; }
+  function isJiEl(profile, elCn){ return zForEl(profile, elCn)<=50; }
+  // 流支与命局+岁运支的全互动：冲刑害合 + 三合半合三会引动 + 空亡
+  function analyzeFlowInteractions(profile, flowGz, extras){
+    var flow=String(flowGz||''), fStem=flow.charAt(0), fBranch=flow.charAt(1);
+    var items=[], adjust=0, penalty=0, notes=[];
+    if(!fBranch) return {adjust:0,penalty:0,items:items,note:'',kongWang:false,ganNotes:[]};
+    var pool=[];
+    var names=['年支','月支','日支','时支'], brW=[0.45,0.72,1,0.45];
+    (profile.pillars||[]).forEach(function(p,i){ if(p.branch) pool.push({branch:p.branch,name:names[i]||'命支',w:brW[i]||0.5}); });
+    (extras||[]).forEach(function(x){
+      var gz=String(x.gz||''), b=gz.charAt(1);
+      if(b) pool.push({branch:b,name:x.tag||'岁运',w:x.tag==='大运'?0.8:(x.tag==='流年'?0.7:0.5)});
+    });
+    var CHONG={子午:1,丑未:1,寅申:1,卯酉:1,辰戌:1,巳亥:1};
+    var HAI={子未:1,丑午:1,寅巳:1,卯辰:1,申亥:1,酉戌:1};
+    var XING={子卯:1,寅巳:1,巳申:1,寅申:1,丑戌:1,戌未:1,丑未:1,辰辰:1,午午:1,酉酉:1,亥亥:1};
+    function pair(map,a,b){ return !!(map[a+b]||map[b+a]); }
+    pool.forEach(function(p){
+      var k=null;
+      if(pair(CHONG,fBranch,p.branch)) k={label:'冲',adj:-7,pen:5};
+      else if(pair(XING,fBranch,p.branch)) k={label:'刑',adj:-5,pen:4};
+      else if(pair(HAI,fBranch,p.branch)) k={label:'害',adj:-4,pen:3};
+      else if(LIUHE[fBranch+p.branch]) k={label:'合',adj:4,pen:0};
+      else if(fBranch===p.branch) k={label:'伏吟',adj:-2,pen:2};
+      if(k) items.push({pillar:p.name,branch:p.branch,label:k.label,adjust:k.adj*p.w,penalty:k.pen*p.w});
+    });
+    // 三合/半合/三会引动：流支与池中支构成合局，按喜忌定吉凶
+    var poolBranches=pool.map(function(p){return p.branch;});
+    SANHE.forEach(function(g){
+      if(g.set.indexOf(fBranch)<0) return;
+      var others=g.set.filter(function(b){return b!==fBranch;});
+      var have=others.filter(function(b){return poolBranches.indexOf(b)>=0;});
+      if(have.length===2){ var good=isXiEl(profile,g.el); items.push({combo:true,pillar:'合局',branch:g.set.join(''),label:'三合'+g.el+'局',adjust:good?8:-6,penalty:good?0:4}); notes.push('流支引动'+g.set.join('')+'三合'+g.el+'局（'+(good?'喜':'忌')+'）'); }
+      else if(have.length===1&&(fBranch===g.set[1]||have[0]===g.set[1])){ var good2=isXiEl(profile,g.el); items.push({combo:true,pillar:'半合',branch:fBranch+have[0],label:'半合'+g.el,adjust:good2?3:-2.5,penalty:good2?0:1.5}); notes.push('流支与'+have[0]+'半合'+g.el+'（'+(good2?'喜':'忌')+'）'); }
+    });
+    SANHUI.forEach(function(g){
+      if(g.set.indexOf(fBranch)<0) return;
+      var others=g.set.filter(function(b){return b!==fBranch;});
+      if(others.every(function(b){return poolBranches.indexOf(b)>=0;})){ var good=isXiEl(profile,g.el); items.push({combo:true,pillar:'会局',branch:g.set.join(''),label:'三会'+g.el+'方',adjust:good?9:-7,penalty:good?0:5}); notes.push('流支引动'+g.set.join('')+'三会'+g.el+'方（'+(good?'喜':'忌')+'）'); }
+    });
+    // 天干五合/冲：合日主=羁绊；合用神透干=用神被绊；化神当令按喜忌
+    var ganNotes=[];
+    var natalStems=(profile.pillars||[]).map(function(p){return p.stem;});
+    var mainCn=profile.yongShen&&profile.yongShen.mainCn;
+    if(fStem){
+      natalStems.forEach(function(s,i){
+        if(!s) return;
+        if(WUHE[fStem+s]){
+          if(i===2){ adjust-=3; penalty+=2; ganNotes.push('流日干合日主（羁绊，行动力受制）'); }
+          else if(mainCn&&STEM_EL[s]===mainCn){ adjust-=5; penalty+=3; ganNotes.push('流日干合去用神'+s+'（用神被绊）'); }
+          else { adjust-=1.5; ganNotes.push('流日干与'+names[i]+'天干相合（互绊）'); }
+        }else if(GAN_CHONG[fStem+s]&&i===2){ adjust-=3; penalty+=2; ganNotes.push('流日干冲克日主'); }
+      });
+    }
+    // 空亡：流支落日柱旬空，引动之力打折
+    var kong=(profile.kongWang||[]).indexOf(fBranch)>=0;
+    if(kong) notes.push('流支'+fBranch+'落空亡，吉凶之力皆减');
+    adjust+=items.reduce(function(a,x){return a+x.adjust;},0);
+    penalty+=items.reduce(function(a,x){return a+x.penalty;},0);
+    if(kong){ adjust*=0.7; penalty*=0.75; }
+    var pairItems=items.filter(function(x){return !x.combo;});
+    var pairNote=pairItems.length?('四柱互动：流支'+fBranch+'与'+pairItems.slice(0,4).map(function(x){return x.pillar+(x.branch.length===1?x.branch:'')+x.label;}).join('、')+'。'):'';
+    return {adjust:Math.round(adjust),penalty:Math.round(penalty),items:items,
+      note:pairNote+(notes.length?notes.join('；')+'。':''),kongWang:kong,ganNotes:ganNotes};
+  }
+  // 岁运特殊格局：岁运并临 / 天克地冲 / 反吟伏吟
+  function detectCycleSpecials(profile, ctx){
+    ctx=ctx||{};
+    var items=[], penalty=0;
+    var dayGz=(profile.pillarsStr&&profile.pillarsStr.day)||'';
+    function stemsKe(a,b){ var A=STEM_EL[a],B=STEM_EL[b],KE={木:'土',土:'水',水:'火',火:'金',金:'木'}; return KE[A]===B||KE[B]===A; }
+    function branchChong(a,b){ var C={子午:1,丑未:1,寅申:1,卯酉:1,辰戌:1,巳亥:1}; return !!(C[a+b]||C[b+a]); }
+    var y=String(ctx.yearGz||''), dy=String(ctx.dayunGz||'');
+    if(y&&dy&&y===dy){ items.push({label:'岁运并临',detail:y}); penalty+=6; }
+    if(y&&dy&&y.length===2&&dy.length===2&&stemsKe(y[0],dy[0])&&branchChong(y[1],dy[1])){ items.push({label:'岁运天克地冲',detail:y+'×'+dy}); penalty+=8; }
+    if(y&&dayGz&&y===dayGz){ items.push({label:'流年伏吟日柱',detail:y}); penalty+=4; }
+    if(y&&dayGz.length===2&&y.length===2&&stemsKe(y[0],dayGz[0])&&branchChong(y[1],dayGz[1])){ items.push({label:'流年反吟日柱',detail:y+'×'+dayGz}); penalty+=6; }
+    return {items:items,penalty:Math.min(12,penalty),
+      note:items.length?('岁运警示：'+items.map(function(x){return x.label+'（'+x.detail+'）';}).join('、')+'。'):''};
+  }
+  // 调候视角下的流日五行加减分
+  function tiaohouAdjustFor(profile, flowElCn){
+    var th=profile.tiaohou||(profile.yongShen&&profile.yongShen.tiaohou);
+    if(!th||!th.els||!th.els.length||!flowElCn) return {adjust:0,note:''};
+    var KE={木:'土',土:'水',水:'火',火:'金',金:'木'};
+    if(flowElCn===th.els[0]) return {adjust:5,note:'调候：流日得月令第一调候用神'+flowElCn};
+    if(th.els.indexOf(flowElCn)>0) return {adjust:3,note:'调候：流日带次级调候用神'+flowElCn};
+    if(KE[flowElCn]===th.els[0]) return {adjust:-3,note:'调候：流日'+flowElCn+'克制调候用神'+th.els[0]+'，气候失衡'};
+    return {adjust:0,note:''};
   }
 
   function dailyRead(profile,today){
@@ -291,6 +570,39 @@
     return {liuStem:liuStem,liuEl:liuEl,role:role,zScore:zScore,zLabel:zLabel,cScore:cScore,cLabel:cLabel,cWarn:cWarn,advice:advice};
   }
 
+  // v2 统一增强流日分析：服务端与前端同一来源（藏干加权+调候表+通根透干+全互动+岁运特殊+空亡）
+  function readDayEnhanced(profile, ctx){
+    ctx=ctx||{};
+    var gz=String(ctx.day||''), stem=gz.charAt(0), branch=gz.charAt(1);
+    var stemEl=STEM_EL[stem], branchEl=BRANCH_EL[branch]||stemEl;
+    if(!profile||!stemEl) return null;
+    var hiddens=HIDDEN_STEMS[branch]||[];
+    var hw=hiddens.length===1?[1]:(hiddens.length===2?[0.7,0.3]:[0.6,0.25,0.15]);
+    var stemScore=zForEl(profile,stemEl), branchScore=zForEl(profile,branchEl);
+    var hiddenScore=hiddens.length?Math.round(hiddens.reduce(function(a,g,i){return a+zForEl(profile,STEM_EL[g])*hw[i];},0)):branchScore;
+    var tenGod=tenGodFor(profile.dayStem,stem);
+    var th=tiaohouAdjustFor(profile,stemEl);
+    var natalStems=(profile.pillars||[]).map(function(p){return p.stem;});
+    var natalBranches=(profile.pillars||[]).map(function(p){return p.branch;});
+    var root=natalBranches.some(function(b){return (HIDDEN_STEMS[b]||[]).some(function(g){return STEM_EL[g]===stemEl;});});
+    var reveal=natalStems.indexOf(stem)>=0;
+    var rootAdjust=(root?3:0)+(reveal?2:0);
+    var extras=[];
+    if(ctx.dayun)extras.push({gz:ctx.dayun,tag:'大运'});
+    if(ctx.year)extras.push({gz:ctx.year,tag:'流年'});
+    if(ctx.month)extras.push({gz:ctx.month,tag:'流月'});
+    var inter=analyzeFlowInteractions(profile,gz,extras);
+    var specials=(ctx.year||ctx.dayun)?detectCycleSpecials(profile,{yearGz:ctx.year,dayunGz:ctx.dayun}):{items:[],penalty:0,note:''};
+    var zRaw=stemScore*0.48+branchScore*0.28+hiddenScore*0.18+th.adjust+rootAdjust+inter.adjust*0.6-specials.penalty*0.5;
+    var zScore=Math.max(34,Math.min(88,Math.round(zRaw)));
+    var zLabel=zScore>=70?'顺势':(zScore<=50?'谨慎':'平稳');
+    return {gz:gz,liuStem:stem,liuEl:stemEl,branch:branch,branchEl:branchEl,tenGod:tenGod,
+      stemScore:stemScore,branchScore:branchScore,hiddenScore:hiddenScore,
+      tiaohouAdjust:th.adjust,tiaohouNote:th.note,rootAdjust:rootAdjust,root:root,reveal:reveal,
+      interaction:inter,interactionPenalty:inter.penalty,kongWang:inter.kongWang,ganNotes:inter.ganNotes,
+      specials:specials,zScore:zScore,zLabel:zLabel};
+  }
+
   function gzMonth(y,m){return global.Solar.fromYmdHms(y,m,15,12,0,0).getLunar().getEightChar().getMonth();}
   function gzDayD(dt){return global.Solar.fromYmdHms(dt.getFullYear(),dt.getMonth()+1,dt.getDate(),12,0,0).getLunar().getEightChar().getDay();}
   function gzHour(y,m,d,h){return global.Solar.fromYmdHms(y,m,d,h,0,0).getLunar().getEightChar().getTime();}
@@ -304,6 +616,13 @@
     applyTrueSolarTime:applyTrueSolarTime,adjustForZiPolicy:adjustForZiPolicy,normalizeBirthInput:normalizeBirthInput,
     solarFromBirthInput:solarFromBirthInput,calcStrength:calcStrength,calcYongShen:calcYongShen,
     calcWealth:calcWealth,calcBaziCore:calcBaziCore,dailyRead:dailyRead,zForEl:zForEl,
-    gzMonth:gzMonth,gzDayD:gzDayD,gzHour:gzHour,chartScore:chartScore,getTodayGZ:getTodayGZ
+    gzMonth:gzMonth,gzDayD:gzDayD,gzHour:gzHour,chartScore:chartScore,getTodayGZ:getTodayGZ,
+    /* v2 专业能力 */
+    SILING:SILING,TIAOHOU:TIAOHOU,WUHE:WUHE,SANHE:SANHE,SANHUI:SANHUI,LIUHE:LIUHE,
+    siLingStem:siLingStem,tiaohouFor:tiaohouFor,tenGodFor:tenGodFor,
+    detectCombos:detectCombos,stemCombos:stemCombos,
+    dayMasterRootScore:dayMasterRootScore,detectSpecialStructure:detectSpecialStructure,
+    analyzeFlowInteractions:analyzeFlowInteractions,detectCycleSpecials:detectCycleSpecials,
+    tiaohouAdjustFor:tiaohouAdjustFor,readDayEnhanced:readDayEnhanced
   };
 })(window);
