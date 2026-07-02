@@ -132,6 +132,22 @@ includesAll(index, [
   "setLocaleText('.footer-links a[data-guide-link]','Trading Persona')",
   "setLocaleAttr('.footer-links a[data-guide-link]','href','/guide/trading-persona.html')",
 ], 'app footer links to the guide (internal crawl path), locale-aware');
+
+includesAll(index, [
+  'function bandColor(score)',
+  'function bandTint(score)',
+  "'red':'#EF5350'",
+  '.today-score .score-max{',
+  '.today-meta{font-size:18px;color:var(--text);font-weight:600',
+  'scoreEl.innerHTML=score+\'<span class="score-max">/100</span>\';scoreEl.style.color=col;',
+  '今日: <span style="color:\'+col+\'">\'+action.label+\'</span>',
+  'meta.innerHTML=\'仓位 <b>\'+position+\'</b> · \'+dr.advice',
+], 'daily today block: risk word + score colored by history band, score shows /100, advice enlarged, ten-god role removed');
+assert.equal(
+  index.includes("title.textContent='今日: '+action.label+' · '+dr.role"),
+  false,
+  'daily headline should not append the ten-god role or leave the risk label uncolored',
+);
 assert.ok(existsSync(baziEnginePath), 'shared bazi-engine.js should exist');
 
 includesAll(index, [
