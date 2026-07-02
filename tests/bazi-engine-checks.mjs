@@ -93,6 +93,28 @@ assert.ok(sp2.items.some((x) => x.label === '岁运天克地冲'), '天克地冲
 const rInter = e.readDayEnhanced(p1, { day: '乙巳' });
 assert.ok(rInter.interaction && Array.isArray(rInter.interaction.items), '互动结构完整');
 
+// ---- 8.5 用神逻辑不变量（防回归：喜忌自洽性）----
+// 甲木酉月中和：官杀当令，喜火水、忌金土；调候庚（金）绝不能混入喜神
+const ysJY = e.calcYongShen('甲', 50, '酉');
+assert.equal(ysJY.mainCn, '火', '甲酉中和主用神应为火（食伤制官）');
+assert.ok(ysJY.xiCn.indexOf('水') >= 0, '甲酉中和应喜水（印化杀）');
+assert.ok(ysJY.jiCn.indexOf('金') >= 0, '甲酉中和应忌金（官杀旺）');
+assert.ok(ysJY.xiCn.indexOf('金') < 0, '克身当令旺神（金）绝不能进喜神');
+// 全维度扫描：10日主 × 12月支 × 3强弱档 —— 忌神非空、喜忌零交集、主用神必在喜内
+['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'].forEach((s) => {
+  ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'].forEach((b) => {
+    [30, 50, 70].forEach((pct) => {
+      const y = e.calcYongShen(s, pct, b);
+      assert.ok(y.jiCn.length >= 1, `忌神为空: ${s}${b} pct=${pct}`);
+      assert.ok(!y.xiCn.some((x) => y.jiCn.includes(x)), `喜忌冲突: ${s}${b} pct=${pct}`);
+      assert.ok(y.xiCn.indexOf(y.mainCn) >= 0, `主用神不在喜内: ${s}${b} pct=${pct}`);
+    });
+  });
+});
+// 投资喜忌必须与命格喜忌同源
+assert.equal(p1.wealth.xi.join(','), p1.yongShen.xi.slice(0, 3).join(','), '投资喜与命格喜同源');
+assert.equal(p1.wealth.ji.join(','), p1.yongShen.ji.slice(0, 3).join(','), '投资忌与命格忌同源');
+
 // ---- 9. 服务端统一分数源 ----
 const s1 = scoreFromProfileAndGanzhi(p1, '丙子', { year: '丙午', month: '甲午', dayun: '丁亥' });
 assert.ok(Number.isFinite(s1.score), '服务端分数有效');
