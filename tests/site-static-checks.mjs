@@ -60,7 +60,7 @@ includesAll(chart, [
   'function shenShaEn',
   'function naYinEn',
   'Full BaZi Chart',
-  'Four Pillars, Ten Gods, hidden stems, Na Yin, void branches, core symbolic stars',
+  'How to read this: your Day Master is your core self',
   'Birth Date',
   'Favorable Elements',
   'Wealth / Investment',

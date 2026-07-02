@@ -309,7 +309,7 @@
   function strengthEn(label,pct){var n=Number(pct);if(/太弱/.test(label)||n<=24)return'Very Weak';if(/偏弱/.test(label)||n<=42)return'Weak';if(/均衡/.test(label)||n<58)return'Balanced';if(/偏强/.test(label)||n<=78)return'Strong';return'Very Strong';}
   function genderEn(v){return String(v).indexOf('女')>=0?'Female':'Male';}
   function ziRuleEn(v){if(/晚/.test(v))return'Late Zi hour uses next-day rule';if(/早/.test(v))return'Early Zi hour';return'Not Zi hour';}
-  function tenGodEn(v){var m={'比肩':'Peer','劫财':'Rob Wealth','食神':'Eating God','伤官':'Hurting Officer','偏财':'Indirect Wealth','正财':'Direct Wealth','七杀':'Seven Killings','正官':'Direct Officer','偏印':'Indirect Resource','正印':'Direct Resource'};var s=String(v||'');if(/^元/.test(s))return s.indexOf('女')>=0?'Day Master · Female':'Day Master · Male';return m[s]||s;}
+  function tenGodEn(v){var m={'比肩':'Peer','劫财':'Rob Wealth','食神':'Eating God','伤官':'Hurting Officer','偏财':'Indirect Wealth','正财':'Direct Wealth','七杀':'Seven Killings','正官':'Direct Officer','偏印':'Indirect Resource','正印':'Direct Resource'};var g={"Peer":"Peer (independence)","Rob Wealth":"Rob Wealth (rivalry & impulse)","Eating God":"Eating God (creativity)","Hurting Officer":"Hurting Officer (rebellion & flair)","Indirect Wealth":"Indirect Wealth (windfall & speculation)","Direct Wealth":"Direct Wealth (steady income)","Seven Killings":"Seven Killings (drive & pressure)","Direct Officer":"Direct Officer (discipline & structure)","Indirect Resource":"Indirect Resource (intuition)","Direct Resource":"Direct Resource (support & learning)"};var s=String(v||'');if(/^元/.test(s))return s.indexOf('女')>=0?'Day Master · Female':'Day Master · Male';var base=m[s]||s;return g[base]||base;}
   function shenShaEn(v){var m={'天乙贵人':'Noble Helper','文昌贵人':'Academic Star','禄神':'Prosperity Star','羊刃':'Yang Blade','将星':'General Star','华盖':'Solitary Talent','驿马':'Travel Star','桃花':'Peach Blossom','劫煞':'Robbery Sha','亡神':'Loss Spirit'};return m[v]||v;}
   function naYinEn(v){var m={'海中金':'Sea Metal','炉中火':'Furnace Fire','大林木':'Great Forest Wood','路旁土':'Roadside Earth','剑锋金':'Sword Metal','山头火':'Mountain Fire','涧下水':'Stream Water','城头土':'City Wall Earth','白蜡金':'White Wax Metal','杨柳木':'Willow Wood','泉中水':'Spring Water','屋上土':'Roof Earth','霹雳火':'Thunder Fire','松柏木':'Pine Wood','长流水':'Long Flowing Water','沙中金':'Sand Metal','山下火':'Mountain Foot Fire','平地木':'Flatland Wood','壁上土':'Wall Earth','金箔金':'Gold Foil Metal','覆灯火':'Lamp Fire','天河水':'Milky Way Water','大驿土':'Great Post Earth','钗钏金':'Jewelry Metal','桑柘木':'Mulberry Wood','大溪水':'Great Creek Water','沙中土':'Sand Earth','天上火':'Sky Fire','石榴木':'Pomegranate Wood','大海水':'Great Sea Water'};return m[v]||'Na Yin Layer';}
   function stemInfoEn(stem){var m={甲:['Jia','Yang','Wood'],乙:['Yi','Yin','Wood'],丙:['Bing','Yang','Fire'],丁:['Ding','Yin','Fire'],戊:['Wu','Yang','Earth'],己:['Ji','Yin','Earth'],庚:['Geng','Yang','Metal'],辛:['Xin','Yin','Metal'],壬:['Ren','Yang','Water'],癸:['Gui','Yin','Water']};var x=m[stem]||['--','',''];return{han:stem||'--',pinyin:x[0],polarity:x[1],element:x[2],label:(x[1]?x[1]+' ':'')+(x[2]||'')};}
@@ -339,7 +339,7 @@
     chartSetText('.btn-signin','Login');
     chartSetText('.eyebrow','Madeshed · Full Chart');
     chartSetHtml('header h1','Full BaZi Chart<span class="sep">/</span>Luck Timeline');
-    chartSetText('.lead','Four Pillars, Ten Gods, hidden stems, Na Yin, void branches, core symbolic stars, favorable elements, plus a Luck → Year → Month → Day timeline. Click a Luck Cycle or Year to inspect the next layer.');
+    chartSetText('.lead','How to read this: your Day Master is your core self — every other element either supports or drains it, and the timeline shows when conditions favor discipline. Below: Four Pillars, Ten Gods, hidden stems, Na Yin, void branches, symbolic stars, favorable elements, plus a Luck → Year → Month → Day timeline. Click a Luck Pillar or Year to inspect the next layer.');
     chartSetText('label[for="in-date"]','Birth Date');
     chartSetText('label[for="in-time"]','Birth Time');
     chartSetText('label[for="in-gender"]','Gender');
@@ -573,14 +573,14 @@
   }
   function renderYongEnglish(st,ys){
     document.getElementById('yong').innerHTML=
-      '<div class="box use"><div class="lab">Primary Support · Strength</div>'+
+      '<div class="box use"><div class="lab">Useful Element · Strength</div>'+
         '<div class="els"><span class="el-pill el-'+ys.main+'">'+elementNameEn(ys.main)+'</span>'+
         '<span style="font-size:13px;color:var(--text-2);margin-left:4px">'+strengthEn(st.label,st.pct)+' '+st.pct+'</span></div>'+
         '<div class="strength-bar"><i style="width:'+st.pct+'%"></i></div>'+
-        '<div class="note">This element supports chart balance. Use it as timing context, not as a return forecast.</div></div>'+
+        '<div class="note">Think of your chart as a system seeking balance: this "useful element" is the remedy. Use it as timing context, not as a return forecast.</div></div>'+
       '<div class="box xi"><div class="lab">Supportive Elements</div><div class="els">'+elPills(ys.xi)+'</div>'+
         '<div class="note">When luck cycles or dates carry these elements, the chart context is generally easier to work with.</div></div>'+
-      '<div class="box ji"><div class="lab">Pressure Elements</div><div class="els">'+elPills(ys.ji)+'</div>'+
+      '<div class="box ji"><div class="lab">Unfavorable Elements</div><div class="els">'+elPills(ys.ji)+'</div>'+
         '<div class="note">When these elements dominate, use more confirmation, smaller size, and stricter discipline.</div></div>';
   }
 
@@ -607,7 +607,7 @@
         '<div class="note">Your wealth element is '+elementNameEn(w.wealth)+'. In trading language, this describes opportunity, volatility, spending pressure, and risk appetite rather than guaranteed profit.</div></div>'+
       '<div class="box xi"><div class="lab">Trading Support Elements</div><div class="els">'+elPills(w.xi)+'</div>'+
         '<div class="note">Support elements help the chart carry opportunity with better discipline and clearer judgment.</div></div>'+
-      '<div class="box ji"><div class="lab">Trading Pressure Elements · Loss Warning</div><div class="els">'+elPills(w.ji)+'</div>'+
+      '<div class="box ji"><div class="lab">Trading Unfavorable Elements · Loss Warning</div><div class="els">'+elPills(w.ji)+'</div>'+
         '<div class="note">When pressure elements are strong, avoid chasing, leverage, and impulsive sizing.</div></div>';
   }
 
@@ -711,7 +711,7 @@
     }).join('');
 
     // 2) 流年行（选中大运的 10 年）
-    var lnHtml='<div class="pano-empty">'+(chartLocaleIsEn()?'Select a Luck Cycle to view annual pillars':'选择一个大运查看流年')+'</div>';
+    var lnHtml='<div class="pano-empty">'+(chartLocaleIsEn()?'Select a Luck Pillar to view annual pillars':'选择一个大运查看流年')+'</div>';
     var selDyObj = daYun[state.selDy];
     if(selDyObj){
       var lnArr=selDyObj.getLiuNian();
