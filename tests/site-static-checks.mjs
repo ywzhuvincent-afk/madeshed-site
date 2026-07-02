@@ -148,6 +148,15 @@ assert.equal(
   false,
   'daily headline should not append the ten-god role or leave the risk label uncolored',
 );
+
+includesAll(index, [
+  'function paintScoreNum(el,score)',
+  'function paintScorePill(el,score)',
+  'el.innerHTML=score+\'<span class="score-max">/100</span>\';el.style.color=bandColor(score)',
+  '.score-n .score-max{',
+  '.score-l::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}',
+  'document.querySelectorAll(\'.score-n\').forEach(function(el){if(Number.isFinite(Number(state.score)))paintScoreNum(el,state.score);})',
+], 'dashboard score card also uses the /100 + history-band-color pattern (zh and en)');
 assert.ok(existsSync(baziEnginePath), 'shared bazi-engine.js should exist');
 
 includesAll(index, [
@@ -858,8 +867,8 @@ includesAll(index, [
   '<span class="k">综合年月日</span>',
   '<span class="k">流日触发</span>',
   '<span class="k">风险扣分</span>',
-  'if(sn)sn.textContent=action.score',
-  "if(sl)sl.textContent=action.label+' · 财运 '+(drT?drT.cScore:'')+' · 底盘 '+foundation.score",
+  'paintScoreNum(sn,action.score)',
+  "sl.textContent=action.label+' · 财运 '+(drT?drT.cScore:'')+' · 底盘 '+foundation.score;paintScorePill(sl,action.score)",
 ], 'dashboard action score rendering');
 
 includesAll(index, [
@@ -867,8 +876,8 @@ includesAll(index, [
   'window.__todayState={dateText,compactDate,day:today.day,label:action.label,score:action.score',
   'flow:action.flowScore',
   "document.querySelectorAll('.m-score-label').forEach(el=>{el.textContent='今日行动指数';});",
-  "document.querySelectorAll('.score-n').forEach(el=>{el.textContent=action.score;});",
-  "document.querySelectorAll('.score-l').forEach(el=>{el.textContent=action.label+' · 财运 '+dr.cScore+' · 底盘 '+action.foundation.score;});",
+  "document.querySelectorAll('.score-n').forEach(el=>{paintScoreNum(el,action.score);});",
+  "document.querySelectorAll('.score-l').forEach(el=>{el.textContent=action.label+' · 财运 '+dr.cScore+' · 底盘 '+action.foundation.score;paintScorePill(el,action.score);});",
   "html+='<div class=\"forecast-card",
   "+(en?'Action ':'行动 ')+a.score",
 ], 'connected action score surfaces');
