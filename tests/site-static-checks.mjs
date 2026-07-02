@@ -226,6 +226,25 @@ assert.equal(
 );
 
 includesAll(index, [
+  'id="home-city-input"',
+  'id="home-city-suggestions"',
+  'function attachCityPicker(input,suggestions,meta)',
+  'function cityInitials(c)',
+  "String(c.py||'').includes(ql)||cityInitials(c).includes(ql)",
+  "attachCityPicker(document.getElementById('home-city-input'),document.getElementById('home-city-suggestions'),document.getElementById('home-city-meta'))",
+  "['.hf-city-label','Birthplace']",
+], 'landing city picker: shared engine matches Chinese name, pinyin, English, and initials on both forms');
+
+{
+  const cityCount = (index.match(/const CITIES = \[([\s\S]*?)\n\];/)[1].match(/\{name:/g) || []).length;
+  assert.ok(cityCount >= 120, `world-city list should be comprehensive (found ${cityCount})`);
+  ['纽约','伦敦','东京','迪拜','悉尼','孟买','圣保罗','开罗','首尔','莫斯科'].forEach(c => {
+    assert.ok(index.includes(`name:'${c}'`), `city list should include ${c}`);
+  });
+  assert.ok(/\{name:'北京',en:'Beijing',country:'中国',py:'beijing'/.test(index), 'each city should carry a pinyin (py) field for fuzzy search');
+}
+
+includesAll(index, [
   "if(storedLocale){applyLocale(storedLocale,true);}else{applyLocale(defaultLocale(),false);}",
 ], 'initial applyLocale runs at the end of the script block so late consts (SAMPLE_ENTRIES, BAND_HEX) are initialized before any dynamic render');
 
