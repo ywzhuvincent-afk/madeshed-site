@@ -249,14 +249,21 @@ includesAll(index, [
 ], 'initial applyLocale runs at the end of the script block so late consts (SAMPLE_ENTRIES, BAND_HEX) are initialized before any dynamic render');
 
 assert.ok(
-  index.indexOf("if(storedLocale){applyLocale(storedLocale,true);}else{applyLocale(defaultLocale(),false);}") > index.indexOf('const SAMPLE_ENTRIES=genEntries'),
+  index.indexOf("if(storedLocale){applyLocale(storedLocale,true);}else{applyLocale(defaultLocale(),false);}") > index.indexOf('SAMPLE_ENTRIES=genEntries'),
   'initial applyLocale/router must run AFTER SAMPLE_ENTRIES is initialized',
 );
 
 assert.ok(
-  index.indexOf('function paintScorePill') < index.indexOf('const SAMPLE_ENTRIES=genEntries'),
+  index.indexOf('function paintScorePill') < index.indexOf('SAMPLE_ENTRIES=genEntries'),
   'band-color helpers stay defined before the sample-data block',
 );
+
+includesAll(index, [
+  'function genEntries(n,scoreFn)',
+  "if(typeof scoreFn==='function'){const sc=scoreFn(d);color=scoreToColor(Number.isFinite(sc)?sc:60);}",
+  'function regenerateSampleEntries(profile,scoreFn)',
+  'regenerateSampleEntries(profile,function(dt){return trendActionScore(profile,dt);})',
+], 'Daily sample calendar/heatmap is colored by the current chart (per-day action index), not fixed random data, and regenerates + re-renders when the chart changes');
 
 includesAll(chart, [
   'function chartLocaleFromUrl',
@@ -701,7 +708,7 @@ includesAll(index, [
 ], 'color meaning explainer');
 
 includesAll(index, [
-  'const SAMPLE_ENTRIES=genEntries(42)',
+  'let SAMPLE_ENTRIES=genEntries(42)',
   'function normalizeDateKey',
   'function scoreToColor',
   'function checkinToEntry',
