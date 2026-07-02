@@ -81,6 +81,20 @@ body.is-landing::before{content:'';position:fixed;top:-200px;right:-200px;width:
 .mockup{position:relative;width:100%;max-width:540px;margin-left:auto}
 .mockup::before{content:'';position:absolute;inset:-60px;background:radial-gradient(circle at center,rgba(0,188,212,.15) 0%,transparent 60%);z-index:-1}
 .m-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.hero-form-wrap{position:relative;width:100%;max-width:460px;margin-left:auto}
+.hero-form-wrap::before{content:'';position:absolute;inset:-60px;background:radial-gradient(circle at center,rgba(0,188,212,.15) 0%,transparent 60%);z-index:-1}
+.hero-form{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.hero-form h2{font-size:19px;font-weight:700;margin-bottom:4px}
+.hero-form .hf-sub{font-size:12px;color:var(--text-3);margin-bottom:18px;line-height:1.5}
+.hero-form .field{margin-bottom:14px}
+.hero-form .hero-submit{width:100%;background:var(--accent);color:var(--bg);border:none;padding:14px;border-radius:8px;font-weight:700;font-size:16px;cursor:pointer;font-family:inherit;transition:filter .15s}
+.hero-form .hero-submit:hover{filter:brightness(1.08)}
+.hero-form .hf-fine{font-size:11px;color:var(--text-3);text-align:center;margin-top:10px;line-height:1.5}
+.hero-form .hf-adv{display:block;width:100%;text-align:center;margin-top:12px;font-size:12px;color:var(--text-2);cursor:pointer;background:none;border:none;font-family:inherit}
+.hero-form .hf-adv:hover{color:var(--accent)}
+.hero-form .time-uncertain{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-3);margin-top:8px;cursor:pointer}
+.hero-form .time-uncertain input{width:auto;margin:0}
+@media (max-width:900px){.hero-form-wrap{margin:0 auto}}
 .m-pillars{font-family:var(--font-cn);font-size:24px;font-weight:500;letter-spacing:4px;text-align:center;padding:12px 0 16px;border-bottom:1px solid var(--border)}
 .m-pillars .sep{color:var(--text-3);font-size:18px;margin:0 4px}
 .m-row{display:grid;grid-template-columns:1fr 1.4fr;gap:16px;margin-top:16px}
@@ -157,9 +171,9 @@ input,select{width:100%;background:var(--bg-input);border:1px solid var(--border
 input:focus,select:focus{outline:none;border-color:var(--accent);background:var(--bg)}
 input::placeholder{color:var(--text-3)}
 input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)}
-.gender-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.gender-toggle button{background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);padding:12px;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;font-family:inherit;transition:all .15s}
-.gender-toggle button.active{background:rgba(0,188,212,.1);border-color:var(--accent);color:var(--accent)}
+.gender-toggle,.hero-gender{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gender-toggle button,.hero-gender button{background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);padding:12px;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;font-family:inherit;transition:all .15s;width:100%}
+.gender-toggle button.active,.hero-gender button.active{background:rgba(0,188,212,.1);border-color:var(--accent);color:var(--accent)}
 .time-uncertain{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--text-3);cursor:pointer;user-select:none}
 .time-uncertain input{width:14px;height:14px;accent-color:var(--accent)}
 .city-wrap{position:relative}
@@ -676,7 +690,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="hero-badge">正式版 · 付费功能按需解锁</div>
     <h1>你的<span class="accent">命盘</span>×<br>你的<span class="mono accent">数据</span></h1>
     <p class="hero-sub">把<strong>八字流日评分</strong>、<strong>个人交易回测</strong>、<strong>行为科学干预</strong>,整合进一个决策仪表盘。<br><br>不是算命——是基于你 90 天真实交易数据,告诉你<strong>在什么状态下胜率最高</strong>。</p>
-    <button class="hero-cta" data-route="/onboarding">免费生成命盘 <span style="font-size:18px;">→</span></button>
+    <button class="hero-cta" type="button" id="hero-cta-scroll">免费生成命盘 <span style="font-size:18px;">→</span></button>
     <span class="hero-fine">基础命盘和手动记录可先体验 · 报告、点数和最高级会员按需解锁</span>
     <div class="hero-stats">
       <div class="hero-stat"><div class="v">¥199/月</div><div class="k">最高级会员</div></div>
@@ -684,20 +698,15 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
       <div class="hero-stat"><div class="v">中/EN</div><div class="k">双语界面</div></div>
     </div>
   </div>
-  <div><div class="mockup"><div class="m-card">
-    <div class="m-pillars"><span class="p"><span>乙</span><span>丑</span></span><span class="sep">·</span><span class="p"><span>壬</span><span>午</span></span><span class="sep">·</span><span class="p"><span>戊</span><span>辰</span></span><span class="sep">·</span><span class="p"><span>丁</span><span>巳</span></span></div>
-    <div class="m-row">
-      <div class="m-score-box"><div class="m-score-label">今日行动指数</div><div class="m-score-num">78</div><div class="m-score-tag">仓位 80%</div></div>
-      <div class="m-chart-box"><div class="m-chart-title">2026 流月走势</div><div class="m-chart">
-        <svg viewBox="0 0 300 100" preserveAspectRatio="none">
-          <defs><linearGradient id="g2" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#00BCD4" stop-opacity=".3"/><stop offset="100%" stop-color="#00BCD4" stop-opacity="0"/></linearGradient></defs>
-          <path d="M 10,72 L 35,62 L 60,48 L 85,32 L 110,24 L 135,18 L 160,30 L 185,46 L 210,58 L 235,50 L 260,38 L 290,30 L 290,90 L 10,90 Z" fill="url(#g2)"/>
-          <path d="M 10,72 L 35,62 L 60,48 L 85,32 L 110,24 L 135,18 L 160,30 L 185,46 L 210,58 L 235,50 L 260,38 L 290,30" stroke="#00BCD4" stroke-width="2" fill="none"/>
-          <circle cx="135" cy="18" r="4" fill="#26A69A" stroke="#161B22" stroke-width="2"/>
-        </svg>
-      </div></div>
-    </div>
-    <div class="m-alert"><strong>个人回测:</strong> 你在亏损后 30 分钟内追单胜率仅 22% (N=9)</div>
+  <div><div class="hero-form-wrap"><div class="hero-form" id="home-generate">
+    <h2 class="hf-title">免费生成你的命盘</h2>
+    <div class="hf-sub">填好出生信息即可生成，全站的每日评分、流年大运都用这一份八字计算。</div>
+    <div class="field"><div class="label hf-gender-label">性别</div><div class="hero-gender" role="group" aria-label="性别"><button class="active" type="button" data-home-gender="F" aria-pressed="true">女</button><button type="button" data-home-gender="M" aria-pressed="false">男</button></div></div>
+    <div class="field"><label class="label" for="home-birth-date"><span class="hf-date-label">出生日期</span> <span class="helper hf-date-helper">公历</span></label><input type="date" id="home-birth-date" max="2026-12-31"></div>
+    <div class="field"><label class="label" for="home-birth-time"><span class="hf-time-label">出生时辰</span> <span class="helper hf-time-helper">24 小时制</span></label><input type="time" id="home-birth-time" value="12:00"><label class="time-uncertain"><input type="checkbox" id="home-time-unknown"><span class="hf-time-unknown">我不知道准确时辰（默认午时 12:00）</span></label></div>
+    <button class="hero-submit" type="button" id="home-submit">免费生成命盘 →</button>
+    <div class="hf-fine">免费 · 本地计算 · 看完命盘再决定是否保存</div>
+    <button class="hf-adv" type="button" data-route="/onboarding">需要农历或出生地精确校正？高级设置</button>
   </div></div></div>
 </div>
 
@@ -1271,6 +1280,19 @@ const EN_COPY={
   text:[
     ['.hero-badge','Live product · Reports and AI coaching unlocked when needed'],
     ['.hero-cta','Generate My Chart'],
+    ['.hf-title','Generate your free chart'],
+    ['.hf-sub','Enter your birth details to generate it. The whole site uses this one chart for every daily score and luck-cycle reading.'],
+    ['.hf-gender-label','Gender'],
+    ['.hero-gender button[data-home-gender="F"]','Female'],
+    ['.hero-gender button[data-home-gender="M"]','Male'],
+    ['.hf-date-label','Birth date'],
+    ['.hf-date-helper','Solar'],
+    ['.hf-time-label','Birth time'],
+    ['.hf-time-helper','24-hour'],
+    ['.hf-time-unknown','I don\'t know the exact time (defaults to noon 12:00)'],
+    ['#home-submit','Generate My Chart →'],
+    ['.hf-fine','Free · Calculated in your browser · Decide whether to save after you see it'],
+    ['.hf-adv','Need lunar calendar or birthplace correction? Advanced setup'],
     ['.hero-fine','Start with a free BaZi chart and manual trade journal. Upgrade only when you want deeper reports, AI reflection, or cloud sync.'],
     ['.hero-stat:nth-child(1) .v','$19/mo'],
     ['.hero-stat:nth-child(1) .k','Ultimate membership'],
@@ -1754,7 +1776,12 @@ function applyLocale(locale,confirmed){const l=normalizeLocale(locale);document.
 function chooseLocale(locale){const l=normalizeLocale(locale);writeStoredLocale(l);syncLocaleUrl(l);applyLocale(l,true);rerenderLocaleSurfaces();window.dispatchEvent(new CustomEvent('madeshed:locale-change',{detail:{locale:l}}));return l;}
 window.MadeshedLocale={key:LOCALE_KEY,normalize:normalizeLocale,get:function(){return readStoredLocale()||defaultLocale();},hasStored:function(){try{return !!localStorage.getItem(LOCALE_KEY);}catch(e){return false;}},set:chooseLocale,applyAccountLocale:function(locale){const l=normalizeLocale(locale);writeStoredLocale(l);applyLocale(l,true);return l;}};
 const initialUrlLocale=localeFromUrl();if(initialUrlLocale)writeStoredLocale(initialUrlLocale);
-const initialLocale=initialUrlLocale||readStoredLocale()||defaultLocale();applyLocale(initialLocale,true);
+const storedLocale=initialUrlLocale||readStoredLocale();
+// On first visit show the language gate; keep the class decision early to avoid a
+// flash, but defer applyLocale() itself to the end of this block (see below) so all
+// top-level consts (SAMPLE_ENTRIES, BAND_HEX, COLOR_* …) exist before localization
+// runs any dynamic rendering.
+if(!storedLocale)document.body.classList.add('language-pending');
 
 function go(route){location.hash = route;}
 function setMobileMenu(open){if(!mobileMenu||!mobileMenuToggle)return;mobileMenu.classList.toggle('open',open);mobileMenuToggle.setAttribute('aria-expanded',open?'true':'false');mobileMenuToggle.setAttribute('aria-label',open?'关闭导航菜单':'打开导航菜单');}
@@ -1794,7 +1821,6 @@ document.addEventListener('click', e => {
   setMobileMenu(false);
 });
 window.addEventListener('hashchange', router);
-router();
 
 // ========== ONBOARDING ==========
 const CITIES = [
@@ -1820,6 +1846,34 @@ document.querySelectorAll('.gender-toggle button').forEach(b=>b.addEventListener
 document.querySelectorAll('.calendar-toggle button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.calendar-toggle button').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-pressed','false');});b.classList.add('active');b.setAttribute('aria-pressed','true');}));
 const timeUnk=document.getElementById('time-unknown');const timeInp=document.getElementById('birth-time');
 timeUnk.addEventListener('change',e=>{if(e.target.checked){timeInp.value='12:00';timeInp.disabled=true;}else{timeInp.disabled=false;}});
+
+/* ===== Landing-page inline chart generator ===== */
+(function(){
+  var homeGenderBtns=document.querySelectorAll('.hero-gender button');
+  homeGenderBtns.forEach(function(b){b.addEventListener('click',function(){homeGenderBtns.forEach(function(x){x.classList.remove('active');x.setAttribute('aria-pressed','false');});b.classList.add('active');b.setAttribute('aria-pressed','true');});});
+  var homeTimeUnk=document.getElementById('home-time-unknown'),homeTimeInp=document.getElementById('home-birth-time');
+  if(homeTimeUnk&&homeTimeInp)homeTimeUnk.addEventListener('change',function(e){if(e.target.checked){homeTimeInp.value='12:00';homeTimeInp.disabled=true;}else{homeTimeInp.disabled=false;}});
+  var heroCta=document.getElementById('hero-cta-scroll');
+  if(heroCta)heroCta.addEventListener('click',function(){var f=document.getElementById('home-generate');if(!f)return;f.scrollIntoView({behavior:'smooth',block:'center'});var d=document.getElementById('home-birth-date');if(d)setTimeout(function(){try{d.focus();}catch(e){}},350);});
+  var homeSubmit=document.getElementById('home-submit');
+  if(homeSubmit)homeSubmit.addEventListener('click',function(){
+    var en=(typeof localeIsEn==='function')&&localeIsEn();
+    var d=document.getElementById('home-birth-date'),t=document.getElementById('home-birth-time'),u=document.getElementById('home-time-unknown');
+    if(!d||!d.value){alert(en?'Please enter your birth date.':'请填写出生日期');if(d)d.focus();return;}
+    var g=document.querySelector('.hero-gender button.active'),gender=(g&&g.getAttribute('data-home-gender')==='M')?'M':'F';
+    var timeKnown=!(u&&u.checked),time=(t&&t.value)||'12:00';
+    var m=window.madeshed;
+    if(!m||!m.calcBazi){alert(en?'The chart engine is still loading. Please try again in a moment.':'八字计算引擎还在加载，请稍后再试');return;}
+    var profile=m.calcBazi(d.value,time,gender,timeKnown);
+    if(!profile){alert(en?'Could not generate the chart. Please check your inputs.':'命盘生成失败，请检查输入');return;}
+    m.saveProfile(profile);
+    location.hash='#/dashboard';
+    if(typeof window.router==='function')window.router();
+    if(m.refresh)m.refresh();
+    if(typeof applyEnglishAfterRender==='function')applyEnglishAfterRender();
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+})();
 
 document.getElementById('submit-btn').addEventListener('click',()=>{
   document.getElementById('loading').classList.add('show');
@@ -2050,6 +2104,12 @@ document.addEventListener('submit',function(e){if(e.target&&e.target.id==='maste
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeHistoryModal();});
 
 function showRecordedSummary(o,m){const card=document.getElementById('checkin-card');if(!card)return;card.classList.add('recorded');const outcome=canonicalOutcome({outcome:o,mag:m}),metaInfo=OUTCOME_META[outcome]||OUTCOME_META.notrade;const cls=metaInfo.tone==='win'?'win':(metaInfo.tone==='loss'?'loss':'');const st=window.__todayState||{};const en=localeIsEn();const dayLabel=en?(st.score!=null?scoreBandEn(st.score):'Today'):((st.label||'今日')+'日');const meta=(st.compactDate||(en?'Today':'今天'))+' · '+dayLabel;const outLabel=en?enOutcomeLabel(outcome):metaInfo.label;const headT=en?'Logged Today · DONE':'今日已记录 · DONE';const headTime=en?'Just now':'刚刚 · 2 秒';const editTxt=en?'Edit':'修改';card.innerHTML=`<div class="checkin-h"><div class="checkin-t">${headT}</div><div class="checkin-time">${headTime}</div></div><div class="recorded-summary"><div class="left"><div class="icon">${metaInfo.icon}</div><div class="info"><div class="label">${meta}</div><div class="value ${cls}">${outLabel}${m?' · '+m:''}</div></div></div><button class="edit-link" type="button">${editTxt}</button></div>`;}
+
+/* Initial localization + route — run at the very end of this block so every
+   top-level const (SAMPLE_ENTRIES, TRUE_WINRATE, BAND_HEX, COLOR_* …) is already
+   initialized before applyLocale()/router() trigger any dynamic rendering. */
+if(storedLocale){applyLocale(storedLocale,true);}else{applyLocale(defaultLocale(),false);}
+router();
 </script>
 <script>
 window.SUPA_URL='https://tkltasrbhjqwurybcyxo.supabase.co';

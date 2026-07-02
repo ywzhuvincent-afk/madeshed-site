@@ -195,8 +195,9 @@ includesAll(index, [
   "rerenderLocaleSurfaces();",
   "url.searchParams.set('lang',l==='en'?'en':'zh')",
   "const initialUrlLocale=localeFromUrl()",
-  "const initialLocale=initialUrlLocale||readStoredLocale()||defaultLocale()",
-  'applyLocale(initialLocale,true)',
+  "const storedLocale=initialUrlLocale||readStoredLocale()",
+  "if(!storedLocale)document.body.classList.add('language-pending')",
+  "if(storedLocale){applyLocale(storedLocale,true);}else{applyLocale(defaultLocale(),false);}",
   'window.MadeshedLocale',
   'madeshed:locale-change',
   'applyAccountLocale',
@@ -204,7 +205,39 @@ includesAll(index, [
   'window.MadeshedLocale.get()',
 ], 'default English homepage, Chinese entry, and account locale persistence');
 
-assert.equal(index.includes('<body class="language-pending">'), false, 'homepage should not block first visit behind the language gate');
+assert.equal(index.includes('<body class="language-pending">'), false, 'language-pending must be toggled by JS (first visit only), not hard-coded on every load');
+
+includesAll(index, [
+  'id="home-generate"',
+  'class="hero-gender"',
+  'id="home-birth-date"',
+  'id="home-birth-time"',
+  'id="home-time-unknown"',
+  'id="home-submit"',
+  'data-home-gender="M"',
+  'var profile=m.calcBazi(d.value,time,gender,timeKnown);',
+  "location.hash='#/dashboard';",
+], 'landing page carries the inline birth-info generator that feeds the whole site');
+
+assert.equal(
+  index.includes("<button class=\"hero-cta\" data-route=\"/onboarding\">"),
+  false,
+  'hero CTA should scroll to the inline form, not route away to a separate onboarding page',
+);
+
+includesAll(index, [
+  "if(storedLocale){applyLocale(storedLocale,true);}else{applyLocale(defaultLocale(),false);}",
+], 'initial applyLocale runs at the end of the script block so late consts (SAMPLE_ENTRIES, BAND_HEX) are initialized before any dynamic render');
+
+assert.ok(
+  index.indexOf("if(storedLocale){applyLocale(storedLocale,true);}else{applyLocale(defaultLocale(),false);}") > index.indexOf('const SAMPLE_ENTRIES=genEntries'),
+  'initial applyLocale/router must run AFTER SAMPLE_ENTRIES is initialized',
+);
+
+assert.ok(
+  index.indexOf('function paintScorePill') < index.indexOf('const SAMPLE_ENTRIES=genEntries'),
+  'band-color helpers stay defined before the sample-data block',
+);
 
 includesAll(chart, [
   'function chartLocaleFromUrl',
