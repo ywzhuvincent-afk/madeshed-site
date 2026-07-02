@@ -127,6 +127,7 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
       <div class="toolbar">
         <input class="search" id="user-search" placeholder="搜索邮箱 / 名称 / 用户 ID">
         <span class="muted mono" id="user-count"></span>
+        <button class="btn ghost sm" id="export-csv">导出 CSV</button>
       </div>
       <div class="tbl-wrap">
         <table>
@@ -255,6 +256,23 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
   }
   $('user-search').addEventListener('input',renderUsers);
 
+  // ---------- CSV export ----------
+  function csvCell(v){var s=String(v==null?'':v);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
+  $('export-csv').addEventListener('click',function(){
+    if(!state.users.length){alert('还没有用户数据，先等列表加载完成。');return;}
+    var head=['邮箱','名称','用户ID','注册时间','邮箱已验证','会员等级','会员状态','会员到期','点数余额','打卡次数','已生成命盘','语言'];
+    var lines=[head.join(',')].concat(state.users.map(function(u){
+      return [u.email,u.displayName,u.id,u.createdAt||'',u.verified?'是':'否',u.tier,u.status,u.periodEnd||'',u.credits,u.checkins,u.hasChart?'是':'否',u.locale||''].map(csvCell).join(',');
+    }));
+    var BOM=String.fromCharCode(0xFEFF);
+    var blob=new Blob([BOM+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='madeshed-users-'+new Date().toISOString().slice(0,10)+'.csv';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
+  });
+
   // ---------- detail drawer ----------
   function closeDrawer(){$('drawer').classList.remove('open');$('overlay').classList.remove('open');}
   $('overlay').addEventListener('click',closeDrawer);
@@ -281,6 +299,25 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
         +'</div>'
         +'<div class="dsec"><h3>八字命盘</h3><div class="dg"><div class="cell"><div class="k">出生</div><div class="v">'+esc(p.birth||'—')+' '+esc(p.birth_time||'')+'</div></div><div class="cell"><div class="k">性别</div><div class="v">'+esc(p.gender==='M'?'男':(p.gender==='F'?'女':'—'))+'</div></div></div><div class="cell" style="margin-top:10px;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px 12px"><div class="k">四柱</div><div class="v mono">'+esc(pillars)+'</div></div></div>'
         +'<div class="dsec"><h3>合规 / 权益</h3><div class="list-row"><span class="muted">法律条款同意</span><span>'+legal+' / 5</span></div><div class="list-row"><span class="muted">报告购买</span><span>'+(j.reports||[]).length+' 次</span></div><div class="list-row"><span class="muted">问大师</span><span>'+(j.masterQuestions||[]).length+' 次</span></div><div class="list-row"><span class="muted">删除申请</span><span>'+((j.deleteRequests&&j.deleteRequests[0])?esc(j.deleteRequests[0].status):'无')+'</span></div></div>'
+        +'<div class="dsec"><h3>会员管理</h3><div class="grant">'
+          +'<div class="row" style="flex-wrap:wrap;gap:8px">'
+            +'<select id="mm-tier" style="background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:9px 10px;font-size:13px;font-family:inherit">'
+              +['free','pro','ultimate'].map(function(t){return '<option value="'+t+'"'+((m.tier||'free')===t?' selected':'')+'>'+t+'</option>';}).join('')
+            +'</select>'
+            +'<select id="mm-status" style="background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:9px 10px;font-size:13px;font-family:inherit">'
+              +['inactive','active','trialing','past_due','canceled'].map(function(s){return '<option value="'+s+'"'+((m.status||'inactive')===s?' selected':'')+'>'+s+'</option>';}).join('')
+            +'</select>'
+            +'<input id="mm-period" type="date" style="background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:8px 10px;font-size:13px;font-family:var(--mono);color-scheme:dark" value="'+(m.current_period_end?String(m.current_period_end).slice(0,10):'')+'">'
+            +'<button class="btn sm" id="mm-save">保存会员</button>'
+          +'</div>'
+          +'<div class="row" style="margin-top:8px"><input id="mm-note" type="text" style="flex:1;min-width:0" placeholder="备注（如：手动开通/客服补偿/退款降级）"></div>'
+          +'<div class="msg" id="mm-msg"></div>'
+          +'<div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.6">'
+            +(m.stripe_customer_id
+              ?('Stripe 客户：<a href="https://dashboard.stripe.com/customers/'+esc(m.stripe_customer_id)+'" target="_blank" rel="noopener">'+esc(m.stripe_customer_id)+'</a> — <b>退款请在 Stripe 后台操作</b>，webhook 会自动同步会员状态；这里的手动修改仅覆盖数据库权益。')
+              :'该用户还没有 Stripe 客户记录（未付费过）。手动开通会员只改数据库权益，不产生扣费。')
+          +'</div>'
+        +'</div></div>'
         +'<div class="dsec"><h3>手动调整点数</h3><div class="grant"><div class="row"><input id="grant-amount" type="number" placeholder="+10 / -5"><input id="grant-note" type="text" placeholder="备注（可选），如补偿/赠送"><button class="btn sm" id="grant-btn">调整</button></div><div class="msg" id="grant-msg"></div></div></div>'
         +'<div class="dsec"><h3>最近打卡</h3>'+((j.checkins||[]).length?j.checkins.slice(0,12).map(function(c){return '<div class="list-row"><span class="mono muted">'+esc(c.checkin_date)+'</span><span>'+esc(c.outcome)+(c.score!=null?' · '+c.score:'')+'</span></div>';}).join(''):'<div class="muted" style="font-size:12px">还没有打卡</div>')+'</div>'
         +'<div class="dsec"><h3>最近活动</h3>'+((j.events||[]).length?j.events.slice(0,12).map(function(ev){return '<div class="list-row"><span class="muted">'+esc(ev.event_type)+'</span><span class="mono muted">'+fmtDateTime(ev.created_at)+'</span></div>';}).join(''):'<div class="muted" style="font-size:12px">无记录</div>')+'</div>';
@@ -293,6 +330,17 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
         msg.textContent='提交中…';msg.className='msg';
         try{var g=await api('grant-credits',{},{method:'POST',body:{userId:id,amount:amt,note:note}});msg.textContent='已调整，新余额 '+num(g.balanceAfter);msg.className='msg ok';loadUsers();}
         catch(e){msg.textContent=e.message||'调整失败';msg.className='msg err';}
+      });
+      $('mm-save').addEventListener('click',async function(){
+        var tier=$('mm-tier').value,status=$('mm-status').value,period=$('mm-period').value,note=$('mm-note').value||'';
+        var msg=$('mm-msg');
+        msg.textContent='保存中…';msg.className='msg';
+        try{
+          var r=await api('set-membership',{},{method:'POST',body:{userId:id,tier:tier,status:status,periodEnd:period?(period+'T23:59:59Z'):'',note:note}});
+          msg.textContent='已保存：'+tier+' / '+status+(r.membership&&r.membership.current_period_end?(' · 到期 '+fmtDate(r.membership.current_period_end)):'');
+          msg.className='msg ok';
+          loadUsers();
+        }catch(e){msg.textContent=e.message||'保存失败';msg.className='msg err';}
       });
     }catch(e){d.innerHTML='<div class="drawer-h"><h2>加载失败</h2><button class="btn ghost sm" id="drawer-close">关闭</button></div><div class="empty">'+esc(e.message||'')+'</div>';var c=$('drawer-close');if(c)c.addEventListener('click',closeDrawer);}
   }

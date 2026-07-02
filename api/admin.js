@@ -263,6 +263,56 @@ async function grantCredits(req, res) {
   }
 }
 
+const MEMBERSHIP_TIERS = new Set(['free', 'pro', 'ultimate']);
+const MEMBERSHIP_STATUSES = new Set(['inactive', 'active', 'trialing', 'past_due', 'canceled']);
+
+async function setMembership(req, res) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return send(res, 405, { error: 'method_not_allowed' });
+  }
+  const admin = await requireAdmin(req, res);
+  if (!admin) return null;
+  const body = req.body || {};
+  const userId = String(body.userId || '').trim();
+  const tier = String(body.tier || '').trim();
+  const status = String(body.status || '').trim();
+  const periodEnd = String(body.periodEnd || '').trim();
+  const note = String(body.note || '').slice(0, 300);
+  if (!userId) return send(res, 400, { error: 'missing_user_id', message: '缺少 userId。' });
+  if (!MEMBERSHIP_TIERS.has(tier)) return send(res, 400, { error: 'invalid_tier', message: 'tier 必须是 free / pro / ultimate。' });
+  if (!MEMBERSHIP_STATUSES.has(status)) return send(res, 400, { error: 'invalid_status', message: 'status 无效。' });
+  let currentPeriodEnd = null;
+  if (periodEnd) {
+    const t = Date.parse(periodEnd);
+    if (!Number.isFinite(t)) return send(res, 400, { error: 'invalid_period_end', message: '到期时间格式无效。' });
+    currentPeriodEnd = new Date(t).toISOString();
+  }
+  try {
+    // Upsert with merge-duplicates only touches provided columns, so Stripe ids
+    // written by the webhook are preserved.
+    const existing = await supabaseSelect('memberships', `user_id=eq.${encodeURIComponent(userId)}&select=tier,status,payload&limit=1`);
+    const prev = existing[0] || null;
+    const overrides = ((prev && prev.payload && Array.isArray(prev.payload.admin_overrides)) ? prev.payload.admin_overrides : []).slice(-9);
+    overrides.push({ by: admin.email, at: new Date().toISOString(), tier, status, period_end: currentPeriodEnd, note: note || null, prev_tier: prev ? prev.tier : null, prev_status: prev ? prev.status : null });
+    const rows = await supabaseInsert('memberships', {
+      user_id: userId,
+      tier,
+      status,
+      current_period_end: currentPeriodEnd,
+      payload: { ...((prev && prev.payload) || {}), admin_overrides: overrides }
+    }, { upsert: true, onConflict: 'user_id' });
+    await supabaseInsert('membership_events', {
+      user_id: userId,
+      event_type: 'admin_override',
+      payload: { by: admin.email, tier, status, period_end: currentPeriodEnd, note: note || null }
+    }).catch(() => null);
+    return send(res, 200, { ok: true, membership: rows[0] || null });
+  } catch (error) {
+    return send(res, 500, { error: 'set_membership_failed', message: error.message || '会员调整失败。' });
+  }
+}
+
 async function whoami(req, res) {
   if (!hasSupabaseService()) return send(res, 503, { error: 'supabase_service_not_configured' });
   const auth = await getUserFromRequest(req);
@@ -281,9 +331,10 @@ export default async function handler(req, res) {
   if (action === 'users') return usersList(req, res);
   if (action === 'user') return userDetail(req, res);
   if (action === 'grant-credits') return grantCredits(req, res);
+  if (action === 'set-membership') return setMembership(req, res);
   return send(res, 400, {
     error: 'invalid_admin_action',
     message: '后台接口 action 无效。',
-    actions: ['whoami', 'overview', 'users', 'user', 'grant-credits']
+    actions: ['whoami', 'overview', 'users', 'user', 'grant-credits', 'set-membership']
   });
 }
