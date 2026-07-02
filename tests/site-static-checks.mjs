@@ -246,24 +246,23 @@ includesAll(index, [
 
 includesAll(index, [
   "if(storedLocale){applyLocale(storedLocale,true);}else{applyLocale(defaultLocale(),false);}",
-], 'initial applyLocale runs at the end of the script block so late consts (SAMPLE_ENTRIES, BAND_HEX) are initialized before any dynamic render');
+], 'initial applyLocale runs at the end of the script block so late consts are initialized before any dynamic render');
 
-assert.ok(
-  index.indexOf("if(storedLocale){applyLocale(storedLocale,true);}else{applyLocale(defaultLocale(),false);}") > index.indexOf('SAMPLE_ENTRIES=genEntries'),
-  'initial applyLocale/router must run AFTER SAMPLE_ENTRIES is initialized',
-);
-
-assert.ok(
-  index.indexOf('function paintScorePill') < index.indexOf('SAMPLE_ENTRIES=genEntries'),
-  'band-color helpers stay defined before the sample-data block',
-);
-
+// Real-data mode: no demo/sample trading data anywhere the user sees.
 includesAll(index, [
-  'function genEntries(n,scoreFn)',
-  "if(typeof scoreFn==='function'){const sc=scoreFn(d);color=scoreToColor(Number.isFinite(sc)?sc:60);}",
-  'function regenerateSampleEntries(profile,scoreFn)',
-  'regenerateSampleEntries(profile,function(dt){return trendActionScore(profile,dt);})',
-], 'Daily sample calendar/heatmap is colored by the current chart (per-day action index), not fixed random data, and regenerates + re-renders when the chart changes');
+  'function getAnalysisEntries(){return getActualEntries();}',
+  'function setDayColors(profileSig,scoreFn)',
+  'function dayColorFor(d)',
+  ',color=dayColorFor(d)',
+  'function setDailyInsight()',
+], 'Daily/Report use only real check-ins; the calendar is colored by the real chart day-color, trades come only from real logs');
+
+assert.equal(index.includes('function genEntries'), false, 'demo trade generator must be removed');
+assert.equal(index.includes('sampleEntries'), false, 'sample-entries fallback must be removed');
+assert.equal(index.includes('示例数据'), false, 'no "示例数据" (demo data) label anywhere');
+assert.equal(index.includes('仅演示'), false, 'no "仅演示" (demo only) label anywhere');
+assert.equal(/<strong>示例历史/.test(index), false, 'daily insight must not show a fake "示例历史" win rate');
+assert.ok(index.includes("return{entries:filterEntriesByRange(actual,{type:type}),usingSample:false"), 'report entries are real-only');
 
 includesAll(chart, [
   'function chartLocaleFromUrl',
@@ -570,9 +569,8 @@ includesAll(index, [
   'ziSegment',
   'id="yong-list"',
   'renderYongProfile(profile)',
-  '示例数据',
   '个人真实记录',
-], 'accurate input and sample-data labels');
+], 'accurate input and real-record labels');
 
 includesAll(chart, [
   '/bazi-engine.js',
@@ -708,7 +706,7 @@ includesAll(index, [
 ], 'color meaning explainer');
 
 includesAll(index, [
-  'let SAMPLE_ENTRIES=genEntries(42)',
+  'let DAY_COLORS={}',
   'function normalizeDateKey',
   'function scoreToColor',
   'function checkinToEntry',
