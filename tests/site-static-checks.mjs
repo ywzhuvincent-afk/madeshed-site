@@ -1,9 +1,28 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+import vm from 'node:vm';
 
 const utf8 = 'utf8';
 const index = readFileSync('index.html', utf8);
 const chart = readFileSync('chart-full.html', utf8);
+
+// 内联 <script> 必须能被 JS 引擎解析——纯字符串断言抓不到语法错误（曾有三元表达式括号错位
+// 导致整段脚本抛 SyntaxError、window.madeshed 从未定义、整站 JS 全废，而所有字符串断言仍通过）。
+(function parseCheckInlineScripts() {
+  for (const [file, html] of [['index.html', index], ['chart-full.html', chart]]) {
+    const re = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+    let m, i = 0;
+    while ((m = re.exec(html))) {
+      i++;
+      const attrs = m[1] || '', code = m[2];
+      if (/\bsrc=/i.test(attrs)) continue;
+      if (/\btype=/i.test(attrs) && !/type=["']?(text\/javascript|module|application\/javascript)["']?/i.test(attrs)) continue;
+      if (!code.trim()) continue;
+      try { new vm.Script(code, { filename: `${file}#inline${i}` }); }
+      catch (e) { assert.fail(`${file} 第 ${i} 个内联脚本存在语法错误: ${e.message}`); }
+    }
+  }
+})();
 const baziEnginePath = 'bazi-engine.js';
 const baziEngine = existsSync(baziEnginePath)
   ? readFileSync(baziEnginePath, utf8)
@@ -839,7 +858,7 @@ includesAll(index, [
 includesAll(index, [
   'if(window.madeshed&&typeof window.madeshed.refresh===\'function\')window.madeshed.refresh();else if(typeof refresh===\'function\')refresh();',
   "if(dashTop[2])dashTop[2].textContent='市场'",
-  "const mkt=document.querySelector('.dash-hero > .dash-meta .v.up');if(mkt)mkt.textContent='▲ 开盘中'",
+  "const mkt=document.querySelector('.dash-hero > .dash-meta .v.up');if(mkt)mkt.textContent=marketStatusZh();",
 ], 'switching language after a chart is generated re-renders profile surfaces (refresh reachable across scope) and restores the Chinese market label');
 
 // 结果页 result-meta 的 用神/喜/忌 必须来自引擎 yongShen（mainCn/xiCn/jiCn），

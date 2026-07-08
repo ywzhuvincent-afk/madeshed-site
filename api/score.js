@@ -9,13 +9,16 @@ export default function handler(req, res) {
     const gz = engine.trendGzForDate(new Date(`${date}T12:00:00`));
     const result = scoreFromProfileAndGanzhi(profile, gz.day, { year: gz.year, month: gz.month });
     const band = actionBand(result.score);
+    // 标签/仓位以引擎 actionScore 输出为唯一来源（与仪表盘逐位一致），actionBand 仅提供颜色/兜底
+    const action = result.action || {};
     res.status(200).json({
       date,
       birth: profile.birth,
       ganzhi: gz.day,
       score: result.score,
       color: band.color,
-      label: band.label,
+      label: action.label || band.label,
+      position: action.position || band.position,
       position_pct: band.positionPct,
       advice: result.read?.advice || band.advice,
       components: {

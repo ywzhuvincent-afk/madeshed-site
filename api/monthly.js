@@ -18,7 +18,7 @@ export default function handler(req, res) {
         ganzhi: mgz.month,
         score: md.score,
         color: band.color,
-        label: band.label,
+        label: md.label || band.label,
         role: dr?.role || null,
         wealth_score: dr?.cScore || null,
         foundation_score: md.base
