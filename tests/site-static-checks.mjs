@@ -1445,4 +1445,31 @@ includesAll(index, [
 assert.ok(!index.includes('LLM_API_KEY'), 'frontend must not expose LLM_API_KEY');
 assert.ok(!index.includes('STRIPE_SECRET_KEY'), 'frontend must not expose STRIPE_SECRET_KEY');
 
+// ===== 全站一致性审计回归守卫（2026-07-08）：钉死本轮修复，防止再退化 =====
+// 1) 分数→颜色分档必须与引擎标签分档一致(82/70/56/44)，禁止回到 70/60/50/40
+includesAll(index, [
+  "if(n>=82)return'green-l';if(n>=70)return'green';if(n>=56)return'yellow';if(n>=44)return'orange';return'red';",
+  "'green-l':'强顺势'",
+  'function positionAdviceZh(score)',
+  'function marketOpenNow()',
+], '分数→颜色/仓位分档与引擎一致，市场状态非写死');
+assert.ok(!/if\(n>=70\)return'green-l';if\(n>=60\)return'green';if\(n>=50\)return'yellow';if\(n>=40\)return'orange'/.test(index), 'scoreToColor 不得退回旧 70/60/50/40 分档');
+// 2) 服务端 actionBand 必须对齐引擎分档/标签
+includesAll(baziRuntimeApi, ["score >= 82", "label: '强顺势'", "position: '80%'"], '服务端 actionBand 对齐引擎 82/70/56/44');
+assert.ok(!/score >= 78/.test(baziRuntimeApi), 'actionBand 不得退回旧 78/66/54/42 分档');
+includesAll(scoreApi, ['action.label || band.label', 'action.position'], 'score API 标签/仓位取引擎 action');
+includesAll(monthlyApi, ['md.label || band.label'], 'monthly API 标签取引擎 md.label');
+// 3) 禁止写死的假数据（本轮事故的同型）
+assert.ok(!index.includes('追单胜率') && !/22%<\/strong> \(N=9\)/.test(index), '不得再出现写死的"追单胜率22% (N=9)"假回测');
+assert.ok(!index.includes("mkt.textContent='▲ 开盘中'"), '市场状态不得写死为永久"开盘中"');
+assert.ok(!/Example history:<\/strong> Light Green days traded/.test(index), '英文不得出现伪造的"Example history 12次/67%"');
+assert.ok(!index.includes("scoreBandEn(score){var n=Number(score);if(!Number.isFinite(n))return'Full Plan'"), 'scoreBandEn 无分数时不得伪造"Full Plan"档位');
+includesAll(index, ['function renderAlerts(profile,today,dr,action)', 'renderAlerts(profile,today,drT,action)'], '今日警示改为真实数据驱动');
+// 4) 喜用神理由支持中和/特殊格局；今日指数 day-only
+includesAll(index, ['中和：制化当令、通关流转为喜', 'function dailyRead(profile,today){return BAZI.dailyReadFull(profile,today);}'], '喜用神理由含中和分支；前端委托引擎');
+// 5) chart-full 查询不粘滞 + 立春时间轴；服务端 API 数值健壮
+includesAll(chart, ['state.userQueried=true', 'state.nowYearGz=tEc.getYear()', 'y.getGanZhi()===state.nowYearGz'], 'chart-full 主动查询不被保存盘覆盖 + 立春边界"今"');
+includesAll(fortuneReportApi, ['cleanText(targetPeriod) || (type'], 'fortune-report 期间用 cleanText||默认，不再恒空');
+assert.ok(/const scored = entries\.filter\(\(entry\) => Number\.isFinite\(entry\.score\)\)/.test(reportApi), 'report avgScore 只计入有真实分数的记录');
+
 console.log('Static site checks passed');
