@@ -15,15 +15,35 @@ const PRICE_ENVS = [
 ];
 
 async function stripeDiagnostics(res) {
-  const secret = process.env.STRIPE_SECRET_KEY || '';
-  const keyMode = secret.startsWith('sk_live') ? 'live' : (secret.startsWith('sk_test') ? 'test' : (secret ? 'unknown' : 'missing'));
+  const { cleanEnv, stripeSecret } = await import('./_stripe.js');
+  const secret = stripeSecret();
+  const keyPrefix = secret.slice(0, 8);
+  const keyMode = secret.startsWith('sk_live') || secret.startsWith('rk_live') ? 'live'
+    : (secret.startsWith('sk_test') || secret.startsWith('rk_test') ? 'test' : (secret ? 'unknown' : 'missing'));
+  const keyKind = secret.startsWith('rk_') ? 'restricted' : (secret.startsWith('sk_') ? 'secret' : 'unknown');
+  async function stripeGetDetail(path) {
+    const r = await fetch(`https://api.stripe.com/v1/${path}`, {
+      headers: { authorization: `Bearer ${secret}`, 'stripe-version': '2026-02-25.clover' }
+    });
+    const data = await r.json().catch(() => ({}));
+    return { ok: r.ok, status: r.status, data };
+  }
   const prices = [];
   for (const item of PRICE_ENVS) {
-    const id = process.env[item.env] || (item.fallback ? process.env[item.fallback] : '');
+    const id = cleanEnv(process.env[item.env]) || (item.fallback ? cleanEnv(process.env[item.fallback]) : '');
     if (!id) { prices.push({ product: item.product, env: item.env, status: 'env_missing' }); continue; }
-    const price = await stripeGet(`prices/${encodeURIComponent(id)}`);
+    const resp = await stripeGetDetail(`prices/${encodeURIComponent(id)}`);
+    const price = resp.ok ? resp.data : null;
     if (!price || !price.id) {
-      prices.push({ product: item.product, env: item.env, status: 'invalid_or_mode_mismatch', hint: 'Stripe 查不到这个价格：ID 错误，或 test/live 模式与 STRIPE_SECRET_KEY 不一致' });
+      const err = (resp.data && resp.data.error) || {};
+      prices.push({
+        product: item.product, env: item.env,
+        status: resp.status === 403 ? 'key_permission_denied' : (err.code === 'resource_missing' ? 'price_not_found' : 'invalid'),
+        idPrefix: id.slice(0, 9),
+        httpStatus: resp.status,
+        stripeCode: err.code || null,
+        stripeMessage: (err.message || '').slice(0, 140)
+      });
       continue;
     }
     const type = price.recurring ? 'recurring' : 'one_time';
@@ -46,6 +66,8 @@ async function stripeDiagnostics(res) {
   const problems = prices.filter((p) => p.status !== 'ok');
   res.status(200).json({
     keyMode,
+    keyKind,
+    keyPrefix,
     webhookSecretConfigured: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
     prices,
     webhooks,
