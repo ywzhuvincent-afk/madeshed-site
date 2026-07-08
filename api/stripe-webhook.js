@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { hasSupabaseService, supabaseInsert, supabaseSelect, supabaseUpdate } from './_supabase.js';
-import { stripeGet } from './_stripe.js';
+import { cleanEnv, stripeGet } from './_stripe.js';
 
 function send(res, status, body) {
   res.status(status).json(body);
@@ -432,7 +432,7 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST');
     return send(res, 405, { error: 'method_not_allowed' });
   }
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  const secret = cleanEnv(process.env.STRIPE_WEBHOOK_SECRET);
   const rawBody = await readRawBody(req);
   if (!secret) {
     return send(res, 503, {

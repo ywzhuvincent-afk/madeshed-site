@@ -1,5 +1,5 @@
 import { getUserFromRequest, hasSupabaseService, requireAccountReadyForPaidAction, supabaseSelect } from './_supabase.js';
-import { priceFromEnv, siteOrigin, stripeFormRequest } from './_stripe.js';
+import { cleanEnv, priceFromEnv, siteOrigin, stripeFormRequest } from './_stripe.js';
 
 const CREDIT_PACK_PRODUCT = {
   credits: 10,
@@ -69,7 +69,7 @@ async function createCreditCheckout(req, res) {
   if (!user) return null;
   if (!(await ensurePaidAccount(req, res, user))) return null;
 
-  const priceId = process.env.STRIPE_CREDIT_PRICE_ID;
+  const priceId = cleanEnv(process.env.STRIPE_CREDIT_PRICE_ID);
   if (!process.env.STRIPE_SECRET_KEY || !priceId) {
     return send(res, 503, { error: 'stripe_not_configured', message: '点数购买暂未配置 Stripe。' });
   }
