@@ -318,6 +318,7 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
               :'该用户还没有 Stripe 客户记录（未付费过）。手动开通会员只改数据库权益，不产生扣费。')
           +'</div>'
         +'</div></div>'
+        +(!u.verified?'<div class="dsec"><h3>邮箱验证</h3><div class="grant"><div class="row"><span class="muted" style="flex:1;font-size:12px">该账号邮箱未验证（收不到确认邮件时可手动放行）</span><button class="btn sm" id="verify-email-btn">手动验证邮箱</button></div><div class="msg" id="verify-msg"></div></div></div>':'')
         +'<div class="dsec"><h3>手动调整点数</h3><div class="grant"><div class="row"><input id="grant-amount" type="number" placeholder="+10 / -5"><input id="grant-note" type="text" placeholder="备注（可选），如补偿/赠送"><button class="btn sm" id="grant-btn">调整</button></div><div class="msg" id="grant-msg"></div></div></div>'
         +'<div class="dsec"><h3>最近打卡</h3>'+((j.checkins||[]).length?j.checkins.slice(0,12).map(function(c){return '<div class="list-row"><span class="mono muted">'+esc(c.checkin_date)+'</span><span>'+esc(c.outcome)+(c.score!=null?' · '+c.score:'')+'</span></div>';}).join(''):'<div class="muted" style="font-size:12px">还没有打卡</div>')+'</div>'
         +'<div class="dsec"><h3>最近活动</h3>'+((j.events||[]).length?j.events.slice(0,12).map(function(ev){return '<div class="list-row"><span class="muted">'+esc(ev.event_type)+'</span><span class="mono muted">'+fmtDateTime(ev.created_at)+'</span></div>';}).join(''):'<div class="muted" style="font-size:12px">无记录</div>')+'</div>';
@@ -330,6 +331,13 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
         msg.textContent='提交中…';msg.className='msg';
         try{var g=await api('grant-credits',{},{method:'POST',body:{userId:id,amount:amt,note:note}});msg.textContent='已调整，新余额 '+num(g.balanceAfter);msg.className='msg ok';loadUsers();}
         catch(e){msg.textContent=e.message||'调整失败';msg.className='msg err';}
+      });
+      var vbtn=$('verify-email-btn');
+      if(vbtn)vbtn.addEventListener('click',async function(){
+        var msg=$('verify-msg');
+        msg.textContent='提交中…';msg.className='msg';
+        try{await api('verify-email',{},{method:'POST',body:{userId:id}});msg.textContent='已手动验证，该账号现在可以登录并购买。';msg.className='msg ok';loadUsers();}
+        catch(e){msg.textContent=e.message||'验证失败';msg.className='msg err';}
       });
       $('mm-save').addEventListener('click',async function(){
         var tier=$('mm-tier').value,status=$('mm-status').value,period=$('mm-period').value,note=$('mm-note').value||'';

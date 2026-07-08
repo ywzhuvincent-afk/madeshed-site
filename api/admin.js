@@ -45,9 +45,11 @@ async function requireAdmin(req, res) {
   return auth.user;
 }
 
-async function authAdminFetch(path) {
+async function authAdminFetch(path, options = {}) {
   const r = await fetch(`${SUPABASE_URL}/auth/v1/admin/${path}`, {
-    headers: { apikey: SERVICE_ROLE_KEY, authorization: `Bearer ${SERVICE_ROLE_KEY}` }
+    method: options.method || 'GET',
+    headers: { apikey: SERVICE_ROLE_KEY, authorization: `Bearer ${SERVICE_ROLE_KEY}`, ...(options.body ? { 'content-type': 'application/json' } : {}) },
+    body: options.body ? JSON.stringify(options.body) : undefined
   });
   const j = await r.json().catch(() => null);
   if (!r.ok) throw new Error((j && (j.msg || j.message)) || 'auth_admin_failed');
@@ -313,6 +315,28 @@ async function setMembership(req, res) {
   }
 }
 
+async function verifyEmail(req, res) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return send(res, 405, { error: 'method_not_allowed' });
+  }
+  const admin = await requireAdmin(req, res);
+  if (!admin) return null;
+  const userId = String(req.body?.userId || '').trim();
+  if (!userId) return send(res, 400, { error: 'missing_user_id', message: '缺少 userId。' });
+  try {
+    const updated = await authAdminFetch('users/' + encodeURIComponent(userId), { method: 'PUT', body: { email_confirm: true } });
+    await supabaseInsert('account_events', {
+      user_id: userId,
+      event_type: 'email_confirmed',
+      payload: { by_admin: admin.email, manual: true }
+    }).catch(() => null);
+    return send(res, 200, { ok: true, verified: Boolean(updated && (updated.email_confirmed_at || updated.confirmed_at)) });
+  } catch (error) {
+    return send(res, 500, { error: 'verify_email_failed', message: error.message || '手动验证邮箱失败。' });
+  }
+}
+
 async function whoami(req, res) {
   if (!hasSupabaseService()) return send(res, 503, { error: 'supabase_service_not_configured' });
   const auth = await getUserFromRequest(req);
@@ -332,9 +356,10 @@ export default async function handler(req, res) {
   if (action === 'user') return userDetail(req, res);
   if (action === 'grant-credits') return grantCredits(req, res);
   if (action === 'set-membership') return setMembership(req, res);
+  if (action === 'verify-email') return verifyEmail(req, res);
   return send(res, 400, {
     error: 'invalid_admin_action',
     message: '后台接口 action 无效。',
-    actions: ['whoami', 'overview', 'users', 'user', 'grant-credits', 'set-membership']
+    actions: ['whoami', 'overview', 'users', 'user', 'grant-credits', 'set-membership', 'verify-email']
   });
 }
