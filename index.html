@@ -58,6 +58,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);font-si
 .btn-signin:hover{border-color:var(--accent)}
 .pro{background:linear-gradient(135deg,#00BCD4,#0097A7);color:var(--bg);font-size:11px;font-weight:700;padding:4px 8px;border-radius:4px;letter-spacing:.5px}
 .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#4FC3F7);display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--bg);cursor:pointer}
+.avatar:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.nav-user{position:relative;display:flex;align-items:center}
+.user-menu{position:absolute;right:0;top:calc(100% + 10px);min-width:190px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;box-shadow:0 18px 40px rgba(0,0,0,.45);padding:6px;display:none;z-index:200}
+.user-menu.open{display:block}
+.user-menu-email{font-size:12px;color:var(--text-3);padding:8px 10px 8px;border-bottom:1px solid var(--border);margin-bottom:4px;word-break:break-all}
+.user-menu-item{display:block;width:100%;text-align:left;background:transparent;border:none;color:var(--text);font-family:inherit;font-size:14px;padding:10px;border-radius:6px;cursor:pointer;text-decoration:none}
+.user-menu-item:hover{background:var(--bg-input)}
+.user-menu-item.danger{color:var(--red)}
 .mobile-menu-toggle{display:none;align-items:center;justify-content:center;width:38px;height:38px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);cursor:pointer;font-family:var(--font-mono);font-size:18px}
 .mobile-menu{display:none;position:absolute;left:0;right:0;top:100%;background:rgba(14,17,23,.98);border-bottom:1px solid var(--border);padding:10px 16px 16px;box-shadow:0 18px 36px rgba(0,0,0,.35)}
 .mobile-menu.open{display:grid;gap:4px}
@@ -677,7 +685,15 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="lang" aria-label="语言"><button class="active" type="button" data-locale-switch="zh-CN" aria-pressed="true">中</button><button type="button" data-locale-switch="en" aria-pressed="false">EN</button></div>
     <button class="btn-signin" id="btn-signin" data-auth-action="signin">登录</button>
     <span class="pro hide" id="nav-pro">PRO</span>
-    <div class="avatar hide" id="nav-avatar">V</div>
+    <div class="nav-user" id="nav-user">
+      <div class="avatar hide" id="nav-avatar" role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false" aria-label="账号菜单">V</div>
+      <div class="user-menu" id="user-menu" role="menu">
+        <div class="user-menu-email" id="user-menu-email"></div>
+        <a href="#/account" data-route="/account" class="user-menu-item" role="menuitem">账号中心</a>
+        <a href="#/account/security" data-route="/account/security" class="user-menu-item" role="menuitem">账号安全</a>
+        <button type="button" id="user-menu-signout" class="user-menu-item danger" role="menuitem">退出登录</button>
+      </div>
+    </div>
   </div>
   <button class="mobile-menu-toggle" id="mobile-menu-toggle" type="button" aria-label="打开导航菜单" aria-controls="mobile-menu" aria-expanded="false">☰</button>
   <div class="mobile-menu" id="mobile-menu">
@@ -689,7 +705,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <a href="#/account" data-route="/account">设置 Account</a>
     <div class="mobile-actions">
       <div class="lang" aria-label="语言"><button class="active" type="button" data-locale-switch="zh-CN" aria-pressed="true">中</button><button type="button" data-locale-switch="en" aria-pressed="false">EN</button></div>
-      <button class="btn-signin" type="button" data-auth-action="signin">登录</button>
+      <button class="btn-signin" type="button" id="mobile-signin" data-signed-in="0">登录</button>
     </div>
   </div>
 </nav>
@@ -1304,6 +1320,9 @@ const EN_COPY={
     ['.hf-time-helper','24-hour'],
     ['.hf-city-label','Birthplace'],
     ['.hf-city-helper','True solar time'],
+    ['#user-menu a[data-route="/account"]','Account'],
+    ['#user-menu a[data-route="/account/security"]','Security'],
+    ['#user-menu-signout','Sign out'],
     ['.hf-time-unknown','I don\'t know the exact time (defaults to noon 12:00)'],
     ['#home-submit','Generate My Chart →'],
     ['.hf-fine','Free · Calculated in your browser · Decide whether to save after you see it'],
@@ -1788,7 +1807,18 @@ function strengthNameEn(strength){var cat=strength&&typeof strength==='object'?(
 function localizeEnglishMetaContent(){if(!localeIsEn())return;var p=window.__profile,metaRoot=document.querySelector('.dash-hero .pillars')&&document.querySelector('.dash-hero .pillars').parentElement;if(metaRoot){var ks=metaRoot.querySelectorAll('.dash-meta .k'),vs=metaRoot.querySelectorAll('.dash-meta .v');['Day Master','Strength','Month Branch','Luck Pillar'].forEach(function(label,i){if(ks[i])ks[i].textContent=label;});if(p&&vs[0])vs[0].textContent=(p.dayStem||'--')+' - '+elementNameEn(p.dayElement);if(p&&vs[1])vs[1].textContent=strengthNameEn(p.strength)+' '+((p.strength&&p.strength.score)!=null?p.strength.score:'--')+' / 100';if(p&&vs[2])vs[2].textContent=(p.monthBranch||'--')+' - month branch';if(p&&vs[3]){var c=(p.currentDayunIdx>=0&&p.daYun&&p.daYun[p.currentDayunIdx])?p.daYun[p.currentDayunIdx]:null;vs[3].textContent=c?c.pillar+' ('+pillarLabelEn({stem:String(c.pillar).charAt(0),branch:String(c.pillar).charAt(1)})+') - Pillar '+(p.currentDayunIdx+1):'Not started';}}var wk=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],top=document.querySelectorAll('.dash-hero > .dash-meta .k');if(top[1])top[1].textContent=wk[new Date().getDay()];if(top[2])top[2].textContent='Market';var market=document.querySelector('.dash-hero > .dash-meta .v.up');if(market)market.textContent='Open';var dateEls=document.querySelectorAll('[data-view=\"daily\"] .today .date');dateEls.forEach(function(el){var d=new Date();el.textContent=d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0')+' - '+wk[d.getDay()];});var pl=document.querySelector('.pillars-line');if(pl){var spans=pl.querySelectorAll('.cn');if(spans.length>=3)pl.innerHTML='Year <span class=\"cn\">'+spans[0].textContent+'</span><span class=\"sep\">-</span> Month <span class=\"cn\">'+spans[1].textContent+'</span><span class=\"sep\">-</span> Day <span class=\"cn\">'+spans[2].textContent+'</span>';}}
 function applyEnglishAfterRender(){if(localeIsEn()){localizeEnglishWholeSite();localizeDynamicContent();localizeEnglishMetaContent();refreshPillarsForLocale();translateLuckCyclesForEnglish(window.__profile||null);translateForecastPillarsForEnglish();}if(typeof setDailyInsight==='function')setDailyInsight();}
 function rerenderLocaleSurfaces(){if(window.__madeshedLocaleRerendering)return;window.__madeshedLocaleRerendering=true;try{if(window.madeshed&&typeof window.madeshed.refresh==='function')window.madeshed.refresh();else if(typeof refresh==='function')refresh();if(typeof renderStoredCheckin==='function')renderStoredCheckin();if(typeof renderDailyStats==='function')renderDailyStats();if(typeof renderReport==='function')renderReport();if(typeof renderFortuneCenter==='function')renderFortuneCenter();if(typeof renderAccount==='function')renderAccount();if(!localeIsEn()&&typeof restoreChineseDailyWidgets==='function')restoreChineseDailyWidgets();if(typeof applyEnglishAfterRender==='function')applyEnglishAfterRender();}finally{window.__madeshedLocaleRerendering=false;}}
-function applyLocale(locale,confirmed){const l=normalizeLocale(locale);document.documentElement.lang=l==='en'?'en':'zh-CN';document.body.dataset.locale=l;setLocaleButtons(l);localizeStaticContent();if(typeof refreshPillarsForLocale==='function')refreshPillarsForLocale();if(typeof translateLuckCyclesForEnglish==='function')translateLuckCyclesForEnglish(window.__profile||null);if(typeof translateForecastPillarsForEnglish==='function')translateForecastPillarsForEnglish();if(confirmed)document.body.classList.remove('language-pending');}
+function applyLocale(locale,confirmed){const l=normalizeLocale(locale);document.documentElement.lang=l==='en'?'en':'zh-CN';document.body.dataset.locale=l;setLocaleButtons(l);localizeStaticContent();if(typeof refreshPillarsForLocale==='function')refreshPillarsForLocale();if(typeof translateLuckCyclesForEnglish==='function')translateLuckCyclesForEnglish(window.__profile||null);if(typeof translateForecastPillarsForEnglish==='function')translateForecastPillarsForEnglish();if(typeof updateAuthNav==='function')updateAuthNav();if(confirmed)document.body.classList.remove('language-pending');}
+// 登录/登出入口：按"是否登录"驱动，而不是按页面。未登录→显示"登录"（所有页）；已登录→显示头像+下拉菜单（账号中心/退出登录）。
+function updateAuthNav(){
+  var en=typeof localeIsEn==='function'&&localeIsEn();
+  var signedIn=!!window.__cloudUser;
+  var email=(window.__cloudUser&&window.__cloudUser.email)||document.body.dataset.user||'';
+  var btn=document.getElementById('btn-signin');if(btn){btn.classList.toggle('hide',signedIn);if(!signedIn)btn.textContent=en?'Log in':'登录';}
+  var avatar=document.getElementById('nav-avatar');if(avatar){avatar.classList.toggle('hide',!signedIn);avatar.textContent=(email?email.trim().charAt(0):'M').toUpperCase();}
+  var em=document.getElementById('user-menu-email');if(em)em.textContent=email||'';
+  var ms=document.getElementById('mobile-signin');if(ms){ms.textContent=signedIn?(en?'Sign out':'退出登录'):(en?'Log in':'登录');ms.setAttribute('data-signed-in',signedIn?'1':'0');}
+  if(!signedIn){var menu=document.getElementById('user-menu');if(menu)menu.classList.remove('open');if(avatar)avatar.setAttribute('aria-expanded','false');}
+}
 function chooseLocale(locale){const l=normalizeLocale(locale);writeStoredLocale(l);syncLocaleUrl(l);applyLocale(l,true);rerenderLocaleSurfaces();window.dispatchEvent(new CustomEvent('madeshed:locale-change',{detail:{locale:l}}));return l;}
 window.MadeshedLocale={key:LOCALE_KEY,normalize:normalizeLocale,get:function(){return readStoredLocale()||defaultLocale();},hasStored:function(){try{return !!localStorage.getItem(LOCALE_KEY);}catch(e){return false;}},set:chooseLocale,applyAccountLocale:function(locale){const l=normalizeLocale(locale);writeStoredLocale(l);applyLocale(l,true);return l;}};
 const initialUrlLocale=localeFromUrl();if(initialUrlLocale)writeStoredLocale(initialUrlLocale);
@@ -1809,9 +1839,7 @@ function router(){
   document.body.classList.toggle('is-landing', view === 'landing');
   // Nav state
   const isLanding = view === 'landing';
-  document.getElementById('btn-signin').classList.toggle('hide', !isLanding);
-  document.getElementById('nav-pro').classList.toggle('hide', isLanding);
-  document.getElementById('nav-avatar').classList.toggle('hide', isLanding);
+  if(typeof updateAuthNav==='function')updateAuthNav();
   if(typeof updateMembershipBadges==='function')updateMembershipBadges();
   if(view==='account'&&typeof renderAccount==='function')renderAccount();
   if(view==='account-security'&&window.renderAccountSecurity)window.renderAccountSecurity();
@@ -1828,6 +1856,15 @@ if(mobileMenuToggle){mobileMenuToggle.addEventListener('click',()=>setMobileMenu
 document.addEventListener('click', e => {
   const langTarget=e.target.closest('[data-language-choice],[data-locale-switch]');
   if(langTarget){e.preventDefault();chooseLocale(langTarget.dataset.languageChoice||langTarget.dataset.localeSwitch);setMobileMenu(false);return;}
+  // Account dropdown (avatar → 账号中心 / 退出登录)
+  const avatarEl=e.target.closest('#nav-avatar');
+  const menuEl=document.getElementById('user-menu');
+  if(avatarEl){e.preventDefault();const open=menuEl&&menuEl.classList.toggle('open');avatarEl.setAttribute('aria-expanded',open?'true':'false');return;}
+  if(e.target.closest('#user-menu-signout')){e.preventDefault();if(menuEl)menuEl.classList.remove('open');if(window.signOut)window.signOut();return;}
+  if(e.target.closest('.user-menu-item')){if(menuEl)menuEl.classList.remove('open');/* let data-route handler below run */}
+  else if(menuEl&&menuEl.classList.contains('open')&&!e.target.closest('#nav-user')){menuEl.classList.remove('open');const a=document.getElementById('nav-avatar');if(a)a.setAttribute('aria-expanded','false');}
+  const mSignin=e.target.closest('#mobile-signin');
+  if(mSignin){e.preventDefault();setMobileMenu(false);if(mSignin.getAttribute('data-signed-in')==='1'){if(window.signOut)window.signOut();}else{go('/login');}return;}
   const t = e.target.closest('[data-route]');
   if (!t) return;
   const r = t.dataset.route;
@@ -1836,6 +1873,7 @@ document.addEventListener('click', e => {
   go(r);
   setMobileMenu(false);
 });
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.id==='nav-avatar'){e.preventDefault();e.target.click();}if(e.key==='Escape'){const m=document.getElementById('user-menu');if(m&&m.classList.contains('open')){m.classList.remove('open');const a=document.getElementById('nav-avatar');if(a){a.setAttribute('aria-expanded','false');a.focus();}}}});
 window.addEventListener('hashchange', router);
 
 // ========== ONBOARDING ==========
@@ -2139,7 +2177,7 @@ function bindCheckinForm(){const card=document.getElementById('checkin-card');if
 function recordCheckin(o,m){const outcome=canonicalOutcome(o),st=window.__todayState||{};const key=currentCheckinKey();const now=new Date().toISOString();const prev=loadCheckins().find(x=>x.date===key);const items=loadCheckins().filter(x=>x.date!==key);items.push({date:key,outcome:outcome,mag:m||null,label:st.label||null,score:st.score||null,day:st.day||null,createdAt:prev&&prev.createdAt?prev.createdAt:now,updatedAt:now});saveCheckins(items);if(window.syncCheckinsToCloud)window.syncCheckinsToCloud();showRecordedSummary(outcome,m);renderDailyStats();renderReport();renderAccount();}
 function renderStoredCheckin(){const item=loadCheckins().find(x=>x.date===currentCheckinKey());if(item)showRecordedSummary(item.outcome,item.mag);else renderCheckinForm();}
 function renderReport(){const box=document.getElementById('report-summary'),note=document.getElementById('report-insight');if(!box)return;const items=loadCheckins();const traded=items.filter(x=>isTradeOutcome(x));const wins=traded.filter(x=>isWinOutcome(x)).length;const bigWins=traded.filter(x=>canonicalOutcome(x)==='big_win').length,bigLosses=traded.filter(x=>canonicalOutcome(x)==='big_loss').length;const rate=traded.length?Math.round(wins/traded.length*100)+'%':'—';const signedIn=!!window.__cloudUser;let profile=null;try{profile=JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');}catch(e){}const chart=profile&&profile.pillarsStr?Object.values(profile.pillarsStr).join(' · '):'未生成';const storageNote=signedIn?'当前浏览器 + Supabase 云端。':'保存在当前浏览器，登录后同步到云端。';box.innerHTML='<div class="metric"><div class="k">个人真实记录</div><div class="v">'+items.length+'</div><div class="d">'+storageNote+'</div></div><div class="metric"><div class="k">胜率</div><div class="v">'+rate+'</div><div class="d">'+(traded.length?('交易样本 '+traded.length+' 条 · 大赚 '+bigWins+' · 大亏 '+bigLosses):'至少 5 条交易后更有参考价值')+'</div></div><div class="metric"><div class="k">当前命盘</div><div class="v" style="font-size:18px;line-height:1.6">'+chart+'</div><div class="d">与 Dashboard / Daily / Forecast 共用同一份命盘。</div></div>';if(note)note.textContent=items.length?(signedIn?'已开始积累你的个人真实记录，并会自动尝试同步到云端。':'已开始积累你的个人真实记录；登录后会自动尝试同步到云端。'):'还没有足够记录。每天收盘后点一次结果，系统会逐步生成个人胜率、红灯日规避、亏损后追单等模式。';renderReportCenter();}
-function updateMembershipBadges(){const m=readMembership(),active=isUltimateMember(),badge=document.getElementById('nav-pro');if(badge){badge.textContent=active?'ULTIMATE':'FREE';badge.classList.toggle('hide',document.body.classList.contains('is-landing'));}}
+function updateMembershipBadges(){const m=readMembership(),active=isUltimateMember(),badge=document.getElementById('nav-pro');if(badge){badge.textContent=active?'ULTIMATE':'FREE';badge.classList.toggle('hide',document.body.classList.contains('is-landing')||!window.__cloudUser);}}
 function renderMembershipCenter(){const box=document.getElementById('membership-panel');if(!box)return;const m=readMembership(),active=isUltimateMember(),signedIn=!!window.__cloudUser,credits=getCreditBalance(),primary=active?'管理会员':'开通最高级会员',action=active?'portal':'subscribe';box.innerHTML='<div class="membership-card featured"><div class="tier">'+membershipTierText(m)+'</div><div class="status">'+membershipStatusText(m)+' · '+membershipPeriodText(m)+'</div><div class="account-list"><div class="account-row"><span>问大师点数</span><strong>'+credits+' 点</strong></div><div class="account-row"><span>账号绑定</span><strong>'+(signedIn?(window.__cloudUser.email||'已登录'):'未登录')+'</strong></div><div class="account-row"><span>报告权益</span><strong>'+(active?'固定报告免费':'需单次解锁')+'</strong></div></div><div class="report-actions"><button class="report-btn primary" type="button" data-membership-action="'+action+'">'+primary+'</button>'+(active?'<button class="report-btn" type="button" data-fortune-action="buy-credits">购买点数包</button>':'<button class="report-btn" type="button" data-fortune-action="buy-credits">购买 10 点包</button>')+'</div></div><div class="membership-card"><div class="tier">最高级会员权益</div><div class="membership-benefits"><span>✓ 全盘、流年大运、每月运程固定报告免费生成</span><span>✓ 7 天、月度、年度、全部历史详细交易报告免费生成</span><span>✓ 每月自动赠送 30 点问大师额度</span><span>✓ Stripe 官方订阅管理，可更新付款方式或取消续订</span></div></div>';updateMembershipBadges();}
 function renderAccountStatusList(){const box=document.getElementById('account-status-list');if(!box)return;const s=window.__accountStatus||readAccountStatus(),signedIn=!!window.__cloudUser,email=s&&s.email?s.email:(window.__cloudUser&&window.__cloudUser.email)||'未登录',emailOk=hasVerifiedEmail(),legalOk=signedIn&&hasRequiredLegalAcceptances(),missing=s&&s.missingLegal&&s.missingLegal.length?s.missingLegal.map(legalLabel).join('、'):'',deleteStatus=s&&s.deleteRequest?s.deleteRequest.status:'无申请';const legalText=!signedIn?'登录后检查账号状态':(legalOk?'已完成':('缺少：'+(missing||'必要条款/waiver')));const membershipText=!signedIn?'请先登录并验证邮箱':((emailOk&&legalOk)?'已满足':'需先完成邮箱验证和 waiver');box.innerHTML='<div class="account-row"><span>登录状态</span><strong>'+(signedIn?'已登录':'未登录')+'</strong></div><div class="account-row"><span>账号邮箱</span><strong>'+escapeHtml(email)+'</strong></div><div class="account-row"><span>邮箱验证</span><strong>'+(emailOk?'已验证':'未验证')+'</strong></div><div class="account-row"><span>法律同意</span><strong>'+legalText+'</strong></div><div class="account-row"><span>会员购买条件</span><strong>'+membershipText+'</strong></div><div class="account-row"><span>删除申请</span><strong>'+deleteStatus+'</strong></div>';}
 function renderAccount(){const prof=document.getElementById('account-profile'),store=document.getElementById('account-storage'),note=document.getElementById('cloud-sync-note'),signout=document.getElementById('btn-signout');if(!prof||!store)return;let p=null;try{p=JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');}catch(e){}const meta=p&&p.inputMeta?p.inputMeta:null;const zi=meta&&meta.ziSegment==='late'?'晚子时换日':(meta&&meta.ziSegment==='early'?'早子时':'非子时');const calendar=meta&&meta.usedCalendar==='lunar'?'农历输入':'公历输入';const rows=p?[['出生日期',p.birth],['出生时间',p.time],['历法',calendar],['真太阳时',meta?(meta.trueSolarYmd+' '+meta.trueSolarTime+' ('+(meta.trueSolarOffsetMinutes>=0?'+':'')+meta.trueSolarOffsetMinutes+' 分)'):'未校正'],['子时判定',zi],['性别',p.gender==='M'?'男':'女'],['四柱',p.pillarsStr?Object.values(p.pillarsStr).join(' · '):'已保存']]:[['命盘','尚未生成']];prof.innerHTML=rows.map(r=>'<div class="account-row"><span>'+r[0]+'</span><strong>'+r[1]+'</strong></div>').join('');const checkins=loadCheckins(),signedIn=!!window.__cloudUser,cloud=signedIn?window.__cloudUser.email:'未登录',status=window.__cloudStatus&&window.__cloudStatus.text?window.__cloudStatus.text:'未登录，当前为本机数据',location=signedIn?'当前浏览器 + Supabase 云端':'当前浏览器（登录后同步到 Supabase）';store.innerHTML='<div class="account-row"><span>个人真实记录</span><strong>'+checkins.length+' 条</strong></div><div class="account-row"><span>数据位置</span><strong>'+location+'</strong></div><div class="account-row"><span>云端账号</span><strong>'+cloud+'</strong></div><div class="account-row"><span>云端同步</span><strong>'+status+'</strong></div>';if(note)note.textContent=status;if(signout)signout.style.display=signedIn?'inline-flex':'none';renderMembershipCenter();}
@@ -2267,8 +2305,9 @@ const CLOUD_SYNC_STATE='madeshed_cloud_sync_v1';
     });
     function showLoggedIn(email,user){
       window.__cloudUser=user||window.__cloudUser;
-      document.querySelectorAll('[data-auth-action="signin"]').forEach(function(btn){btn.textContent='✓ '+email.split('@')[0];});
       document.body.dataset.user=email;
+      if(typeof updateAuthNav==='function')updateAuthNav();
+      if(typeof updateMembershipBadges==='function')updateMembershipBadges();
       if(typeof renderAccount==='function')renderAccount();
     }
     window.supa.auth.getSession().then(function(r){
@@ -2279,7 +2318,7 @@ const CLOUD_SYNC_STATE='madeshed_cloud_sync_v1';
     window.supa.auth.onAuthStateChange(function(event,session){
       if(event==='PASSWORD_RECOVERY')go('/reset-password');
       if(event==='SIGNED_IN'&&session)bootstrapCloudSync(session);
-      if(event==='SIGNED_OUT'){window.__cloudUser=null;delete document.body.dataset.user;saveAccountStatus(null);document.querySelectorAll('[data-auth-action="signin"]').forEach(function(btn){btn.textContent='登录';});setCloudStatus('已退出登录，本机数据仍保留','info');}
+      if(event==='SIGNED_OUT'){window.__cloudUser=null;delete document.body.dataset.user;saveAccountStatus(null);if(typeof updateAuthNav==='function')updateAuthNav();if(typeof updateMembershipBadges==='function')updateMembershipBadges();setCloudStatus('已退出登录，本机数据仍保留','info');}
     });
   };
   document.head.appendChild(s);
