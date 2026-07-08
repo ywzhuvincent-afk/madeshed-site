@@ -842,6 +842,19 @@ includesAll(index, [
   "const mkt=document.querySelector('.dash-hero > .dash-meta .v.up');if(mkt)mkt.textContent='▲ 开盘中'",
 ], 'switching language after a chart is generated re-renders profile surfaces (refresh reachable across scope) and restores the Chinese market label');
 
+// 结果页 result-meta 的 用神/喜/忌 必须来自引擎 yongShen（mainCn/xiCn/jiCn），
+// 不能再套用 dash-meta 的 月令/大运 写法（该 bug 会把喜忌显示反、忌槽残留占位符）
+includesAll(index, [
+  'const ys=profile.yongShen||{};',
+  "(ys.mainCn||'—')",
+  "ys.xiCn.join(', ')",
+  "ys.jiCn.join(', ')",
+], 'result summary card fills 用神/喜/忌 from the engine yongShen, not from month/dayun');
+assert.ok(
+  !index.includes("if(items[2]){const v=items[2].querySelector('.v');if(v)v.textContent=profile.monthBranch+' · '+profile.monthRelation;}"),
+  'result-meta 用神 slot must not be filled with 月令 (the old dash-meta pattern bug that inverted 喜忌)',
+);
+
 assert.ok(
   !/meta\.textContent='仓位 '\+position\+' · 底盘 '/.test(index),
   'daily headline should not show a raw unexplained foundation number by default',

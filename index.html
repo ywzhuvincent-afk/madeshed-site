@@ -2627,10 +2627,14 @@ function applyProfile(profile,today){
   }
   const rm=document.querySelector('.result-meta');
   if(rm){const items=rm.querySelectorAll('.meta-item');
+    // result-meta 的槽位是 日元 / 强弱 / 用神 / 喜 / 忌（与 dash-meta 的 日元/强弱/月令/大运 不同）——
+    // 曾误用 dash-meta 的写法把月令/大运塞进用神/喜槽、且忌槽从未填充而残留占位符，导致喜忌显示反了。
+    const ys=profile.yongShen||{};
     if(items[0]){const v=items[0].querySelector('.v');if(v)v.innerHTML='<span class="cn">'+profile.dayStem+'</span> · '+profile.dayElement;}
     if(items[1]){const v=items[1].querySelector('.v');if(v)v.textContent=profile.strength.category+' '+profile.strength.score;}
-    if(items[2]){const v=items[2].querySelector('.v');if(v)v.textContent=profile.monthBranch+' · '+profile.monthRelation;}
-    if(items[3]){const v=items[3].querySelector('.v');const c=(profile.currentDayunIdx>=0&&profile.daYun[profile.currentDayunIdx])?profile.daYun[profile.currentDayunIdx]:null;if(v)v.innerHTML=c?'<span class="cn">'+c.pillar+'</span> · 第 '+(profile.currentDayunIdx+1)+' 柱':'尚未起运';}
+    if(items[2]){const v=items[2].querySelector('.v');if(v)v.innerHTML='<span class="cn">'+(ys.mainCn||'—')+'</span>';}
+    if(items[3]){const v=items[3].querySelector('.v');if(v)v.innerHTML='<span class="cn">'+((ys.xiCn&&ys.xiCn.length)?ys.xiCn.join(', '):'—')+'</span>';}
+    if(items[4]){const v=items[4].querySelector('.v');if(v)v.innerHTML='<span class="cn">'+((ys.jiCn&&ys.jiCn.length)?ys.jiCn.join(', '):'—')+'</span>';}
   }
   const dyList=document.querySelector('.dy-list');
   if(dyList&&profile.daYun.length){const cells=dyList.querySelectorAll('.dy');if(cells.length>=profile.daYun.length){cells.forEach((cell,i)=>{const dy=profile.daYun[i];if(!dy)return;const isC=i===profile.currentDayunIdx;cell.className='dy'+(isC?' current':'')+(localeIsEn()?' en':'');cell.innerHTML=renderLuckCycleCell(dy,isC);});}else{dyList.innerHTML=profile.daYun.map((dy,i)=>{const isC=i===profile.currentDayunIdx;return '<div class="dy'+(isC?' current':'')+(localeIsEn()?' en':'')+'">'+renderLuckCycleCell(dy,isC)+'</div>';}).join('');}}
