@@ -463,15 +463,25 @@
     var by=parseInt(d[0],10);
     var saved=state.savedProfile||{};
     var meta=saved.inputMeta||{};
-    var inputDate=(meta.usedCalendar==='lunar'&&meta.sourceYmd)?meta.sourceYmd:document.getElementById('in-date').value;
-    var sharedInput={
-      date:inputDate,
+    // 用户主动查询(点"排盘"/回车)时，输入框按公历新盘处理（默认城市/子时、有时辰）；
+    // 仅在首屏/云同步渲染已保存命盘且用户未改动时，才用保存盘的原始录入(农历/城市)精确复现。
+    var useSaved=(!state.userQueried)&&meta&&meta.usedCalendar;
+    var sharedInput=useSaved?{
+      date:(meta.usedCalendar==='lunar'&&meta.sourceYmd)?meta.sourceYmd:document.getElementById('in-date').value,
       time:document.getElementById('in-time').value,
       gender:gender? 'M':'F',
       timeKnown:saved.timeKnown!==false,
       calendar:meta.usedCalendar||'solar',
       city:meta.city||window.MadeshedBazi.DEFAULT_CITY,
       ziPolicy:meta.ziPolicy||'late-zi-next-day'
+    }:{
+      date:document.getElementById('in-date').value,
+      time:document.getElementById('in-time').value,
+      gender:gender? 'M':'F',
+      timeKnown:true,
+      calendar:'solar',
+      city:window.MadeshedBazi.DEFAULT_CITY,
+      ziPolicy:'late-zi-next-day'
     };
     state.shared=window.MadeshedBazi.calcBaziCore(sharedInput);
     var built=window.MadeshedBazi.solarFromBirthInput(sharedInput);
@@ -485,6 +495,7 @@
     var today=Solar.fromDate(new Date());
     var tEc=today.getLunar().getEightChar();
     state.nowYear=new Date().getFullYear();
+    state.nowYearGz=tEc.getYear(); // 立春/节气边界的当前流年干支——时间轴"今"以干支匹配，避免公历年 1/1~立春错标
     state.nowMonthGz=tEc.getMonth();
     state.nowDayGz=tEc.getDay();
     var nowDyObj=null;
@@ -719,7 +730,7 @@
       lnHtml = lnArr.map(function(y){
         var yr=y.getYear();
         return cellHtml(y.getGanZhi(), (chartLocaleIsEn()?'Age ':'')+(yr-by)+(chartLocaleIsEn()?' · ':'岁 · ')+yr,
-          {sel:yr===state.selYear, now:yr===state.nowYear, data:yr, dataKey:'yr'});
+          {sel:yr===state.selYear, now:y.getGanZhi()===state.nowYearGz, data:yr, dataKey:'yr'});
       }).join('');
     }
 
@@ -732,7 +743,7 @@
         var JIE_EN=['Start of Spring','Awakening','Clear Bright','Start of Summer','Grain Buds','Minor Heat','Start of Autumn','White Dew','Cold Dew','Start of Winter','Major Snow','Minor Cold'];
         lyHtml = ln.getLiuYue().map(function(m,idx){
           var gz=m.getGanZhi();
-          var isNow=(state.selYear===state.nowYear && gz===state.nowMonthGz);
+          var isNow=(ln.getGanZhi()===state.nowYearGz && gz===state.nowMonthGz);
           return cellHtml(gz, chartLocaleIsEn()?(JIE_EN[idx]||('Month '+(idx+1))):(JIE[idx]||m.getMonthInChinese()+'月'), {now:isNow, clickless:true});
         }).join('');
       }
@@ -780,8 +791,9 @@
     }
   });
 
-  document.getElementById('go').addEventListener('click', compute);
-  document.getElementById('in-date').addEventListener('keydown',function(e){if(e.key==='Enter')compute();});
+  document.getElementById('go').addEventListener('click', function(){state.userQueried=true;compute();});
+  document.getElementById('in-date').addEventListener('keydown',function(e){if(e.key==='Enter'){state.userQueried=true;compute();}});
+  document.getElementById('in-time').addEventListener('keydown',function(e){if(e.key==='Enter'){state.userQueried=true;compute();}});
 
   function applySavedProfile(){
     try{
@@ -791,6 +803,7 @@
       if(p.time)document.getElementById('in-time').value=p.time;
       if(p.gender!=null)document.getElementById('in-gender').value=p.gender==='M'?'1':'0';
       state.savedProfile=p;
+      state.userQueried=false; // 回到"渲染已保存命盘"模式
       return true;
     }catch(_){return false;}
   }

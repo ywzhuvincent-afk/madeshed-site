@@ -283,7 +283,7 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
     try{
       var j=await api('user',{userId:id});
       var u=j.user||{},p=j.profile||{},m=j.membership||{},acct=j.account||{};
-      var pillars=p.pillars&&(p.pillars.year||p.pillars.month)?[p.pillars.year,p.pillars.month,p.pillars.day,p.pillars.time].filter(Boolean).join(' · '):(p.profile&&p.profile.pillarsStr?Object.values(p.profile.pillarsStr).join(' · '):'—');
+      var pillars=p.pillars&&(p.pillars.year||p.pillars.month)?[p.pillars.year,p.pillars.month,p.pillars.day,p.pillars.hour||p.pillars.time].filter(Boolean).join(' · '):(p.profile&&p.profile.pillarsStr?Object.values(p.profile.pillarsStr).join(' · '):'—');
       var legal=(j.legal||[]).length;
       var html=''
         +'<div class="drawer-h"><div><h2>'+esc(u.displayName||u.email||'用户')+'</h2><div class="sub">'+esc(u.email||'')+'<br>'+esc(id)+'</div></div><button class="btn ghost sm" id="drawer-close">关闭</button></div>'

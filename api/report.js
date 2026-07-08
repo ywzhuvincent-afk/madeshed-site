@@ -91,9 +91,12 @@ function summarize(entries) {
   const traded = entries.filter((entry) => isTrade(entry.outcome));
   const wins = traded.filter((entry) => isWin(entry.outcome)).length;
   const losses = traded.filter((entry) => isLoss(entry.outcome)).length;
-  const avgScore = entries.length
-    ? Math.round(entries.reduce((sum, entry) => sum + (Number(entry.score) || 0), 0) / entries.filter((entry) => Number.isFinite(Number(entry.score))).length || 0)
-    : 0;
+  // 仅对有真实分数(引擎下限34，绝不为0/null)的记录求均分；无分数记录不计入分子分母，
+  // 否则 Number(null)===0 会被当成有效 0 分，把均分强行拉低。
+  const scored = entries.filter((entry) => Number.isFinite(entry.score));
+  const avgScore = scored.length
+    ? Math.round(scored.reduce((sum, entry) => sum + entry.score, 0) / scored.length)
+    : null;
   const confidence = traded.length >= 50 ? '高可信' : traded.length >= 20 ? '中等可信' : traded.length >= 5 ? '初步参考' : '样本不足';
   return {
     total: entries.length,

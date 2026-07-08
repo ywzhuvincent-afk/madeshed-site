@@ -36,7 +36,7 @@ function currentDayun(profile) {
 
 function buildFortunePreview(type, profile, targetPeriod) {
   const product = FORTUNE_REPORT_TYPES[type] || FORTUNE_REPORT_TYPES.full;
-  const period = cleanText(targetPeriod, type === 'month' ? '本月' : '当前周期');
+  const period = cleanText(targetPeriod) || (type === 'month' ? '本月' : '当前周期');
   const summary = profileSummary(profile);
   return [
     '<div class="report-generated fortune-generated">',
@@ -53,7 +53,7 @@ function buildFortunePreview(type, profile, targetPeriod) {
 
 function buildFortuneReport(type, profile, targetPeriod, accessLevel) {
   const product = FORTUNE_REPORT_TYPES[type] || FORTUNE_REPORT_TYPES.full;
-  const period = cleanText(targetPeriod, type === 'month' ? '本月' : '当前周期');
+  const period = cleanText(targetPeriod) || (type === 'month' ? '本月' : '当前周期');
   const summary = profileSummary(profile);
   const yong = profile?.yongShen?.xi?.length
     ? profile.yongShen.xi.map(elementLabel).join('、')
@@ -136,7 +136,7 @@ export default async function handler(req, res) {
     user_id: gate.user.id,
     report_key: key,
     report_type: reportType,
-    target_period: cleanText(body.targetPeriod, ''),
+    target_period: cleanText(body.targetPeriod),
     title: FORTUNE_REPORT_TYPES[reportType].label,
     context: body.context || {},
     report_html: reportHtml,
