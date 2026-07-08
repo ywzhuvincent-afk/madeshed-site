@@ -16,6 +16,7 @@
 <meta name="twitter:description" content="Madeshed 完整排盘与流年大运全景时间轴。">
 <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.13/lunar.min.js"></script>
 <script src="/bazi-engine.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg:#0a0d14; --panel:#11151f; --panel-2:#161b27; --line:#222a3a; --border:#222a3a; --bg-card:#11151f;
@@ -837,7 +838,26 @@
   setupCollapsibleSections();
   applyChartEnglishLocale();
   applySavedProfile();
-  compute(); // 首屏：优先使用主站已保存命盘
+  compute(); // 首屏：优先使用本机已保存命盘
+  // 登录后从云端拉取账号命盘，保证与主站一致（本机可能是旧命盘）。云端更新时间新者胜。
+  function chartCloudSync(){
+    try{
+      if(!window.supabase||!window.supabase.createClient)return;
+      var supa=window.supabase.createClient('https://tkltasrbhjqwurybcyxo.supabase.co','sb_publishable_EPfFhpn8fsVMadj0YLytsw_IZ72Ks7q');
+      supa.auth.getSession().then(function(r){
+        var session=r&&r.data&&r.data.session;if(!session||!session.user)return;
+        supa.from('profiles').select('profile,updated_at').eq('user_id',session.user.id).maybeSingle().then(function(res){
+          if(res.error||!res.data||!res.data.profile)return;
+          var cloud=res.data.profile,local=null;
+          try{local=JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null');}catch(e){}
+          var lt=local?(Date.parse(local.updatedAt||local.createdAt||0)||0):0;
+          var ct=Date.parse((cloud&&cloud.updatedAt)||(cloud&&cloud.createdAt)||res.data.updated_at||0)||0;
+          if(!local||ct>=lt){localStorage.setItem('madeshed_profile_v1',JSON.stringify(cloud));applySavedProfile();compute();}
+        }).catch(function(){});
+      }).catch(function(){});
+    }catch(e){}
+  }
+  chartCloudSync();
 })();
 </script>
 </body>
