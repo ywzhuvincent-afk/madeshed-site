@@ -4,14 +4,25 @@ export function siteOrigin(req) {
   return process.env.PUBLIC_SITE_URL || `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`;
 }
 
+// 清洗环境变量：去掉粘贴时混入的 BOM/零宽字符/首尾空白与引号。
+// （曾发生 STRIPE_SECRET_KEY 带 U+FEFF 导致所有 Stripe 请求构造 header 时崩溃）
+export function cleanEnv(value) {
+  return String(value || '')
+    .replace(/[﻿​-‍⁠]/gu, '')
+    .trim()
+    .replace(/^["']+|["']+$/g, '')
+    .trim();
+}
+
 export function stripeSecret() {
-  return process.env.STRIPE_SECRET_KEY || '';
+  return cleanEnv(process.env.STRIPE_SECRET_KEY);
 }
 
 export function priceFromEnv(names) {
   const keys = Array.isArray(names) ? names : [names];
   for (const key of keys) {
-    if (process.env[key]) return { key, value: process.env[key] };
+    const value = cleanEnv(process.env[key]);
+    if (value) return { key, value };
   }
   return { key: keys[0] || '', value: '' };
 }
