@@ -97,15 +97,12 @@ export function monthGanzhi(year, month) {
 
 export function scoreFromProfileAndGanzhi(profile, ganzhi, ctx = {}) {
   const engine = loadBaziEngine();
-  // 统一分数源：主体走引擎增强版（藏干加权+调候表+通根+全互动+空亡+岁运），
-  // 财运维度沿用引擎 dailyRead 的十神映射。
-  const enhanced = engine.readDayEnhanced
-    ? engine.readDayEnhanced(profile, { day: ganzhi, year: ctx.year, month: ctx.month, dayun: ctx.dayun })
-    : null;
-  const simple = engine.dailyRead(profile, { day: ganzhi });
-  const read = enhanced ? { ...simple, ...enhanced, cScore: simple?.cScore, cLabel: simple?.cLabel } : simple;
-  const base = engine.chartScore(profile, ganzhi);
-  const z = (enhanced && enhanced.zScore) || (simple && simple.zScore) || 60;
-  const score = Math.max(24, Math.min(92, Math.round(base * 0.54 + z * 0.26 + (simple?.cScore || 55) * 0.2)));
-  return { score, read, base };
+  // 统一分数源 v3：与前端 renderLuck / actionRead 完全同一套算法（唯一实现在 bazi-engine.js）。
+  // 约定与前端一致：当日 dr 只按当日干支（大运由 profile 自动注入流日互动），
+  // 年/月/大运通过 foundation 分层进入综合底盘，最终行动指数走 actionScore。
+  const today = { year: ctx.year, month: ctx.month, day: ganzhi };
+  const dr = engine.dailyReadFull(profile, { day: ganzhi });
+  const foundation = engine.foundationRead(profile, today);
+  const action = engine.actionScore(profile, today, dr, foundation);
+  return { score: action.score, read: dr, base: foundation.score, action, foundation };
 }

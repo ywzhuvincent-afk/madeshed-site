@@ -1,24 +1,27 @@
-import { actionBand, buildProfileFromRequest, loadBaziEngine, monthGanzhi, scoreFromProfileAndGanzhi } from './_bazi-runtime.js';
+import { actionBand, buildProfileFromRequest, loadBaziEngine } from './_bazi-runtime.js';
 
 export default function handler(req, res) {
   try {
-    loadBaziEngine();
+    const engine = loadBaziEngine();
     const profile = buildProfileFromRequest(req.query || {});
     const year = parseInt(req.query.year, 10) || new Date().getFullYear();
+    // 与前端流月趋势同一套：monthActionDetail（分层底盘+触发+财运+校准），非把月干支当日干支
     const monthly = Array.from({ length: 12 }, (_, i) => {
       const month = i + 1;
-      const ganzhi = monthGanzhi(year, month);
-      const result = scoreFromProfileAndGanzhi(profile, ganzhi);
-      const band = actionBand(result.score);
+      const dt = new Date(year, month - 1, 15);
+      const mgz = engine.trendGzForDate(dt);
+      const md = engine.monthActionDetail(profile, dt);
+      const dr = engine.dailyReadFull(profile, { day: mgz.month });
+      const band = actionBand(md.score);
       return {
         month,
-        ganzhi,
-        score: result.score,
+        ganzhi: mgz.month,
+        score: md.score,
         color: band.color,
         label: band.label,
-        role: result.read?.role || null,
-        wealth_score: result.read?.cScore || null,
-        foundation_score: result.base
+        role: dr?.role || null,
+        wealth_score: dr?.cScore || null,
+        foundation_score: md.base
       };
     });
     const today = new Date();

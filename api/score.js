@@ -1,17 +1,18 @@
-import { actionBand, buildProfileFromRequest, ganzhiForDate, loadBaziEngine, scoreFromProfileAndGanzhi } from './_bazi-runtime.js';
+import { actionBand, buildProfileFromRequest, loadBaziEngine, scoreFromProfileAndGanzhi } from './_bazi-runtime.js';
 
 export default function handler(req, res) {
   try {
-    loadBaziEngine();
+    const engine = loadBaziEngine();
     const date = req.query.date || new Date().toISOString().slice(0, 10);
     const profile = buildProfileFromRequest(req.query || {});
-    const ganzhi = ganzhiForDate(date);
-    const result = scoreFromProfileAndGanzhi(profile, ganzhi);
+    // 与前端一致：取该日的年/月/日干支，日分走当日、年月经 foundation 分层
+    const gz = engine.trendGzForDate(new Date(`${date}T12:00:00`));
+    const result = scoreFromProfileAndGanzhi(profile, gz.day, { year: gz.year, month: gz.month });
     const band = actionBand(result.score);
     res.status(200).json({
       date,
       birth: profile.birth,
-      ganzhi,
+      ganzhi: gz.day,
       score: result.score,
       color: band.color,
       label: band.label,

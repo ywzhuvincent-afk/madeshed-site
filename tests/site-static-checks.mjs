@@ -792,9 +792,6 @@ includesAll(index, [
   'professionalAdjust',
   'branchScore',
   'hiddenScore',
-  'interactionPenalty',
-  'interaction.adjust',
-  'interaction.penalty',
   '正财',
   '偏财',
   '七杀',
@@ -866,22 +863,45 @@ includesAll(index, [
   "data.push(trendActionScore(profile,dt))",
   "title:y+'年'+m+'月 每日行动指数 · DAILY ACTION TREND'",
   "mark:now.getDate()+'号 行动指数'",
-  'Math.round(dr.zScore*0.65+chartScore(profile,today.day)*0.35)',
-  '60+(triggerScore-60)*0.75+(dr.cScore-55)*0.35+(foundation.score-60)*0.25+(dr.rootAdjust||0)*.25-riskPenalty',
-  'if(foundation.score<=45)cap=64;else if(foundation.score<=55)cap=72;else if(foundation.score<=66)cap=84;else cap=92;',
 ], 'daily trend uses action score');
 includesAll(index, [
   'data.push(monthActionScore(profile,dt))',
   'MONTHLY ACTION TREND',
-  'var monthRead=dailyRead(profile,{day:gz.month})',
-  'var monthScore=chartScore(profile,gz.month)',
-  'var trigger=Math.round((monthRead?monthRead.zScore:60)*0.48+monthScore*0.34+wealth*0.18)',
-  '60+(trigger-60)*.82+(wealth-55)*.25+(base-60)*.18+(monthRead&&monthRead.rootAdjust?monthRead.rootAdjust*.15:0)-riskPenalty',
-  "calibrateActionScore(raw,'month'",
   'data=smoothTrendData(data)',
   'details.forEach(function(d,i){d.score=data[i]',
   "mark:(now.getMonth()+1)+'",
 ], 'monthly trend uses steady calibrated monthly action score');
+// v3 统一分数源：行动指数/流月核心公式的唯一实现已移入 bazi-engine.js，前端只做委托
+includesAll(index, [
+  'function dailyRead(profile,today){return BAZI.dailyReadFull(profile,today);}',
+  'function foundationRead(profile,today){return BAZI.foundationRead(profile,today);}',
+  'function actionRead(profile,today,dr,foundation){return BAZI.actionScore(profile,today,dr,foundation);}',
+  'function monthActionDetail(profile,dt){return BAZI.monthActionDetail(profile,dt);}',
+  'function trendGzForDate(dt){return BAZI.trendGzForDate(dt);}',
+], 'front-end delegates the whole action-score pipeline to the shared engine (single source)');
+includesAll(baziEngine, [
+  'function dailyReadFull(profile,today)',
+  'function foundationRead(profile,today)',
+  'function actionScore(profile,today,dr,foundation)',
+  'function monthActionDetail(profile,dt)',
+  'Math.round(dr.zScore*0.65+chartScore(profile,today.day)*0.35)',
+  '60+(triggerScore-60)*0.75+(dr.cScore-55)*0.35+(foundation.score-60)*0.25+(dr.rootAdjust||0)*.25-riskPenalty',
+  'if(foundation.score<=45)cap=64;else if(foundation.score<=55)cap=72;else if(foundation.score<=66)cap=84;else cap=92;',
+  'var monthRead=dailyReadFull(profile,{day:gz.month})',
+  'var monthScore=chartScore(profile,gz.month)',
+  'var trigger=Math.round((monthRead?monthRead.zScore:60)*0.48+monthScore*0.34+wealth*0.18)',
+  '60+(trigger-60)*.82+(wealth-55)*.25+(base-60)*.18+(monthRead&&monthRead.rootAdjust?monthRead.rootAdjust*.15:0)-riskPenalty',
+  "a_calibrateActionScore(raw,'month'",
+  'interactionPenalty',
+  'interaction.adjust',
+  'interaction.penalty',
+  'actionScore:actionScore',
+  'dailyReadFull:dailyReadFull',
+], 'shared engine hosts the single action-score + monthly implementation');
+assert.ok(
+  baziEngine.includes("function getTodayGZ(){if(typeof global.Solar==='undefined')return null;return trendGzForDate(new Date());}"),
+  'getTodayGZ delegates to trendGzForDate so the dashboard today-card uses the same 立春-boundary ganzhi as the trends and server',
+);
 assert.ok(
   !/function buildMonthTrend\(profile,now\)[\s\S]{0,360}data\.push\(chartScore\(profile,gzMonth/.test(index),
   'monthly trend should not use month single score',
@@ -1193,6 +1213,25 @@ includesAll(baziRuntimeApi, [
   'window.MadeshedBazi',
   'loadBaziEngine',
 ], 'server bazi runtime');
+
+// v3 统一分数源：服务端必须走引擎 actionScore/foundationRead/dailyReadFull（与前端同一套），不得再用旧的线性拼分公式
+includesAll(baziRuntimeApi, [
+  'engine.dailyReadFull(profile',
+  'engine.foundationRead(profile, today)',
+  'engine.actionScore(profile, today, dr, foundation)',
+], 'server daily score is the unified engine actionScore pipeline');
+assert.ok(
+  !/base \* 0\.54 \+ z \* 0\.26/.test(baziRuntimeApi),
+  'server must not keep the old crude base*0.54+z*0.26+cScore*0.2 daily formula',
+);
+includesAll(scoreApi, [
+  'engine.trendGzForDate',
+  'scoreFromProfileAndGanzhi(profile, gz.day, { year: gz.year, month: gz.month })',
+], 'score API feeds year/month ganzhi so its daily score equals the dashboard');
+includesAll(monthlyApi, [
+  'engine.monthActionDetail(profile, dt)',
+  'engine.trendGzForDate(dt)',
+], 'monthly API uses the unified monthActionDetail (same as the front-end month trend)');
 
 [
   ['score API', scoreApi],

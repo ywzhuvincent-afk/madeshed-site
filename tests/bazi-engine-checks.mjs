@@ -115,10 +115,49 @@ assert.ok(ysJY.xiCn.indexOf('金') < 0, '克身当令旺神（金）绝不能进
 assert.equal(p1.wealth.xi.join(','), p1.yongShen.xi.slice(0, 3).join(','), '投资喜与命格喜同源');
 assert.equal(p1.wealth.ji.join(','), p1.yongShen.ji.slice(0, 3).join(','), '投资忌与命格忌同源');
 
-// ---- 9. 服务端统一分数源 ----
-const s1 = scoreFromProfileAndGanzhi(p1, '丙子', { year: '丙午', month: '甲午', dayun: '丁亥' });
-assert.ok(Number.isFinite(s1.score), '服务端分数有效');
-assert.ok(Number.isFinite(s1.read.tiaohouAdjust), '服务端已走增强通道（含调候）');
-assert.ok(s1.read.cScore != null, '服务端保留财运维度');
+// ---- 9. 统一行动指数管道 v3：前端与服务端唯一分数源（bazi-engine.js） ----
+// 9a. 引擎导出齐全
+['dailyReadFull','foundationRead','actionScore','monthActionScore','monthActionDetail','trendGzForDate'].forEach((fn) => {
+  assert.equal(typeof e[fn], 'function', `引擎应导出 ${fn}`);
+});
+// 9b. 服务端 scoreFromProfileAndGanzhi 必须逐位等于 engine.actionScore（同一套算法）
+['癸未', '乙亥', '丙子', '庚戌'].forEach((dayGz) => {
+  const year = '丙午', month = '甲午';
+  const dr = e.dailyReadFull(p1, { day: dayGz });
+  const fnd = e.foundationRead(p1, { year, month, day: dayGz });
+  const act = e.actionScore(p1, { year, month, day: dayGz }, dr, fnd);
+  const srv = scoreFromProfileAndGanzhi(p1, dayGz, { year, month });
+  assert.equal(srv.score, act.score, `服务端行动分应等于引擎 actionScore（${dayGz}）`);
+  assert.equal(srv.base, fnd.score, `服务端底盘应等于 foundation.score（${dayGz}）`);
+  assert.equal(srv.read.cScore, dr.cScore, `服务端财运维度应等于 dr.cScore（${dayGz}）`);
+  assert.equal(srv.read.role, dr.role, `服务端十神角色应一致（${dayGz}）`);
+  assert.ok(Number.isFinite(srv.read.zScore) && Number.isFinite(srv.read.seasonalAdjust), '服务端仍走增强通道（zScore/调候）');
+});
+// 9c. 黄金值锁定：p1（丁卯 壬寅 癸丑 丙辰）真实历日分数不得漂移
+const gm1 = e.trendGzForDate(new Date('2026-07-08T12:00:00'));
+const dr1 = e.dailyReadFull(p1, { day: gm1.day });
+const act1 = e.actionScore(p1, { year: gm1.year, month: gm1.month, day: gm1.day }, dr1, e.foundationRead(p1, { year: gm1.year, month: gm1.month, day: gm1.day }));
+assert.equal(gm1.day, '癸未', 'p1 2026-07-08 流日干支');
+assert.equal(act1.score, 46, 'p1 2026-07-08 行动指数锁定=46');
+assert.equal(act1.label, '谨慎', 'p1 2026-07-08 标签锁定');
+assert.equal(dr1.cScore, 49, 'p1 2026-07-08 财运锁定=49');
+assert.equal(dr1.role, '比劫', 'p1 2026-07-08 十神角色');
+assert.equal(e.monthActionScore(p1, new Date(2026, 6, 15)), 34, 'p1 2026年7月 流月行动分锁定=34');
+const gm2 = e.trendGzForDate(new Date('2026-01-01T12:00:00'));
+const dr2 = e.dailyReadFull(p1, { day: gm2.day });
+const act2 = e.actionScore(p1, { year: gm2.year, month: gm2.month, day: gm2.day }, dr2, e.foundationRead(p1, { year: gm2.year, month: gm2.month, day: gm2.day }));
+assert.equal(act2.score, 39, 'p1 2026-01-01 行动指数锁定=39');
+assert.equal(dr2.cScore, 41, 'p1 2026-01-01 财运锁定=41');
+// 9d. getTodayGZ 必须与 trendGzForDate 同源（立春边界）——杜绝仪表盘"今日"卡片与趋势/服务端在立春~正月之间漂移
+const tg = e.getTodayGZ();
+if (tg) {
+  const tf = e.trendGzForDate(new Date());
+  assert.equal(tg.year, tf.year, 'getTodayGZ 流年应与 trendGzForDate 同源(立春边界)');
+  assert.equal(tg.month, tf.month, 'getTodayGZ 流月应与 trendGzForDate 同源');
+  assert.equal(tg.day, tf.day, 'getTodayGZ 流日应与 trendGzForDate 同源');
+}
+// 2026-02-04 是立春后、农历新年前的边界日：流年必须是丙午（立春），而非乙巳（农历新年）
+const boundary = e.trendGzForDate(new Date('2026-02-04T12:00:00'));
+assert.equal(boundary.year, '丙午', '2026-02-04 立春后流年应为丙午');
 
 console.log('BaZi engine v2 checks passed');
