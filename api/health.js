@@ -57,7 +57,13 @@ async function stripeDiagnostics(res) {
 export default async function handler(req, res) {
   const url = new URL(req.url || '/', 'http://localhost');
   const action = String(req.query?.action || url.searchParams.get('action') || '').trim();
-  if (action === 'stripe-diagnostics') return stripeDiagnostics(res);
+  if (action === 'stripe-diagnostics') {
+    try {
+      return await stripeDiagnostics(res);
+    } catch (error) {
+      return res.status(500).json({ error: 'diagnostics_failed', message: String(error && error.message), stack: String(error && error.stack).split('\n').slice(0, 4) });
+    }
+  }
 
   const supabaseConfigured = Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
   const stripeConfigured = Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET);
