@@ -247,14 +247,25 @@ async function createCustomerPortal(req, res) {
 }
 
 export default async function handler(req, res) {
-  const action = requestAction(req);
-  if (action === 'credit') return createCreditCheckout(req, res);
-  if (action === 'membership') return createMembershipCheckout(req, res);
-  if (action === 'report') return createReportCheckout(req, res);
-  if (action === 'portal') return createCustomerPortal(req, res);
-  return send(res, 400, {
-    error: 'invalid_checkout_action',
-    message: '付款接口 action 无效。',
-    actions: ['credit', 'membership', 'report', 'portal']
-  });
+  try {
+    const action = requestAction(req);
+    if (action === 'credit') return await createCreditCheckout(req, res);
+    if (action === 'membership') return await createMembershipCheckout(req, res);
+    if (action === 'report') return await createReportCheckout(req, res);
+    if (action === 'portal') return await createCustomerPortal(req, res);
+    return send(res, 400, {
+      error: 'invalid_checkout_action',
+      message: '付款接口 action 无效。',
+      actions: ['credit', 'membership', 'report', 'portal']
+    });
+  } catch (error) {
+    // 兜底：任何未捕获异常都回 JSON（否则 Vercel 抛非 JSON 500，前端只会显示"暂不可用"、看不到真因，且从不扣费）
+    if (!res.headersSent) {
+      return send(res, 500, {
+        error: 'checkout_failed',
+        message: '购买接口出错：' + ((error && error.message) || 'unknown') + '。当前不会扣费。',
+        detail: String((error && error.stack) || error || '').split('\n').slice(0, 3)
+      });
+    }
+  }
 }

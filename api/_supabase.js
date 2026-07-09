@@ -1,7 +1,18 @@
 import { createHash } from 'node:crypto';
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://tkltasrbhjqwurybcyxo.supabase.co';
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// 清洗环境变量：去掉粘贴时常带的 BOM(U+FEFF)/零宽字符/首尾引号/空白。
+// Stripe 密钥曾因 BOM 导致 header 构造报错、接口全 500；服务角色密钥/URL 同样必须清洗，
+// 否则一个不可见字符会让所有 Supabase 服务端查询 401→抛错→购买接口非 JSON 500（"暂不可用"）。
+function cleanEnv(value) {
+  return String(value || '')
+    .replace(/[﻿​-‍⁠]/gu, '')
+    .trim()
+    .replace(/^["']+|["']+$/g, '')
+    .trim();
+}
+
+const SUPABASE_URL = cleanEnv(process.env.SUPABASE_URL) || 'https://tkltasrbhjqwurybcyxo.supabase.co';
+const SERVICE_ROLE_KEY = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 export const LEGAL_DOCUMENT_VERSIONS = {
   terms: '2026-06-30',
@@ -116,13 +127,16 @@ export async function accountStatusForUser(user) {
   const userId = user && user.id;
   if (!userId) throw new Error('missing_user');
 
-  const [profiles, acceptances, memberships, credits, deleteRequests] = await Promise.all([
+  // allSettled：单个表查询失败不再让整个账号状态崩掉（进而把购买接口打成非 JSON 500）
+  const settled = await Promise.allSettled([
     supabaseSelect('account_profiles', `user_id=eq.${encodeURIComponent(userId)}&select=*&limit=1`),
     supabaseSelect('legal_acceptances', `user_id=eq.${encodeURIComponent(userId)}&select=document_type,document_version,accepted_at`),
     supabaseSelect('memberships', `user_id=eq.${encodeURIComponent(userId)}&select=tier,status,current_period_end&limit=1`),
     supabaseSelect('credit_ledger', `user_id=eq.${encodeURIComponent(userId)}&select=amount`),
     supabaseSelect('account_delete_requests', `user_id=eq.${encodeURIComponent(userId)}&select=status,created_at&order=created_at.desc&limit=1`)
   ]);
+  const at = (i) => (settled[i].status === 'fulfilled' ? settled[i].value : []);
+  const profiles = at(0), acceptances = at(1), memberships = at(2), credits = at(3), deleteRequests = at(4);
 
   const accepted = new Map((acceptances || []).map((row) => [row.document_type, row]));
   const missingLegal = LEGALLY_REQUIRED_ACCEPTANCES.filter((type) => {
