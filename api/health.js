@@ -76,9 +76,50 @@ async function stripeDiagnostics(res) {
   });
 }
 
+function envInfo(v) {
+  const s = v == null ? '' : String(v);
+  return {
+    present: Boolean(s),
+    length: s.length,
+    firstCharCode: s ? s.charCodeAt(0) : null,
+    hasBOM: s.charCodeAt(0) === 0xFEFF,
+    hasZeroWidth: /[​-‍⁠﻿]/.test(s),
+    trimmedDiffers: s !== s.trim(),
+    hasWrappingQuotes: /^["']|["']$/.test(s)
+  };
+}
+async function supabaseDiagnostics(res) {
+  const rawUrl = process.env.SUPABASE_URL || '';
+  const rawKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const clean = (v) => String(v || '').replace(/[​-‍⁠﻿]/g, '').trim().replace(/^["']+|["']+$/g, '').trim();
+  const cleanUrl = clean(rawUrl), cleanKey = clean(rawKey);
+  async function probe(u, k) {
+    try {
+      const r = await fetch(`${u}/rest/v1/account_profiles?select=user_id&limit=0`, { headers: { apikey: k, authorization: `Bearer ${k}` } });
+      const t = await r.text();
+      return { ok: r.ok, status: r.status, bodyPrefix: t.slice(0, 100) };
+    } catch (e) { return { ok: false, error: String(e && e.message).slice(0, 120) }; }
+  }
+  const cleaned = await probe(cleanUrl, cleanKey);
+  const raw = (rawUrl === cleanUrl && rawKey === cleanKey) ? { note: 'raw==cleaned (no BOM/quotes/space found)' } : await probe(rawUrl.trim(), rawKey);
+  res.status(200).json({
+    urlEnv: envInfo(rawUrl),
+    keyEnv: envInfo(rawKey),
+    cleanedProbe: cleaned,
+    rawProbe: raw,
+    verdict: cleaned.ok ? 'service key WORKS after cleaning' : 'service key still FAILS after cleaning — check the key value / table / RLS'
+  });
+}
 export default async function handler(req, res) {
   const url = new URL(req.url || '/', 'http://localhost');
   const action = String(req.query?.action || url.searchParams.get('action') || '').trim();
+  if (action === 'supabase-diagnostics') {
+    try {
+      return await supabaseDiagnostics(res);
+    } catch (error) {
+      return res.status(500).json({ error: 'supabase_diagnostics_failed', message: String(error && error.message) });
+    }
+  }
   if (action === 'stripe-diagnostics') {
     try {
       return await stripeDiagnostics(res);
