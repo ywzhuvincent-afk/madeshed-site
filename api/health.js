@@ -1,6 +1,21 @@
 // Madeshed Bazi API - Health Check + Stripe self-diagnostics
 // Vercel Serverless Function (Node.js runtime)
 import { stripeGet } from './_stripe.js';
+import { createHash } from 'node:crypto';
+
+function keyKind(k) {
+  const s = String(k || '');
+  if (s.startsWith('sb_publishable')) return 'PUBLISHABLE / anon (WRONG — this is the browser key, no DB privileges)';
+  if (s.startsWith('sb_secret')) return 'sb_secret (new-format secret)';
+  if (s.startsWith('eyJ')) return 'legacy JWT (role is inside; service_role JWT is ~219 chars)';
+  if (!s) return 'MISSING';
+  return 'unknown';
+}
+function keyFingerprint(k) {
+  const s = String(k || '');
+  if (!s) return null;
+  return createHash('sha256').update(s).digest('hex').slice(0, 12);
+}
 
 const PRICE_ENVS = [
   { env: 'STRIPE_CREDIT_PRICE_ID', product: '问大师 10 点包', expect: 'one_time' },
@@ -105,6 +120,8 @@ async function supabaseDiagnostics(res) {
   res.status(200).json({
     urlEnv: envInfo(rawUrl),
     keyEnv: envInfo(rawKey),
+    keyKind: keyKind(cleanKey),
+    keyFingerprint: keyFingerprint(cleanKey),
     cleanedProbe: cleaned,
     rawProbe: raw,
     verdict: cleaned.ok ? 'service key WORKS after cleaning' : 'service key still FAILS after cleaning — check the key value / table / RLS'
