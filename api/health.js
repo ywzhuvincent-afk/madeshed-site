@@ -16,6 +16,19 @@ function keyFingerprint(k) {
   if (!s) return null;
   return createHash('sha256').update(s).digest('hex').slice(0, 12);
 }
+// 解码 JWT 的 payload（公开信息，非签名/密钥本身）以读出 role 声明：anon vs service_role
+function jwtRole(k) {
+  const s = String(k || '');
+  if (!s.startsWith('eyJ')) return 'not-a-jwt';
+  try {
+    const parts = s.split('.');
+    if (parts.length < 2) return 'malformed';
+    const json = JSON.parse(Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
+    return json.role || json.ref ? `role=${json.role || '?'} ref=${json.ref || '?'}` : 'no-role-claim';
+  } catch (e) {
+    return 'decode-failed';
+  }
+}
 
 const PRICE_ENVS = [
   { env: 'STRIPE_CREDIT_PRICE_ID', product: '问大师 10 点包', expect: 'one_time' },
@@ -121,6 +134,7 @@ async function supabaseDiagnostics(res) {
     urlEnv: envInfo(rawUrl),
     keyEnv: envInfo(rawKey),
     keyKind: keyKind(cleanKey),
+    keyRole: jwtRole(cleanKey),
     keyFingerprint: keyFingerprint(cleanKey),
     cleanedProbe: cleaned,
     rawProbe: raw,
