@@ -348,6 +348,47 @@ async function whoami(req, res) {
   });
 }
 
+// 正确的商品中文名/描述（修复 Stripe 里被存成 ??? 的乱码名）——按价格环境变量定位商品并改名
+const PRODUCT_NAME_MAP = [
+  { envs: ['STRIPE_CREDIT_PRICE_ID'], name: '问大师 10 点包', description: '问大师 AI 命理咨询 10 点点数包（普通问题 1 点、深度分析 3 点）。' },
+  { envs: ['STRIPE_ULTIMATE_PRICE_ID', 'STRIPE_MEMBERSHIP_PRICE_ID'], name: '最高级会员（订阅）', description: '固定命理报告免费生成 + 问大师每月赠送 30 点，适合高频咨询与长期复盘。' },
+  { envs: ['STRIPE_REPORT_7_PRICE_ID'], name: '交易复盘报告 · 近 7 天', description: '基于你的真实打卡记录生成的近 7 天交易复盘报告。' },
+  { envs: ['STRIPE_REPORT_30_PRICE_ID', 'STRIPE_REPORT_PRICE_ID'], name: '交易复盘报告 · 月度', description: '基于真实记录的月度交易复盘报告。' },
+  { envs: ['STRIPE_REPORT_365_PRICE_ID'], name: '交易复盘报告 · 年度', description: '基于真实记录的年度交易复盘报告。' },
+  { envs: ['STRIPE_REPORT_ALL_PRICE_ID'], name: '交易复盘报告 · 全部历史', description: '基于全部历史记录的交易复盘报告。' },
+  { envs: ['STRIPE_FORTUNE_FULL_PRICE_ID'], name: '八字全盘解读', description: '日主强弱、用神喜忌、婚姻、事业、财运、健康的长期主题解读。' },
+  { envs: ['STRIPE_FORTUNE_DAYUN_PRICE_ID'], name: '流年大运解读', description: '当前大运、今年流年、以及未来三年的高低节奏。' },
+  { envs: ['STRIPE_FORTUNE_MONTH_PRICE_ID'], name: '每月运程报告', description: '流月五行、财星与风险，本月适合推进 / 观望 / 避险的时间窗口。' }
+];
+async function fixProductNames(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  const { cleanEnv, stripeGet, stripeFormRequest } = await import('./_stripe.js');
+  if (!process.env.STRIPE_SECRET_KEY) return send(res, 503, { error: 'stripe_not_configured', message: 'Stripe 未配置。' });
+  const results = [];
+  const doneProducts = new Set();
+  for (const item of PRODUCT_NAME_MAP) {
+    let priceId = '';
+    for (const e of item.envs) { const v = cleanEnv(process.env[e]); if (v) { priceId = v; break; } }
+    if (!priceId) { results.push({ name: item.name, status: 'env_missing', envs: item.envs }); continue; }
+    try {
+      const price = await stripeGet(`prices/${encodeURIComponent(priceId)}`);
+      const productId = price && (typeof price.product === 'string' ? price.product : (price.product && price.product.id));
+      if (!productId) { results.push({ name: item.name, status: 'no_product' }); continue; }
+      if (doneProducts.has(productId)) { results.push({ name: item.name, status: 'dup_skipped', productId }); continue; }
+      doneProducts.add(productId);
+      const params = new URLSearchParams();
+      params.set('name', item.name);
+      params.set('description', item.description);
+      await stripeFormRequest(`products/${encodeURIComponent(productId)}`, params);
+      results.push({ name: item.name, status: 'updated', productId });
+    } catch (error) {
+      results.push({ name: item.name, status: 'error', error: String(error && error.message).slice(0, 140) });
+    }
+  }
+  return send(res, 200, { ok: true, updated: results.filter((r) => r.status === 'updated').length, results });
+}
+
 export default async function handler(req, res) {
   const action = requestAction(req);
   if (action === 'whoami') return whoami(req, res);
@@ -357,9 +398,10 @@ export default async function handler(req, res) {
   if (action === 'grant-credits') return grantCredits(req, res);
   if (action === 'set-membership') return setMembership(req, res);
   if (action === 'verify-email') return verifyEmail(req, res);
+  if (action === 'fix-product-names') return fixProductNames(req, res);
   return send(res, 400, {
     error: 'invalid_admin_action',
     message: '后台接口 action 无效。',
-    actions: ['whoami', 'overview', 'users', 'user', 'grant-credits', 'set-membership', 'verify-email']
+    actions: ['whoami', 'overview', 'users', 'user', 'grant-credits', 'set-membership', 'verify-email', 'fix-product-names']
   });
 }
