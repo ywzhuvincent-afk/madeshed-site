@@ -236,7 +236,7 @@
   <header>
     <div class="eyebrow">Madeshed · 命盘</div>
     <h1>完整排盘<span class="sep">/</span>流年大运全景</h1>
-    <p class="lead">四柱、十神、藏干、纳音、空亡、核心神煞，加上喜忌用神，以及大运 → 流年 → 流月 → 流日的逐层时间轴。点任意大运 / 流年查看其下一层。</p>
+    <p class="lead">四柱、十神、藏干、纳音、空亡、核心神煞，加上喜忌用神，以及大运 → 流年 → 流月 → 流日的逐层时间轴。点任意大运 / 流年 / 流月查看其下一层。</p>
   </header>
 
   <div class="inbar">
@@ -340,7 +340,7 @@
     chartSetText('.btn-signin','Login');
     chartSetText('.eyebrow','Madeshed · Full Chart');
     chartSetHtml('header h1','Full BaZi Chart<span class="sep">/</span>Luck Timeline');
-    chartSetText('.lead','How to read this: your Day Master is your core self — every other element either supports or drains it, and the timeline shows when conditions favor discipline. Below: Four Pillars, Ten Gods, hidden stems, Na Yin, void branches, symbolic stars, favorable elements, plus a Luck → Year → Month → Day timeline. Click a Luck Pillar or Year to inspect the next layer.');
+    chartSetText('.lead','How to read this: your Day Master is your core self — every other element either supports or drains it, and the timeline shows when conditions favor discipline. Below: Four Pillars, Ten Gods, hidden stems, Na Yin, void branches, symbolic stars, favorable elements, plus a Luck → Year → Month → Day timeline. Click a Luck Pillar, Year, or Month to inspect the next layer.');
     chartSetText('label[for="in-date"]','Birth Date');
     chartSetText('label[for="in-time"]','Birth Time');
     chartSetText('label[for="in-gender"]','Gender');
@@ -449,7 +449,7 @@
   /* ===== 用神 / 财运统一读取共享 bazi-engine.js，避免各页面重复算法 ===== */
 
   /* ===== 渲染 ===== */
-  var state={ec:null, yun:null, daYun:[], birthYear:0, selDy:-1, selYear:0,
+  var state={ec:null, yun:null, daYun:[], birthYear:0, selDy:-1, selYear:0, selMonthGz:'',
              nowDy:'', nowYear:0, nowMonthGz:'', nowDayGz:''};
 
   function elPills(els){
@@ -512,7 +512,7 @@
     // 默认选中含今年的大运 + 今年流年
     var defIdx=0;
     daYun.forEach(function(x,i){ if(x.getStartYear()<=state.nowYear && x.getEndYear()>=state.nowYear) defIdx=i; });
-    state.selDy=defIdx; state.selYear=state.nowYear;
+    state.selDy=defIdx; state.selYear=state.nowYear; state.selMonthGz=state.nowMonthGz;
     renderPano();
   }
 
@@ -734,41 +734,59 @@
       }).join('');
     }
 
-    // 3) 流月行（选中流年的 12 月）
+    // 3) 流月行（选中流年的 12 月）——可点，点击驱动流日行
     var lyHtml='<div class="pano-empty">'+(chartLocaleIsEn()?'Select a Year to view monthly pillars':'选择一个流年查看流月')+'</div>';
+    var selMonthGz='';
     if(selDyObj){
       var ln=selDyObj.getLiuNian().filter(function(y){return y.getYear()===state.selYear;})[0];
       if(ln){
         var JIE=['立春','惊蛰','清明','立夏','芒种','小暑','立秋','白露','寒露','立冬','大雪','小寒'];
         var JIE_EN=['Start of Spring','Awakening','Clear Bright','Start of Summer','Grain Buds','Minor Heat','Start of Autumn','White Dew','Cold Dew','Start of Winter','Major Snow','Minor Cold'];
-        lyHtml = ln.getLiuYue().map(function(m,idx){
+        var lyArr=ln.getLiuYue(), lyGzs=lyArr.map(function(m){return m.getGanZhi();});
+        // 默认/纠正选中流月：不在本流年则取（当前流年→当前流月，否则首月）
+        if(lyGzs.indexOf(state.selMonthGz)<0) state.selMonthGz=(ln.getGanZhi()===state.nowYearGz && lyGzs.indexOf(state.nowMonthGz)>=0)?state.nowMonthGz:lyGzs[0];
+        selMonthGz=state.selMonthGz;
+        lyHtml = lyArr.map(function(m,idx){
           var gz=m.getGanZhi();
           var isNow=(ln.getGanZhi()===state.nowYearGz && gz===state.nowMonthGz);
-          return cellHtml(gz, chartLocaleIsEn()?(JIE_EN[idx]||('Month '+(idx+1))):(JIE[idx]||m.getMonthInChinese()+'月'), {now:isNow, clickless:true});
+          return cellHtml(gz, chartLocaleIsEn()?(JIE_EN[idx]||('Month '+(idx+1))):(JIE[idx]||m.getMonthInChinese()+'月'), {sel:gz===state.selMonthGz, now:isNow, data:gz, dataKey:'mon'});
         }).join('');
       }
     }
 
-    // 4) 流日行（今天 ±7 天，按真实历日计算日柱）
+    // 4) 流日行：显示所选流月（节气月）的实际日子，随流月点击而变；无有效流月则回退今天±7天
     var ldCells='';
-    var base=new Date(); base.setHours(12,0,0,0);
-    for(var off=-7; off<=7; off++){
-      var dt=new Date(base.getTime()+off*86400000);
-      var s=Solar.fromYmd(dt.getFullYear(),dt.getMonth()+1,dt.getDate());
-      var gz=s.getLunar().getEightChar().getDay();
-      ldCells+=cellHtml(gz, (dt.getMonth()+1)+'/'+dt.getDate(),
-        {now:off===0, clickless:true});
+    var todayD=new Date();
+    if(selMonthGz){
+      var MB=['寅','卯','辰','巳','午','未','申','酉','戌','亥','子','丑'];
+      var mIdx=MB.indexOf(selMonthGz.charAt(1));
+      var anchor=new Date(state.selYear,1,4); anchor.setDate(anchor.getDate()+Math.round(mIdx*30.4)-10);
+      for(var k=0;k<46;k++){
+        var dd=new Date(anchor.getTime()+k*86400000);
+        var dec=Solar.fromYmd(dd.getFullYear(),dd.getMonth()+1,dd.getDate()).getLunar().getEightChar();
+        if(dec.getMonth()!==selMonthGz) continue;
+        var isToday=(dd.getFullYear()===todayD.getFullYear()&&dd.getMonth()===todayD.getMonth()&&dd.getDate()===todayD.getDate());
+        ldCells+=cellHtml(dec.getDay(), (dd.getMonth()+1)+'/'+dd.getDate(), {now:isToday, clickless:true});
+      }
+    }
+    if(!ldCells){
+      var base=new Date(); base.setHours(12,0,0,0);
+      for(var off=-7; off<=7; off++){
+        var dt=new Date(base.getTime()+off*86400000);
+        var gz=Solar.fromYmd(dt.getFullYear(),dt.getMonth()+1,dt.getDate()).getLunar().getEightChar().getDay();
+        ldCells+=cellHtml(gz, (dt.getMonth()+1)+'/'+dt.getDate(), {now:off===0, clickless:true});
+      }
     }
 
     document.getElementById('pano').innerHTML=
       '<div class="pano-row"><div class="rlab">'+(chartLocaleIsEn()?'Luck':'大运')+'<small>'+(chartLocaleIsEn()?'Cycle':'DaYun')+'</small></div><div class="track" id="trk-dy">'+dyCells+'</div></div>'+
       '<div class="pano-row"><div class="rlab">'+(chartLocaleIsEn()?'Year':'流年')+'<small>Year</small></div><div class="track" id="trk-yr">'+lnHtml+'</div></div>'+
-      '<div class="pano-row"><div class="rlab">'+(chartLocaleIsEn()?'Month':'流月')+'<small>Month</small></div><div class="track">'+lyHtml+'</div></div>'+
+      '<div class="pano-row"><div class="rlab">'+(chartLocaleIsEn()?'Month':'流月')+'<small>Month</small></div><div class="track" id="trk-ly">'+lyHtml+'</div></div>'+
       '<div class="pano-row"><div class="rlab">'+(chartLocaleIsEn()?'Day':'流日')+'<small>Day</small></div><div class="track" id="trk-ld">'+ldCells+'</div></div>'+
       (chartLocaleIsEn()?'<div class="pano-empty">Chinese = original pillar · Pinyin = pronunciation · English = element + zodiac meaning</div>':'');
 
     // 选中项滚动到可见
-    ['trk-dy','trk-yr','trk-ld'].forEach(function(id){
+    ['trk-dy','trk-yr','trk-ly','trk-ld'].forEach(function(id){
       var c=document.getElementById(id); if(!c) return;
       var sel=c.querySelector('.sel')||c.querySelector('.now');
       if(sel) c.scrollLeft = sel.offsetLeft - c.clientWidth/2 + sel.clientWidth/2;
@@ -784,9 +802,14 @@
       // 选中大运后，默认选其首个流年（若含今年则选今年）
       var yrs=dy.getLiuNian().map(function(y){return y.getYear();});
       state.selYear = yrs.indexOf(state.nowYear)>=0? state.nowYear : yrs[0];
+      state.selMonthGz='';
       renderPano();
     } else if(cell.dataset.yr!=null){
       state.selYear=parseInt(cell.dataset.yr,10);
+      state.selMonthGz='';
+      renderPano();
+    } else if(cell.dataset.mon!=null){
+      state.selMonthGz=cell.dataset.mon;
       renderPano();
     }
   });

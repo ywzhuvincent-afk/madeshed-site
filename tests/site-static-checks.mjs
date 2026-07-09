@@ -1469,6 +1469,8 @@ includesAll(index, ['function renderAlerts(profile,today,dr,action)', 'renderAle
 includesAll(index, ['中和：制化当令、通关流转为喜', 'function dailyRead(profile,today){return BAZI.dailyReadFull(profile,today);}'], '喜用神理由含中和分支；前端委托引擎');
 // 5) chart-full 查询不粘滞 + 立春时间轴；服务端 API 数值健壮
 includesAll(chart, ['state.userQueried=true', 'state.nowYearGz=tEc.getYear()', 'y.getGanZhi()===state.nowYearGz'], 'chart-full 主动查询不被保存盘覆盖 + 立春边界"今"');
+// 时间轴 流月→流日 下钻：流月可点(data-mon) + 点击处理 + 流日随所选流月渲染该节气月
+includesAll(chart, ["dataKey:'mon'", 'cell.dataset.mon!=null', 'state.selMonthGz=cell.dataset.mon', 'dec.getMonth()!==selMonthGz'], 'chart-full 时间轴：流月可点并驱动流日行显示该节气月的实际日子');
 includesAll(fortuneReportApi, ['cleanText(targetPeriod) || (type'], 'fortune-report 期间用 cleanText||默认，不再恒空');
 assert.ok(/const scored = entries\.filter\(\(entry\) => Number\.isFinite\(entry\.score\)\)/.test(reportApi), 'report avgScore 只计入有真实分数的记录');
 
