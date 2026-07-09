@@ -1473,6 +1473,8 @@ includesAll(chart, ['state.userQueried=true', 'state.nowYearGz=tEc.getYear()', '
 includesAll(chart, ["dataKey:'mon'", 'cell.dataset.mon!=null', 'state.selMonthGz=cell.dataset.mon', 'dec.getMonth()!==selMonthGz'], 'chart-full 时间轴：流月可点并驱动流日行显示该节气月的实际日子');
 // 流日可点 → 弹出该日行动指数明细（走同一引擎 actionScore，含所选大运）
 includesAll(chart, ["dataKey:'ld'", 'cell.dataset.ld!=null', 'function renderDayDetail', 'B.actionScore(prof,ctx,dr,fnd)', 'id="ld-detail"'], 'chart-full 时间轴：点流日弹出行动指数明细（财运/结构/互动/岁运/风险，引擎口径）');
+// 流日明细英文态：命理"值"也译成英文（不止行标签）——band/仓位/十神/财运/互动/岁运
+includesAll(chart, ['function ldBandEn', 'function ldInterEn', 'function ldCLabelEn', 'en?ldBandEn(act.label)', 'en?ldInterEn(dr.interaction.note)'], 'chart-full 流日明细：英文态把命理值(标签/仓位/财运/四柱互动/岁运)整体译成英文');
 includesAll(fortuneReportApi, ['cleanText(targetPeriod) || (type'], 'fortune-report 期间用 cleanText||默认，不再恒空');
 assert.ok(/const scored = entries\.filter\(\(entry\) => Number\.isFinite\(entry\.score\)\)/.test(reportApi), 'report avgScore 只计入有真实分数的记录');
 

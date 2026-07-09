@@ -807,6 +807,27 @@
   /* 流日明细：点某一天，展示该日行动指数的完整拆解（口径与仪表盘/服务端同一引擎） */
   function ldColor(s){return s>=82?'#4DD0E1':(s>=70?'#26A69A':(s>=56?'#F7B731':(s>=44?'#FF8A65':'#EF5350')));}
   function hideDayDetail(){var b=document.getElementById('ld-detail');if(b){b.className='ld-detail';b.innerHTML='';}}
+  /* 英文态：把引擎输出的中文命理值译成英文（值层，不止标签） */
+  var LD_ELM={'火':'Fire','水':'Water','木':'Wood','金':'Metal','土':'Earth'};
+  function ldBandEn(l){return {'强顺势':'Strong trend','顺势':'Favorable','中性':'Neutral','谨慎':'Cautious','高风险':'High risk','平稳':'Steady'}[l]||l;}
+  function ldPosEn(p){return p==='观望'?'Stand aside':p;}
+  function ldRoleEn(r){return {'比劫':'Peer','食伤':'Output','财':'Wealth','印':'Resource','官杀':'Officer'}[r]||r;}
+  function ldWarnEn(w){return {
+    '争财/冲动加仓/被借钱，防破财':'Rivalry for money / impulsive add-ons / being lent from — guard against losses',
+    '看得到赚不到，忌追高/加杠杆':'Visible but hard to capture — avoid chasing highs / leverage',
+    '看得到赚不到，忌追高/加杠杆，偏财投机尤须克制':'Visible but hard to capture — avoid chasing / leverage; curb speculative bets',
+    '泄身耗神，宜轻仓':'Draining on you — keep size light',
+    '偏保守，易错失':'Overly conservative — may miss moves',
+    '压力大，宜观望':'High pressure — stand aside'}[w]||w;}
+  function ldTenShort(tg){return (tenGodEn(tg)||tg).replace(/\s*\(.*\)$/,'');}
+  function ldCLabelEn(dr){var raw=dr.cLabel||'';if(!raw||raw==='—')return '—';var tg=ldTenShort(dr.tenGod);var suf=(raw.indexOf(dr.tenGod)===0)?raw.slice(dr.tenGod.length):raw;var S={'旺·担得起':'strong · can bear it','多身弱':'heavy, self weak','可担·宜节制':'bearable · moderate','生财':'generates wealth','帮身':'supports self','劫财':'robs wealth','护身':'guards self','克身':'controls self'};return tg+(S[suf]?' '+S[suf]:(suf?' '+suf:''));}
+  function ldSpecialEn(l){return {'岁运并临':'Year meets Luck pillar','岁运天克地冲':'Year–Luck heaven-clash & earth-clash','流年伏吟日柱':'Year repeats Day pillar','流年反吟日柱':'Year opposes Day pillar'}[l]||l;}
+  function ldInterEn(note){if(!note)return '';var s=note;
+    s=s.replace(/三合(.)局/g,function(_,e){return (LD_ELM[e]||e)+' trine';});
+    s=s.replace(/三会(.)方/g,function(_,e){return (LD_ELM[e]||e)+' directional group';});
+    s=s.replace(/半合(.)/g,function(_,e){return (LD_ELM[e]||e)+' half-combine';});
+    [['四柱互动：',''],['流支引动','flow-branch triggers '],['流支','flow-branch '],['落空亡，吉凶之力皆减',' in void (good & bad effects weakened)'],['（喜）',' (favorable)'],['（忌）',' (unfavorable)'],['年支','Year-br '],['月支','Month-br '],['日支','Day-br '],['时支','Hour-br '],['命支','natal-br '],['大运','Luck '],['流年','annual '],['流月','month '],['岁运','cycle '],['与',' vs '],['冲',' clash'],['刑',' punishment'],['害',' harm'],['合',' combine'],['伏吟',' repeat'],['、',', '],['；','; '],['。','. ']].forEach(function(p){s=s.split(p[0]).join(p[1]);});
+    return s.replace(/\s+/g,' ').trim();}
   function renderDayDetail(ymd){
     var box=document.getElementById('ld-detail'), B=window.MadeshedBazi, P=state.shared;
     if(!box) return;
@@ -821,17 +842,24 @@
     var dr=B.dailyReadFull(prof,ctx), fnd=B.foundationRead(prof,ctx), act=B.actionScore(prof,ctx,dr,fnd);
     if(!dr||!act){hideDayDetail();return;}
     var en=chartLocaleIsEn(), col=ldColor(act.score);
-    var W=en?{pos:'Position',day:'Flow-day',wealth:'Wealth',base:'Base',struct:'Structure',pro:'Adjust',inter:'Clash',cycle:'Cycle alert',risk:'Risk',none:'none',stem:'stem',branch:'branch',hidden:'hidden',th:'climate',root:'root/reveal',note:'Not a return forecast — timing context only.'}
+    var W=en?{pos:'Position',day:'Flow-day',wealth:'Wealth',base:'Base',struct:'Structure',pro:'Adjust',inter:'Interactions',cycle:'Cycle alert',risk:'Risk',none:'none',stem:'stem',branch:'branch',hidden:'hidden',th:'climate',root:'root/reveal',note:'Not a return forecast — timing rhythm only.'}
       :{pos:'仓位',day:'流日',wealth:'财运',base:'底盘',struct:'结构分',pro:'专业因子',inter:'四柱互动',cycle:'岁运警示',risk:'风险扣分',none:'无',stem:'天干',branch:'地支',hidden:'藏干',th:'调候',root:'通根透干',note:'表达节奏强弱，非收益预测。'};
+    var vLabel=en?ldBandEn(act.label):act.label, vPos=en?ldPosEn(act.position):act.position,
+        vTen=en?ldTenShort(dr.tenGod):dr.tenGod, vRole=en?ldRoleEn(dr.role):dr.role,
+        vCLabel=en?ldCLabelEn(dr):dr.cLabel, vCWarn=dr.cWarn?(en?ldWarnEn(dr.cWarn):dr.cWarn):'',
+        vBase=en?ldBandEn(fnd.label):fnd.label,
+        vInter=(dr.interaction&&dr.interaction.note)?(en?ldInterEn(dr.interaction.note):String(dr.interaction.note).replace(/^四柱互动：/,'')):'',
+        vSpec=(dr.specials&&dr.specials.items&&dr.specials.items.length)?dr.specials.items.map(function(x){return en?ldSpecialEn(x.label):x.label;}).join(en?'; ':'、'):'',
+        rolePair=en?(' ('+vTen+' · '+vRole+')'):('（'+vTen+'·'+vRole+'）');
     var h='<div class="ld-h"><span class="ld-score" style="color:'+col+'">'+act.score+'</span>'+
-      '<span><b style="color:'+col+'">'+act.label+'</b> · '+W.pos+' '+act.position+'</span>'+
-      '<span style="color:var(--text-3)">'+Mo+'/'+Da+' · '+W.day+' '+dayGz+'（'+dr.tenGod+'·'+dr.role+'）</span></div>';
-    h+='<div class="ld-row"><b>'+W.wealth+'</b><span'+(dr.cWarn?' class="ld-warn"':'')+'>'+dr.cLabel+' '+dr.cScore+(dr.cWarn?' ⚠ '+dr.cWarn:'')+'</span></div>';
-    h+='<div class="ld-row"><b>'+W.base+'</b><span>'+fnd.label+' '+fnd.score+'</span></div>';
+      '<span><b style="color:'+col+'">'+vLabel+'</b> · '+W.pos+' '+vPos+'</span>'+
+      '<span style="color:var(--text-3)">'+Mo+'/'+Da+' · '+W.day+' '+dayGz+rolePair+'</span></div>';
+    h+='<div class="ld-row"><b>'+W.wealth+'</b><span'+(vCWarn?' class="ld-warn"':'')+'>'+vCLabel+' '+dr.cScore+(vCWarn?' ⚠ '+vCWarn:'')+'</span></div>';
+    h+='<div class="ld-row"><b>'+W.base+'</b><span>'+vBase+' '+fnd.score+'</span></div>';
     h+='<div class="ld-row"><b>'+W.struct+'</b><span>'+W.stem+' '+dr.stemScore+' · '+W.branch+' '+dr.branchScore+' · '+W.hidden+' '+dr.hiddenScore+'</span></div>';
     h+='<div class="ld-row"><b>'+W.pro+'</b><span>'+W.th+' '+(dr.seasonalAdjust||0)+' · '+W.root+' '+(dr.rootAdjust||0)+'</span></div>';
-    if(dr.interaction&&dr.interaction.note)h+='<div class="ld-row"><b>'+W.inter+'</b><span>'+dr.interaction.note+'</span></div>';
-    if(dr.specials&&dr.specials.items&&dr.specials.items.length)h+='<div class="ld-row"><b>'+W.cycle+'</b><span class="ld-warn">'+dr.specials.items.map(function(x){return x.label;}).join('、')+'</span></div>';
+    if(vInter)h+='<div class="ld-row"><b>'+W.inter+'</b><span>'+vInter+'</span></div>';
+    if(vSpec)h+='<div class="ld-row"><b>'+W.cycle+'</b><span class="ld-warn">'+vSpec+'</span></div>';
     h+='<div class="ld-row"><b>'+W.risk+'</b><span>'+(act.riskPenalty?'-'+act.riskPenalty:W.none)+'</span></div>';
     h+='<div class="ld-row" style="margin-top:6px"><span style="color:var(--text-3);font-size:11px">'+W.note+'</span></div>';
     box.innerHTML=h; box.className='ld-detail show';
