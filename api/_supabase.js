@@ -146,17 +146,8 @@ export async function accountStatusForUser(user) {
 
 export async function requireAccountReadyForPaidAction(req, user) {
   const status = await accountStatusForUser(user);
-  if (!status.emailConfirmed) {
-    return {
-      ok: false,
-      status: 403,
-      body: {
-        error: 'email_not_confirmed',
-        message: '请先到邮箱点击确认链接，确认后才能购买会员、点数或付费报告。',
-        account: status
-      }
-    };
-  }
+  // 邮箱确认不再作为购买前置：Stripe Checkout 会自行收集并验证付款邮箱、发送收据，
+  // 站内再卡一道邮件确认属冗余摩擦（且 SMTP 不稳时会完全挡死收款）。仅保留法律条款接受。
   if (!status.legalComplete) {
     return {
       ok: false,

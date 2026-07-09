@@ -1477,5 +1477,10 @@ includesAll(chart, ["dataKey:'ld'", 'cell.dataset.ld!=null', 'function renderDay
 includesAll(chart, ['function ldBandEn', 'function ldInterEn', 'function ldCLabelEn', 'en?ldBandEn(act.label)', 'en?ldInterEn(dr.interaction.note)'], 'chart-full 流日明细：英文态把命理值(标签/仓位/财运/四柱互动/岁运)整体译成英文');
 includesAll(fortuneReportApi, ['cleanText(targetPeriod) || (type'], 'fortune-report 期间用 cleanText||默认，不再恒空');
 assert.ok(/const scored = entries\.filter\(\(entry\) => Number\.isFinite\(entry\.score\)\)/.test(reportApi), 'report avgScore 只计入有真实分数的记录');
+// 购买前置：去掉冗余的"邮箱确认"闸门（Stripe 自会验证付款邮箱），仅保留法律条款接受
+const supabaseLib = readFileSync('api/_supabase.js', utf8);
+assert.ok(!supabaseLib.includes("error: 'email_not_confirmed'"), '服务端购买前置不再强制邮箱确认');
+assert.ok(/requireAccountReadyForPaidAction/.test(supabaseLib) && /if \(!status\.legalComplete\)/.test(supabaseLib), '服务端购买前置仍保留法律条款接受');
+assert.ok(!index.includes('确认邮箱后才能购买会员'), '前端购买提示不再强制邮箱确认');
 
 console.log('Static site checks passed');
