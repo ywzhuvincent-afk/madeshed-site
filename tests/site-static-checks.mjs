@@ -1471,6 +1471,8 @@ includesAll(index, ['中和：制化当令、通关流转为喜', 'function dail
 includesAll(chart, ['state.userQueried=true', 'state.nowYearGz=tEc.getYear()', 'y.getGanZhi()===state.nowYearGz'], 'chart-full 主动查询不被保存盘覆盖 + 立春边界"今"');
 // 时间轴 流月→流日 下钻：流月可点(data-mon) + 点击处理 + 流日随所选流月渲染该节气月
 includesAll(chart, ["dataKey:'mon'", 'cell.dataset.mon!=null', 'state.selMonthGz=cell.dataset.mon', 'dec.getMonth()!==selMonthGz'], 'chart-full 时间轴：流月可点并驱动流日行显示该节气月的实际日子');
+// 流日可点 → 弹出该日行动指数明细（走同一引擎 actionScore，含所选大运）
+includesAll(chart, ["dataKey:'ld'", 'cell.dataset.ld!=null', 'function renderDayDetail', 'B.actionScore(prof,ctx,dr,fnd)', 'id="ld-detail"'], 'chart-full 时间轴：点流日弹出行动指数明细（财运/结构/互动/岁运/风险，引擎口径）');
 includesAll(fortuneReportApi, ['cleanText(targetPeriod) || (type'], 'fortune-report 期间用 cleanText||默认，不再恒空');
 assert.ok(/const scored = entries\.filter\(\(entry\) => Number\.isFinite\(entry\.score\)\)/.test(reportApi), 'report avgScore 只计入有真实分数的记录');
 

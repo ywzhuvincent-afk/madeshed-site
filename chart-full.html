@@ -172,6 +172,14 @@
   .cell .meta{font-size:10px;color:var(--text-3);margin-top:3px;white-space:nowrap}
   .cell.clickless{cursor:default}.cell.clickless:hover{transform:none;border-color:var(--line)}
   .pano-empty{color:var(--text-3);font-size:12px;padding:14px}
+  .ld-detail{margin-top:12px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--bg-card);font-size:13px;line-height:1.75;display:none}
+  .ld-detail.show{display:block}
+  .ld-detail .ld-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:8px;border-bottom:1px dashed var(--line)}
+  .ld-detail .ld-score{font-size:28px;font-weight:700;font-family:var(--font-mono);line-height:1}
+  .ld-detail .ld-row{display:flex;gap:10px}
+  .ld-detail .ld-row b{color:var(--text);font-weight:600;flex:0 0 66px}
+  .ld-detail .ld-row span{color:var(--text-2)}
+  .ld-detail .ld-warn{color:var(--red)}
 
   footer{color:var(--text-3);font-size:11px;line-height:1.7;border-top:1px solid var(--line);
          padding-top:16px;margin-top:30px}
@@ -280,6 +288,7 @@
   <section>
     <div class="s-head"><h2>流年大运全景</h2><span class="en">Timeline</span></div>
     <div class="pano" id="pano"></div>
+    <div class="ld-detail" id="ld-detail"></div>
   </section>
 
   <footer>
@@ -449,7 +458,7 @@
   /* ===== 用神 / 财运统一读取共享 bazi-engine.js，避免各页面重复算法 ===== */
 
   /* ===== 渲染 ===== */
-  var state={ec:null, yun:null, daYun:[], birthYear:0, selDy:-1, selYear:0, selMonthGz:'',
+  var state={ec:null, yun:null, daYun:[], birthYear:0, selDy:-1, selYear:0, selMonthGz:'', selYearGz:'', selDayYmd:'',
              nowDy:'', nowYear:0, nowMonthGz:'', nowDayGz:''};
 
   function elPills(els){
@@ -745,7 +754,7 @@
         var lyArr=ln.getLiuYue(), lyGzs=lyArr.map(function(m){return m.getGanZhi();});
         // 默认/纠正选中流月：不在本流年则取（当前流年→当前流月，否则首月）
         if(lyGzs.indexOf(state.selMonthGz)<0) state.selMonthGz=(ln.getGanZhi()===state.nowYearGz && lyGzs.indexOf(state.nowMonthGz)>=0)?state.nowMonthGz:lyGzs[0];
-        selMonthGz=state.selMonthGz;
+        selMonthGz=state.selMonthGz; state.selYearGz=ln.getGanZhi();
         lyHtml = lyArr.map(function(m,idx){
           var gz=m.getGanZhi();
           var isNow=(ln.getGanZhi()===state.nowYearGz && gz===state.nowMonthGz);
@@ -766,7 +775,8 @@
         var dec=Solar.fromYmd(dd.getFullYear(),dd.getMonth()+1,dd.getDate()).getLunar().getEightChar();
         if(dec.getMonth()!==selMonthGz) continue;
         var isToday=(dd.getFullYear()===todayD.getFullYear()&&dd.getMonth()===todayD.getMonth()&&dd.getDate()===todayD.getDate());
-        ldCells+=cellHtml(dec.getDay(), (dd.getMonth()+1)+'/'+dd.getDate(), {now:isToday, clickless:true});
+        var ymd=dd.getFullYear()+'-'+(dd.getMonth()+1)+'-'+dd.getDate();
+        ldCells+=cellHtml(dec.getDay(), (dd.getMonth()+1)+'/'+dd.getDate(), {now:isToday, sel:ymd===state.selDayYmd, data:ymd, dataKey:'ld'});
       }
     }
     if(!ldCells){
@@ -774,7 +784,8 @@
       for(var off=-7; off<=7; off++){
         var dt=new Date(base.getTime()+off*86400000);
         var gz=Solar.fromYmd(dt.getFullYear(),dt.getMonth()+1,dt.getDate()).getLunar().getEightChar().getDay();
-        ldCells+=cellHtml(gz, (dt.getMonth()+1)+'/'+dt.getDate(), {now:off===0, clickless:true});
+        var ymd2=dt.getFullYear()+'-'+(dt.getMonth()+1)+'-'+dt.getDate();
+        ldCells+=cellHtml(gz, (dt.getMonth()+1)+'/'+dt.getDate(), {now:off===0, sel:ymd2===state.selDayYmd, data:ymd2, dataKey:'ld'});
       }
     }
 
@@ -793,7 +804,40 @@
     });
   }
 
-  /* 事件委托：点大运 / 流年 */
+  /* 流日明细：点某一天，展示该日行动指数的完整拆解（口径与仪表盘/服务端同一引擎） */
+  function ldColor(s){return s>=82?'#4DD0E1':(s>=70?'#26A69A':(s>=56?'#F7B731':(s>=44?'#FF8A65':'#EF5350')));}
+  function hideDayDetail(){var b=document.getElementById('ld-detail');if(b){b.className='ld-detail';b.innerHTML='';}}
+  function renderDayDetail(ymd){
+    var box=document.getElementById('ld-detail'), B=window.MadeshedBazi, P=state.shared;
+    if(!box) return;
+    if(!P||!B||!B.actionScore){hideDayDetail();return;}
+    var pr=ymd.split('-'), Y=+pr[0], Mo=+pr[1], Da=+pr[2];
+    var dayGz=Solar.fromYmd(Y,Mo,Da).getLunar().getEightChar().getDay();
+    // 用选中大运覆盖 currentDayunIdx，使底盘/岁运按所选大运计
+    var selDyGz=(state.daYun[state.selDy]&&state.daYun[state.selDy].getGanZhi())||'';
+    var prof=Object.assign({},P);
+    if(P.daYun&&selDyGz){for(var i=0;i<P.daYun.length;i++){if(P.daYun[i].pillar===selDyGz){prof.currentDayunIdx=i;break;}}}
+    var ctx={day:dayGz, year:state.selYearGz||undefined, month:state.selMonthGz||undefined};
+    var dr=B.dailyReadFull(prof,ctx), fnd=B.foundationRead(prof,ctx), act=B.actionScore(prof,ctx,dr,fnd);
+    if(!dr||!act){hideDayDetail();return;}
+    var en=chartLocaleIsEn(), col=ldColor(act.score);
+    var W=en?{pos:'Position',day:'Flow-day',wealth:'Wealth',base:'Base',struct:'Structure',pro:'Adjust',inter:'Clash',cycle:'Cycle alert',risk:'Risk',none:'none',stem:'stem',branch:'branch',hidden:'hidden',th:'climate',root:'root/reveal',note:'Not a return forecast — timing context only.'}
+      :{pos:'仓位',day:'流日',wealth:'财运',base:'底盘',struct:'结构分',pro:'专业因子',inter:'四柱互动',cycle:'岁运警示',risk:'风险扣分',none:'无',stem:'天干',branch:'地支',hidden:'藏干',th:'调候',root:'通根透干',note:'表达节奏强弱，非收益预测。'};
+    var h='<div class="ld-h"><span class="ld-score" style="color:'+col+'">'+act.score+'</span>'+
+      '<span><b style="color:'+col+'">'+act.label+'</b> · '+W.pos+' '+act.position+'</span>'+
+      '<span style="color:var(--text-3)">'+Mo+'/'+Da+' · '+W.day+' '+dayGz+'（'+dr.tenGod+'·'+dr.role+'）</span></div>';
+    h+='<div class="ld-row"><b>'+W.wealth+'</b><span'+(dr.cWarn?' class="ld-warn"':'')+'>'+dr.cLabel+' '+dr.cScore+(dr.cWarn?' ⚠ '+dr.cWarn:'')+'</span></div>';
+    h+='<div class="ld-row"><b>'+W.base+'</b><span>'+fnd.label+' '+fnd.score+'</span></div>';
+    h+='<div class="ld-row"><b>'+W.struct+'</b><span>'+W.stem+' '+dr.stemScore+' · '+W.branch+' '+dr.branchScore+' · '+W.hidden+' '+dr.hiddenScore+'</span></div>';
+    h+='<div class="ld-row"><b>'+W.pro+'</b><span>'+W.th+' '+(dr.seasonalAdjust||0)+' · '+W.root+' '+(dr.rootAdjust||0)+'</span></div>';
+    if(dr.interaction&&dr.interaction.note)h+='<div class="ld-row"><b>'+W.inter+'</b><span>'+dr.interaction.note+'</span></div>';
+    if(dr.specials&&dr.specials.items&&dr.specials.items.length)h+='<div class="ld-row"><b>'+W.cycle+'</b><span class="ld-warn">'+dr.specials.items.map(function(x){return x.label;}).join('、')+'</span></div>';
+    h+='<div class="ld-row"><b>'+W.risk+'</b><span>'+(act.riskPenalty?'-'+act.riskPenalty:W.none)+'</span></div>';
+    h+='<div class="ld-row" style="margin-top:6px"><span style="color:var(--text-3);font-size:11px">'+W.note+'</span></div>';
+    box.innerHTML=h; box.className='ld-detail show';
+  }
+
+  /* 事件委托：点大运 / 流年 / 流月（下钻）与 流日（明细） */
   document.getElementById('pano').addEventListener('click', function(e){
     var cell=e.target.closest('.cell'); if(!cell||cell.classList.contains('clickless')) return;
     if(cell.dataset.dy!=null){
@@ -802,15 +846,19 @@
       // 选中大运后，默认选其首个流年（若含今年则选今年）
       var yrs=dy.getLiuNian().map(function(y){return y.getYear();});
       state.selYear = yrs.indexOf(state.nowYear)>=0? state.nowYear : yrs[0];
-      state.selMonthGz='';
+      state.selMonthGz=''; state.selDayYmd=''; hideDayDetail();
       renderPano();
     } else if(cell.dataset.yr!=null){
       state.selYear=parseInt(cell.dataset.yr,10);
-      state.selMonthGz='';
+      state.selMonthGz=''; state.selDayYmd=''; hideDayDetail();
       renderPano();
     } else if(cell.dataset.mon!=null){
-      state.selMonthGz=cell.dataset.mon;
+      state.selMonthGz=cell.dataset.mon; state.selDayYmd=''; hideDayDetail();
       renderPano();
+    } else if(cell.dataset.ld!=null){
+      state.selDayYmd=cell.dataset.ld;
+      renderPano();
+      renderDayDetail(cell.dataset.ld);
     }
   });
 
