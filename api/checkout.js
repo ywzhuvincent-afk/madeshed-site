@@ -119,24 +119,27 @@ async function createCreditCheckout(req, res) {
   }
 
   const origin = siteOrigin(req);
-  const stripeResource = 'checkout.sessions';
-  const checkoutMode = "mode:'payment'";
   const locale = checkoutLocale(req);
   const params = new URLSearchParams();
   params.set('mode', 'payment');
   params.set('locale', locale);
   await setLocalizedLineItem(params, priceId, CREDIT_PACK_PRODUCT.label, CREDIT_PACK_PRODUCT.labelEn, locale);
-  params.set('success_url', `${origin}/#/fortune?credits=success`);
+  params.set('success_url', `${origin}/#/fortune?credits=success&session_id={CHECKOUT_SESSION_ID}`);
   params.set('cancel_url', `${origin}/#/fortune?credits=cancel`);
+  // 收据/对账三件套：账号邮箱预填+收据直达、client_reference_id 便于人工对账（此前唯独点数包漏了）
+  if (user.email) { params.set('customer_email', user.email); params.set('payment_intent_data[receipt_email]', user.email); }
+  params.set('client_reference_id', user.id);
+  params.set('allow_promotion_codes', 'true');
+  params.set('invoice_creation[enabled]', 'true');
   params.set('metadata[product]', 'credit_pack');
   params.set('metadata[credits]', String(CREDIT_PACK_PRODUCT.credits));
   params.set('metadata[user_id]', user.id);
 
   try {
     const session = await stripeFormRequest('checkout/sessions', params);
-    return send(res, 200, { url: session.url, id: session.id, stripeResource, checkoutMode, product: CREDIT_PACK_PRODUCT });
+    return send(res, 200, { url: session.url, id: session.id, product: CREDIT_PACK_PRODUCT });
   } catch (error) {
-    return send(res, error.status || 500, { error: error.message || 'stripe_error', detail: error.detail || null, stripeResource, checkoutMode });
+    return send(res, error.status || 500, { error: error.message || 'stripe_error', detail: error.detail || null });
   }
 }
 
@@ -149,8 +152,24 @@ async function createMembershipCheckout(req, res) {
   if (!user) return null;
   if (!(await ensurePaidAccount(req, res, user))) return null;
 
-  const tier = req.body && req.body.tier === 'ultimate' ? 'ultimate' : 'ultimate';
+  const tier = 'ultimate';
   const product = MEMBERSHIP_PRODUCTS[tier];
+  const locale = checkoutLocale(req);
+
+  // 防重复订阅（曾为 blocker：双开标签/换设备可开出两个 ¥199/月 订阅，旧订阅站内不可见持续扣费）
+  let existingMembership = null;
+  try {
+    const rows = await supabaseSelect('memberships', `user_id=eq.${encodeURIComponent(user.id)}&select=status,tier,stripe_customer_id,stripe_subscription_id&limit=1`);
+    existingMembership = rows[0] || null;
+  } catch (e) { existingMembership = null; }
+  if (existingMembership && ['active', 'trialing', 'past_due'].indexOf(existingMembership.status) >= 0) {
+    return send(res, 409, {
+      error: 'already_member',
+      message: locale === 'en'
+        ? 'You already have an active Ultimate membership. Use "Manage Billing" to view or change it — no second subscription was created.'
+        : '你已经是最高级会员，无需重复开通。请用「管理会员/账单」查看或调整订阅——本次未创建新的订阅、未扣费。'
+    });
+  }
   const price = priceFromEnv(product.priceEnv);
   if (!process.env.STRIPE_SECRET_KEY || !price.value) {
     return send(res, 503, {
@@ -161,15 +180,16 @@ async function createMembershipCheckout(req, res) {
   }
 
   const origin = siteOrigin(req);
-  const locale = checkoutLocale(req);
   const params = new URLSearchParams();
   params.set('mode', 'subscription');
   params.set('locale', locale);
   await setLocalizedLineItem(params, price.value, product.label, product.labelEn, locale);
-  params.set('success_url', `${origin}/#/account?membership=success`);
+  params.set('success_url', `${origin}/#/account?membership=success&session_id={CHECKOUT_SESSION_ID}`);
   params.set('cancel_url', `${origin}/#/account?membership=cancel`);
   params.set('client_reference_id', user.id);
-  if (user.email) params.set('customer_email', user.email);
+  // 复用既有 Stripe customer（避免同一用户散落多个 customer，门户/发票历史才完整）
+  if (existingMembership && existingMembership.stripe_customer_id) params.set('customer', existingMembership.stripe_customer_id);
+  else if (user.email) params.set('customer_email', user.email);
   params.set('allow_promotion_codes', 'true');
   params.set('metadata[product]', 'membership');
   params.set('metadata[user_id]', user.id);
@@ -216,6 +236,27 @@ async function createReportCheckout(req, res) {
 
   const item = reportProductFor(req.body || {});
   if (!item) return send(res, 400, { error: 'invalid_report_type', message: '报告类型无效。' });
+  const locale = checkoutLocale(req);
+
+  // 防重复购买（曾为 major：已购权益按 (user,type) upsert，二次付款用户得不到任何新东西）
+  try {
+    let owned = false;
+    if (item.kind === 'fortune_report') {
+      const rows = await supabaseSelect('fortune_reports', `user_id=eq.${encodeURIComponent(user.id)}&report_type=eq.${encodeURIComponent(item.type)}&access_level=eq.paid&select=id&limit=1`);
+      owned = rows.length > 0;
+    } else {
+      const rows = await supabaseSelect('report_entitlements', `user_id=eq.${encodeURIComponent(user.id)}&report_type=eq.${encodeURIComponent(item.type)}&status=eq.active&select=id&limit=1`);
+      owned = rows.length > 0;
+    }
+    if (owned) {
+      return send(res, 409, {
+        error: 'already_owned',
+        message: locale === 'en'
+          ? 'You already own this report — open it from the report page, no need to buy again. You were not charged.'
+          : '你已购买过这份报告，直接在报告页生成/查看即可，无需重复购买——本次未扣费。'
+      });
+    }
+  } catch (e) { /* 权益查询失败不阻断购买 */ }
   const price = priceFromEnv(item.config.priceEnv);
   if (!process.env.STRIPE_SECRET_KEY || !price.value) {
     return send(res, 503, {
@@ -226,15 +267,16 @@ async function createReportCheckout(req, res) {
   }
 
   const origin = siteOrigin(req);
-  const locale = checkoutLocale(req);
   const params = new URLSearchParams();
   params.set('mode', 'payment');
   params.set('locale', locale);
   await setLocalizedLineItem(params, price.value, item.config.label, item.config.labelEn, locale);
-  params.set('success_url', `${origin}/#/${item.kind === 'fortune_report' ? 'fortune' : 'report'}?purchase=success`);
+  params.set('success_url', `${origin}/#/${item.kind === 'fortune_report' ? 'fortune' : 'report'}?purchase=success&session_id={CHECKOUT_SESSION_ID}`);
   params.set('cancel_url', `${origin}/#/${item.kind === 'fortune_report' ? 'fortune' : 'report'}?purchase=cancel`);
   params.set('client_reference_id', user.id);
-  if (user.email) params.set('customer_email', user.email);
+  if (user.email) { params.set('customer_email', user.email); params.set('payment_intent_data[receipt_email]', user.email); }
+  params.set('allow_promotion_codes', 'true');
+  params.set('invoice_creation[enabled]', 'true');
   params.set('metadata[product]', item.kind);
   params.set('metadata[user_id]', user.id);
   if (item.kind === 'fortune_report') {

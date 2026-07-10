@@ -8,7 +8,8 @@ import {
   logAccountEvent,
   requestIpHash,
   requestUserAgent,
-  supabaseInsert
+  supabaseInsert,
+  supabaseSelect
 } from './_supabase.js';
 
 const LEGAL_DOCUMENT_TYPES = new Set(LEGALLY_REQUIRED_ACCEPTANCES);
@@ -162,15 +163,35 @@ async function requestAccountDelete(req, res) {
   }
 }
 
+// 购买与点数记录：用户自助查看订单/点数流水/已解锁权益（专业购买流程标配，曾完全缺失）
+async function purchaseHistory(req, res) {
+  const auth = await getUserFromRequest(req);
+  if (!auth.user) return send(res, 401, { error: auth.error || 'unauthorized', message: '请先登录。' });
+  if (!hasSupabaseService()) return send(res, 503, { error: 'supabase_service_not_configured' });
+  const uid = encodeURIComponent(auth.user.id);
+  try {
+    const [ledger, reports, fortunes, memberships] = await Promise.all([
+      supabaseSelect('credit_ledger', `user_id=eq.${uid}&select=entry_type,amount,balance_after,reference_type,created_at,payload&order=created_at.desc&limit=50`),
+      supabaseSelect('report_entitlements', `user_id=eq.${uid}&select=report_type,status,created_at&order=created_at.desc&limit=20`),
+      supabaseSelect('fortune_reports', `user_id=eq.${uid}&select=report_type,access_level,updated_at&order=updated_at.desc&limit=20`),
+      supabaseSelect('memberships', `user_id=eq.${uid}&select=tier,status,current_period_end,payload,created_at&limit=1`)
+    ]);
+    return send(res, 200, { ok: true, ledger, reports, fortunes, membership: memberships[0] || null });
+  } catch (error) {
+    return send(res, 500, { error: 'purchase_history_failed', message: error.message });
+  }
+}
+
 export default async function handler(req, res) {
   const action = requestAction(req);
   if (action === 'bootstrap') return bootstrapAccount(req, res);
   if (action === 'status') return accountStatus(req, res);
   if (action === 'legal') return acceptLegal(req, res);
   if (action === 'delete') return requestAccountDelete(req, res);
+  if (action === 'purchases') return purchaseHistory(req, res);
   return send(res, 400, {
     error: 'invalid_account_action',
     message: '账号接口 action 无效。',
-    actions: ['bootstrap', 'status', 'legal', 'delete']
+    actions: ['bootstrap', 'status', 'legal', 'delete', 'purchases']
   });
 }

@@ -1366,8 +1366,8 @@ includesAll(checkoutApi, [
   "action === 'membership'",
   "action === 'report'",
   "action === 'portal'",
-  'checkout.sessions',
-  "mode:'payment'",
+  'checkout/sessions',
+  "params.set('mode', 'payment')",
   'CREDIT_PACK_PRODUCT',
   'STRIPE_SECRET_KEY',
   'STRIPE_CREDIT_PRICE_ID',
@@ -1502,5 +1502,23 @@ assert.ok(readdirSync('api').filter((f) => f.endsWith('.js') && !f.startsWith('_
 assert.ok(/export const PRODUCT_CATALOG/.test(catalogApi) && /default_price/.test(catalogApi), '_catalog.js 是商品目录唯一实现（跟随 default_price）');
 assert.ok(/function hydrateLivePrices/.test(index) && index.includes("fetch('/api/health?action=prices')"), '前端启动时用实时价格接口水合全部价格显示');
 assert.ok(!/priceEn:'\$/.test(index), '禁止编造美元价：英文价签用 CN¥（与实际扣费货币一致）');
+
+// ===== 购买全流程审计修复钉死（2026-07-10：42 项确认，8 blocker）=====
+// 1) 支付回跳：路由剥离 hash query + 消费 success/cancel 参数（确认横幅+延迟重拉权益）
+includesAll(index, ["const hash = rawHash.split('?')[0];", 'function handlePurchaseReturn', 'function showPurchaseToast', "params.get('credits')"], '支付回跳：路由兼容带 query 的 hash + 成功/取消确认闭环');
+// 2) 结账防重复：已是会员/已购报告返回 409，不再二次扣费；点数包补 customer_email/收据
+includesAll(checkoutApi, ["error: 'already_member'", "error: 'already_owned'", 'payment_intent_data[receipt_email]', 'session_id={CHECKOUT_SESSION_ID}', 'invoice_creation[enabled]'], '结账：防重复订阅/重复购买 + 收据邮箱 + 发票 + 回跳带 session_id');
+assert.ok((checkoutApi.match(/allow_promotion_codes/g) || []).length >= 3, '全部结账线支持促销码');
+// 3) webhook：跨事件退款幂等 / 未收款不履约 / 拒付冻结 / 扣款失败宽限 / 期末日兼容新 API
+includesAll(stripeWebhookApi, ['function refundAlreadyRecorded', "session.payment_status !== 'paid'", "event.type === 'charge.dispute.created'", "event.type === 'invoice.payment_failed'", 'function subscriptionPeriodEnd', 'partial_refund_entitlement_kept', "{ method: 'DELETE' }"], 'webhook：退款幂等/收款校验/拒付/宽限期/到期日/退款联动取消订阅');
+assert.ok(!/grantMembershipCredits\(userId, tier, 'subscription_event'\)/.test(stripeWebhookApi), '订阅状态事件不再发月度赠点（只在 invoice.paid/真实付款发放）');
+// 4) past_due 宽限口径前后端一致
+assert.ok(/'active', 'trialing', 'past_due'/.test(accessApi), '服务端权益检查 past_due 宽限');
+assert.ok(/m\.status==='past_due'/.test(index), '前端会员判定含 past_due 宽限');
+// 5) 购买历史：account?action=purchases + 账号页渲染
+assert.ok(/action === 'purchases'/.test(accountApi) && /function purchaseHistory/.test(accountApi), 'account API 提供购买与点数记录');
+includesAll(index, ['function renderPurchaseHistory', "fetch('/api/account?action=purchases'", 'id="purchase-history"'], '账号页展示购买记录/点数流水/已解锁权益');
+// 6) 数据库硬化脚本存在（需在 Supabase SQL Editor 执行）
+assert.ok(existsSync('supabase/2026-07-10-purchase-hardening.sql'), '购买硬化 SQL（封付费绕过+账本唯一约束）');
 
 console.log('Static site checks passed');

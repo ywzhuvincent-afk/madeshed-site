@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { hasSupabaseService, supabaseInsert, supabaseSelect, supabaseUpdate } from './_supabase.js';
-import { cleanEnv, stripeGet } from './_stripe.js';
+import { cleanEnv, stripeGet, stripeFormRequest } from './_stripe.js';
 
 function send(res, status, body) {
   res.status(status).json(body);
@@ -56,6 +56,19 @@ function subscriptionPriceId(subscription) {
     subscription.items.data[0].price.id;
 }
 
+// Stripe 2025-03-31.basil 起 current_period_* 从订阅根对象移到 items 上——根字段拿不到时从 item 取，
+// 否则 memberships.current_period_end 恒为 null，会员永远看不到到期日。
+function subscriptionPeriodEnd(subscription) {
+  if (!subscription) return null;
+  const item = subscription.items && subscription.items.data && subscription.items.data[0];
+  return subscription.current_period_end || (item && item.current_period_end) || null;
+}
+function subscriptionPeriodStart(subscription) {
+  if (!subscription) return null;
+  const item = subscription.items && subscription.items.data && subscription.items.data[0];
+  return subscription.current_period_start || (item && item.current_period_start) || null;
+}
+
 async function creditBalance(userId) {
   const rows = await supabaseSelect('credit_ledger', `user_id=eq.${encodeURIComponent(userId)}&select=amount`);
   return rows.reduce((sum, row) => sum + (Number(row.amount) || 0), 0);
@@ -63,9 +76,12 @@ async function creditBalance(userId) {
 
 async function grantMembershipCredits(userId, tier, source, referenceId = currentGrantMonth()) {
   if (!hasSupabaseService() || !userId || tier !== 'ultimate') return { granted: false };
+  // 幂等口径：每用户每个日历月至多一次月度赠点（按 created_at 月窗口查重，而非只比 reference_id——
+  // 否则 invoice 键与月份键并存的多事件源会在同月各发一次 30 点）。
+  const monthStart = `${currentGrantMonth()}-01T00:00:00Z`;
   const existing = await supabaseSelect(
     'credit_ledger',
-    `user_id=eq.${encodeURIComponent(userId)}&entry_type=eq.membership_grant&reference_id=eq.${encodeURIComponent(referenceId)}&select=id&limit=1`
+    `user_id=eq.${encodeURIComponent(userId)}&entry_type=eq.membership_grant&created_at=gte.${encodeURIComponent(monthStart)}&select=id&limit=1`
   );
   if (existing.length) return { granted: false, duplicate: true };
   const balance = await creditBalance(userId);
@@ -130,12 +146,21 @@ async function upsertMembershipFromSubscription(subscription, fallback = {}) {
   if (!userId) return null;
   const tier = metadata.tier || fallback.tier || 'ultimate';
   const status = activeMembershipStatus(subscription.status || fallback.status || 'active');
-  const currentPeriodEnd = stripeTime(subscription.current_period_end || fallback.currentPeriodEnd);
+  // 防"旧订阅期末取消事件压掉新订阅"（曾为 blocker：取消→改主意重订后，旧订阅 deleted 事件会把
+  // 正常扣费的新订阅整行覆盖成 canceled）：canceled 事件只在 subscription_id 匹配当前行时才写。
+  if (status === 'canceled' && subscriptionId) {
+    const existingRow = await membershipForCustomer(customerId) || await membershipForSubscription(subscriptionId);
+    const current = existingRow || (userId ? (await supabaseSelect('memberships', `user_id=eq.${encodeURIComponent(userId)}&select=stripe_subscription_id,status&limit=1`))[0] : null);
+    if (current && current.stripe_subscription_id && current.stripe_subscription_id !== subscriptionId) {
+      return { userId, tier, status: current.status, skipped: 'stale_subscription_cancel' };
+    }
+  }
+  const currentPeriodEnd = stripeTime(subscriptionPeriodEnd(subscription) || fallback.currentPeriodEnd);
   const payload = {
     stripe_status: subscription.status || null,
     stripe_price_id: subscriptionPriceId(subscription) || fallback.priceId || null,
     cancel_at_period_end: Boolean(subscription.cancel_at_period_end),
-    current_period_start: stripeTime(subscription.current_period_start),
+    current_period_start: stripeTime(subscriptionPeriodStart(subscription)),
     trial_end: stripeTime(subscription.trial_end),
     latest_invoice: subscription.latest_invoice || null
   };
@@ -148,9 +173,8 @@ async function upsertMembershipFromSubscription(subscription, fallback = {}) {
     current_period_end: currentPeriodEnd,
     payload
   }, { upsert: true, onConflict: 'user_id' });
-  if (status === 'active' || status === 'trialing') {
-    await grantMembershipCredits(userId, tier, 'subscription_event');
-  }
+  // 月度赠点只在真实付款事件发放（invoice.paid / checkout 完成）——订阅状态事件不发点，
+  // 否则用户在 portal 点取消都会触发 subscription.updated 白拿新月份 30 点。
   return { userId, tier, status };
 }
 
@@ -178,7 +202,7 @@ async function upsertMembershipFromCheckout(session, metadata) {
     current_period_end: null,
     payload: { checkout_session_id: session.id || null, source: 'checkout.session.completed' }
   }, { upsert: true, onConflict: 'user_id' });
-  await grantMembershipCredits(userId, tier, 'checkout_session');
+  // 赠点统一由 invoice.paid 发放（订阅结账后首张发票立即触发），此处不再重复发
   return { userId, tier, status: 'active' };
 }
 
@@ -282,13 +306,28 @@ async function resolveRefundContext(event) {
   };
 }
 
-async function reverseCreditPack(ctx) {
-  if (!hasSupabaseService() || !ctx.userId) return { reversed: false };
-  const existing = await supabaseSelect(
+// 退款幂等（跨事件）：refund.created 与 charge.refunded 对同一笔退款可能生成不同 reference_id
+// （新 Stripe API 版本 charge 不再内嵌 refunds 列表 → 兜底键为 chargeId-refund），故再按 session 查重，
+// 否则同一笔退款会被两个事件各回收一次点数（曾为 blocker：-10×2 / -30×2）。
+async function refundAlreadyRecorded(ctx) {
+  const byRef = await supabaseSelect(
     'credit_ledger',
     `reference_id=eq.${encodeURIComponent(ctx.refund_id)}&entry_type=eq.refund&select=id&limit=1`
   );
-  if (existing.length) return { reversed: false, duplicate: true };
+  if (byRef.length) return true;
+  if (ctx.session_id) {
+    const bySession = await supabaseSelect(
+      'credit_ledger',
+      `stripe_session_id=eq.${encodeURIComponent(ctx.session_id)}&entry_type=eq.refund&select=id&limit=1`
+    );
+    if (bySession.length) return true;
+  }
+  return false;
+}
+
+async function reverseCreditPack(ctx) {
+  if (!hasSupabaseService() || !ctx.userId) return { reversed: false };
+  if (await refundAlreadyRecorded(ctx)) return { reversed: false, duplicate: true };
   const purchased = ctx.session_id
     ? await supabaseSelect('credit_ledger', `stripe_session_id=eq.${encodeURIComponent(ctx.session_id)}&entry_type=eq.purchase&select=amount&limit=1`)
     : [];
@@ -369,11 +408,18 @@ async function markMembershipRefunded(ctx) {
       amount_total: ctx.amount_total
     }
   });
-  const existing = await supabaseSelect(
-    'credit_ledger',
-    `reference_id=eq.${encodeURIComponent(ctx.refund_id)}&entry_type=eq.refund&select=id&limit=1`
-  );
-  if (!existing.length) {
+  // 同步取消 Stripe 订阅（曾为 major：只改本地库不取消订阅→下月照扣 ¥199，invoice.paid 又把状态翻回 active，
+  // 退款形同虚设）。取消失败不阻断退款处理，但记录下来供人工跟进。
+  let stripeCancel = null;
+  if (ctx.subscription_id) {
+    try {
+      await stripeFormRequest(`subscriptions/${encodeURIComponent(ctx.subscription_id)}`, new URLSearchParams(), { method: 'DELETE' });
+      stripeCancel = 'canceled';
+    } catch (error) {
+      stripeCancel = 'cancel_failed:' + String(error && (error.detail?.error?.message || error.message)).slice(0, 100);
+    }
+  }
+  if (!(await refundAlreadyRecorded(ctx))) {
     const balance = await creditBalance(ctx.userId);
     await supabaseInsert('credit_ledger', {
       user_id: ctx.userId,
@@ -386,12 +432,17 @@ async function markMembershipRefunded(ctx) {
       payload: { product: 'membership', refund_id: ctx.refund_id, payment_intent: ctx.payment_intent }
     });
   }
-  return { updated: true, status: 'canceled' };
+  return { updated: true, status: 'canceled', stripeCancel };
 }
 
 async function handleCheckoutCompleted(session) {
   const metadata = session.metadata || {};
   const product = metadata.product;
+  // 延迟到账支付方式下 session 以 payment_status='unpaid' 完成——未收到钱绝不履约，
+  // 等 checkout.session.async_payment_succeeded 再发货（曾为 major：先发货后收款）。
+  if (session.payment_status && session.payment_status !== 'paid' && session.payment_status !== 'no_payment_required') {
+    return { userId: metadata.user_id || null, product, deferred: 'awaiting_payment(' + session.payment_status + ')' };
+  }
   if (product === 'credit_pack') await handleCreditPack(session, metadata);
   if (product === 'membership') return upsertMembershipFromCheckout(session, metadata);
   if (product === 'report') await handleTradeReport(session, metadata);
@@ -402,10 +453,11 @@ async function handleCheckoutCompleted(session) {
 async function handleRefund(event) {
   const ctx = await resolveRefundContext(event);
   let action = { handled: false, reason: 'unmatched_refund' };
+  // 部分退款不撤权益（曾为 major：善意退 ¥20 会没收全部已付权益）；点数包按比例回冲维持原逻辑。
   if (ctx.product === 'credit_pack') action = await reverseCreditPack(ctx);
-  if (ctx.product === 'report') action = await markTradeReportRefunded(ctx);
-  if (ctx.product === 'fortune_report') action = await markFortuneReportRefunded(ctx);
-  if (ctx.product === 'membership') action = await markMembershipRefunded(ctx);
+  if (ctx.product === 'report') action = ctx.full_refund ? await markTradeReportRefunded(ctx) : { skipped: 'partial_refund_entitlement_kept' };
+  if (ctx.product === 'fortune_report') action = ctx.full_refund ? await markFortuneReportRefunded(ctx) : { skipped: 'partial_refund_entitlement_kept' };
+  if (ctx.product === 'membership') action = ctx.full_refund ? await markMembershipRefunded(ctx) : { skipped: 'partial_refund_membership_kept' };
   return {
     userId: ctx.userId,
     product: ctx.product || 'unknown',
@@ -416,13 +468,37 @@ async function handleRefund(event) {
   };
 }
 
+// 拒付（chargeback）：钱已被 Stripe 划走——按全额退款同款逻辑立即冻结对应权益并留痕，
+// 避免"货款两失+权益照用"（曾为 major：完全无处理）。
+async function handleDispute(event) {
+  const dispute = event.data && event.data.object ? event.data.object : {};
+  const pseudoEvent = {
+    id: event.id,
+    type: 'charge.refunded',
+    data: { object: { id: dispute.charge, payment_intent: dispute.payment_intent, refunds: { data: [{ id: `dispute-${dispute.id}`, amount: dispute.amount, charge: dispute.charge, payment_intent: dispute.payment_intent }] }, amount: dispute.amount, amount_refunded: dispute.amount, refunded: true, customer: null } }
+  };
+  const result = await handleRefund(pseudoEvent);
+  return { ...result, dispute_id: dispute.id, dispute_reason: dispute.reason || null };
+}
+
+// 扣款失败：标记 past_due（权益进入宽限期，前端提示更新支付方式），不静默断权
+async function handleInvoicePaymentFailed(invoice) {
+  const subscriptionId = subscriptionIdFromInvoice(invoice);
+  if (!subscriptionId) return null;
+  const membership = await membershipForSubscription(subscriptionId) || await membershipForCustomer(invoice.customer);
+  if (!membership) return null;
+  await supabaseUpdate('memberships', `user_id=eq.${encodeURIComponent(membership.user_id)}`, { status: 'past_due' });
+  return { userId: membership.user_id, status: 'past_due' };
+}
+
 async function handleInvoicePaid(invoice) {
   const subscriptionId = subscriptionIdFromInvoice(invoice);
   if (!subscriptionId) return null;
   const subscription = await stripeGet(`subscriptions/${encodeURIComponent(subscriptionId)}`);
   const updated = await upsertMembershipFromSubscription(subscription || { id: subscriptionId, customer: invoice.customer, status: 'active' });
-  if (updated && updated.userId && updated.tier === 'ultimate') {
-    await grantMembershipCredits(updated.userId, updated.tier, 'invoice.paid', currentGrantMonth());
+  if (updated && updated.userId && updated.tier === 'ultimate' && (updated.status === 'active' || updated.status === 'trialing')) {
+    // 引用真实发票 id（月窗口幂等在 grantMembershipCredits 内统一处理）
+    await grantMembershipCredits(updated.userId, updated.tier, 'invoice.paid', invoice.id || currentGrantMonth());
   }
   return updated;
 }
@@ -454,14 +530,20 @@ export default async function handler(req, res) {
   let result = null;
   const object = event.data && event.data.object ? event.data.object : {};
   try {
-    if (event.type === 'checkout.session.completed') {
+    if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
       result = await handleCheckoutCompleted(object);
+    } else if (event.type === 'checkout.session.async_payment_failed') {
+      result = { userId: (object.metadata || {}).user_id || null, product: (object.metadata || {}).product || null, note: 'async_payment_failed_no_fulfillment' };
     } else if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
       result = await upsertMembershipFromSubscription(object, {
         status: event.type === 'customer.subscription.deleted' ? 'canceled' : object.status
       });
     } else if (event.type === 'invoice.paid') {
       result = await handleInvoicePaid(object);
+    } else if (event.type === 'invoice.payment_failed') {
+      result = await handleInvoicePaymentFailed(object);
+    } else if (event.type === 'charge.dispute.created') {
+      result = await handleDispute(event);
     } else if (event.type === 'refund.created' || event.type === 'refund.updated' || event.type === 'charge.refunded') {
       result = await handleRefund(event);
     }

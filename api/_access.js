@@ -1,6 +1,8 @@
 import { getUserFromRequest, hasSupabaseService, supabaseInsert, supabaseSelect } from './_supabase.js';
 
-const ACTIVE_MEMBERSHIP_STATUSES = new Set(['active', 'trialing']);
+// past_due=扣款失败宽限期：Stripe 智能重试期间不立刻断权（前端 isMembershipActive 同口径），
+// 界面另行提示"更新支付方式"；重试全部失败后订阅转 canceled 自然降级。
+const ACTIVE_MEMBERSHIP_STATUSES = new Set(['active', 'trialing', 'past_due']);
 
 export function escapeHtml(value) {
   return String(value || '').replace(/[&<>"']/g, (char) => ({

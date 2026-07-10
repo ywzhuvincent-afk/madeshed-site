@@ -107,7 +107,10 @@ async function maybeGrantUltimateCredits(userId) {
   const activeUltimate = membership && (membership.tier === 'ultimate' || membership.tier === 'highest') && (membership.status === 'active' || membership.status === 'trialing');
   if (!activeUltimate) return;
   const referenceId = currentGrantMonth();
-  const grants = await supabaseSelect('credit_ledger', `user_id=eq.${encodeURIComponent(userId)}&entry_type=eq.membership_grant&reference_id=eq.${encodeURIComponent(referenceId)}&select=id&limit=1`);
+  // 与 stripe-webhook 同口径：按"日历月窗口"查重（webhook 的 grant 以 invoice.id 为 reference_id，
+  // 若仍按 reference_id 精确比对，本兜底会在同月再发一次 30 点）
+  const monthStart = `${referenceId}-01T00:00:00Z`;
+  const grants = await supabaseSelect('credit_ledger', `user_id=eq.${encodeURIComponent(userId)}&entry_type=eq.membership_grant&created_at=gte.${encodeURIComponent(monthStart)}&select=id&limit=1`);
   if (grants.length) return;
   const balance = await creditBalance(userId);
   await supabaseInsert('credit_ledger', {

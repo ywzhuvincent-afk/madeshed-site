@@ -131,7 +131,7 @@ export async function accountStatusForUser(user) {
   const settled = await Promise.allSettled([
     supabaseSelect('account_profiles', `user_id=eq.${encodeURIComponent(userId)}&select=*&limit=1`),
     supabaseSelect('legal_acceptances', `user_id=eq.${encodeURIComponent(userId)}&select=document_type,document_version,accepted_at`),
-    supabaseSelect('memberships', `user_id=eq.${encodeURIComponent(userId)}&select=tier,status,current_period_end&limit=1`),
+    supabaseSelect('memberships', `user_id=eq.${encodeURIComponent(userId)}&select=tier,status,current_period_end,payload&limit=1`),
     supabaseSelect('credit_ledger', `user_id=eq.${encodeURIComponent(userId)}&select=amount`),
     supabaseSelect('account_delete_requests', `user_id=eq.${encodeURIComponent(userId)}&select=status,created_at&order=created_at.desc&limit=1`)
   ]);
