@@ -1,15 +1,18 @@
 import { getUserFromRequest, hasSupabaseService, requireAccountReadyForPaidAction, supabaseSelect } from './_supabase.js';
-import { cleanEnv, priceFromEnv, siteOrigin, stripeFormRequest } from './_stripe.js';
+import { cleanEnv, priceFromEnv, siteOrigin, stripeFormRequest, stripeGet } from './_stripe.js';
 
+// 商品名中英文各自一份：结账页按用户语言显示各自语言（不混）。改名时两边都要改。
 const CREDIT_PACK_PRODUCT = {
   credits: 10,
   label: '问大师 10 点包',
+  labelEn: 'Ask Master · 10 Credits',
   price: '¥99'
 };
 
 const MEMBERSHIP_PRODUCTS = {
   ultimate: {
     label: '最高级会员',
+    labelEn: 'Ultimate Membership',
     price: '¥199/月',
     monthlyCredits: 30,
     priceEnv: ['STRIPE_ULTIMATE_PRICE_ID', 'STRIPE_MEMBERSHIP_PRICE_ID']
@@ -17,17 +20,42 @@ const MEMBERSHIP_PRODUCTS = {
 };
 
 const REPORT_PRODUCTS = {
-  '7': { label: '7 天报告', priceEnv: ['STRIPE_REPORT_7_PRICE_ID'] },
-  '30': { label: '月度报告', priceEnv: ['STRIPE_REPORT_30_PRICE_ID', 'STRIPE_REPORT_PRICE_ID'] },
-  '365': { label: '年度报告', priceEnv: ['STRIPE_REPORT_365_PRICE_ID'] },
-  all: { label: '全部历史报告', priceEnv: ['STRIPE_REPORT_ALL_PRICE_ID'] }
+  '7': { label: '7 天报告', labelEn: 'Trade Report · 7 Days', priceEnv: ['STRIPE_REPORT_7_PRICE_ID'] },
+  '30': { label: '月度报告', labelEn: 'Trade Report · Monthly', priceEnv: ['STRIPE_REPORT_30_PRICE_ID', 'STRIPE_REPORT_PRICE_ID'] },
+  '365': { label: '年度报告', labelEn: 'Trade Report · Yearly', priceEnv: ['STRIPE_REPORT_365_PRICE_ID'] },
+  all: { label: '全部历史报告', labelEn: 'Trade Report · All History', priceEnv: ['STRIPE_REPORT_ALL_PRICE_ID'] }
 };
 
 const FORTUNE_PRODUCTS = {
-  full: { label: '全盘解读', priceEnv: ['STRIPE_FORTUNE_FULL_PRICE_ID'] },
-  dayun: { label: '流年大运解读', priceEnv: ['STRIPE_FORTUNE_DAYUN_PRICE_ID'] },
-  month: { label: '每月运程', priceEnv: ['STRIPE_FORTUNE_MONTH_PRICE_ID'] }
+  full: { label: '全盘解读', labelEn: 'Full Chart Reading', priceEnv: ['STRIPE_FORTUNE_FULL_PRICE_ID'] },
+  dayun: { label: '流年大运解读', labelEn: 'Luck Pillar Reading', priceEnv: ['STRIPE_FORTUNE_DAYUN_PRICE_ID'] },
+  month: { label: '每月运程', labelEn: 'Monthly Timing Reading', priceEnv: ['STRIPE_FORTUNE_MONTH_PRICE_ID'] }
 };
+
+// 结账语言：前端把当前站点语言(localeIsEn)放进 body.locale
+function checkoutLocale(req) {
+  return String((req.body && req.body.locale) || '').toLowerCase() === 'en' ? 'en' : 'zh';
+}
+// 用 price_data 内联本地化商品名——金额/币种/订阅周期仍取自已配置的 price（价格权威、不改），
+// 只把展示名换成对应语言。取价失败则安全退回用 price ID（宁可名字是中文，也不让结账失败）。
+async function setLocalizedLineItem(params, priceId, nameZh, nameEn, locale) {
+  let price = null;
+  try { price = await stripeGet(`prices/${encodeURIComponent(priceId)}`); } catch (e) { price = null; }
+  params.set('line_items[0][quantity]', '1');
+  if (!price || !price.unit_amount || !price.currency) {
+    params.set('line_items[0][price]', priceId);
+    return;
+  }
+  params.set('line_items[0][price_data][currency]', price.currency);
+  params.set('line_items[0][price_data][unit_amount]', String(price.unit_amount));
+  params.set('line_items[0][price_data][product_data][name]', locale === 'en' ? nameEn : nameZh);
+  if (price.recurring && price.recurring.interval) {
+    params.set('line_items[0][price_data][recurring][interval]', price.recurring.interval);
+    if (price.recurring.interval_count && price.recurring.interval_count !== 1) {
+      params.set('line_items[0][price_data][recurring][interval_count]', String(price.recurring.interval_count));
+    }
+  }
+}
 
 function send(res, status, body) {
   res.status(status).json(body);
@@ -77,10 +105,11 @@ async function createCreditCheckout(req, res) {
   const origin = siteOrigin(req);
   const stripeResource = 'checkout.sessions';
   const checkoutMode = "mode:'payment'";
+  const locale = checkoutLocale(req);
   const params = new URLSearchParams();
   params.set('mode', 'payment');
-  params.set('line_items[0][price]', priceId);
-  params.set('line_items[0][quantity]', '1');
+  params.set('locale', locale);
+  await setLocalizedLineItem(params, priceId, CREDIT_PACK_PRODUCT.label, CREDIT_PACK_PRODUCT.labelEn, locale);
   params.set('success_url', `${origin}/#/fortune?credits=success`);
   params.set('cancel_url', `${origin}/#/fortune?credits=cancel`);
   params.set('metadata[product]', 'credit_pack');
@@ -116,10 +145,11 @@ async function createMembershipCheckout(req, res) {
   }
 
   const origin = siteOrigin(req);
+  const locale = checkoutLocale(req);
   const params = new URLSearchParams();
   params.set('mode', 'subscription');
-  params.set('line_items[0][price]', price.value);
-  params.set('line_items[0][quantity]', '1');
+  params.set('locale', locale);
+  await setLocalizedLineItem(params, price.value, product.label, product.labelEn, locale);
   params.set('success_url', `${origin}/#/account?membership=success`);
   params.set('cancel_url', `${origin}/#/account?membership=cancel`);
   params.set('client_reference_id', user.id);
@@ -180,10 +210,11 @@ async function createReportCheckout(req, res) {
   }
 
   const origin = siteOrigin(req);
+  const locale = checkoutLocale(req);
   const params = new URLSearchParams();
   params.set('mode', 'payment');
-  params.set('line_items[0][price]', price.value);
-  params.set('line_items[0][quantity]', '1');
+  params.set('locale', locale);
+  await setLocalizedLineItem(params, price.value, item.config.label, item.config.labelEn, locale);
   params.set('success_url', `${origin}/#/${item.kind === 'fortune_report' ? 'fortune' : 'report'}?purchase=success`);
   params.set('cancel_url', `${origin}/#/${item.kind === 'fortune_report' ? 'fortune' : 'report'}?purchase=cancel`);
   params.set('client_reference_id', user.id);

@@ -1482,5 +1482,9 @@ const supabaseLib = readFileSync('api/_supabase.js', utf8);
 assert.ok(!supabaseLib.includes("error: 'email_not_confirmed'"), '服务端购买前置不再强制邮箱确认');
 assert.ok(/requireAccountReadyForPaidAction/.test(supabaseLib) && /if \(!status\.legalComplete\)/.test(supabaseLib), '服务端购买前置仍保留法律条款接受');
 assert.ok(!index.includes('确认邮箱后才能购买会员'), '前端购买提示不再强制邮箱确认');
+// 结账双语：会话按语言传 locale + price_data 本地化商品名；每个商品有 labelEn；4 个入口都传站点语言
+assert.ok(/function checkoutLocale/.test(checkoutApi) && /setLocalizedLineItem/.test(checkoutApi) && /params\.set\('locale', locale\)/.test(checkoutApi), '结账会话按语言传 locale + 用 price_data 本地化商品名');
+assert.ok(/labelEn:/.test(checkoutApi), '结账商品配置中英文各一份(label + labelEn)');
+assert.ok((index.match(/locale:\(typeof localeIsEn==='function'&&localeIsEn\(\)\)\?'en':'zh'/g) || []).length >= 4, '4 个购买入口都把当前站点语言传给结账接口');
 
 console.log('Static site checks passed');
