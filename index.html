@@ -2087,7 +2087,7 @@ function productDisplayPrice(product){return typeof localeIsEn==='function'&&loc
    后台"价格管理"改价后，页面各处价格自动跟随，杜绝"显示旧价、扣新价"的脱节。取不到时用上面的常量兜底。 */
 function hydrateLivePrices(){
   try{
-    fetch('/api/prices').then(function(r){return r.json();}).then(function(j){
+    fetch('/api/health?action=prices').then(function(r){return r.json();}).then(function(j){
       if(!j||!j.items||!j.items.length)return;
       var by={};j.items.forEach(function(x){by[x.key]=x;});
       var en=typeof localeIsEn==='function'&&localeIsEn();

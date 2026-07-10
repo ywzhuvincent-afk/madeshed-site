@@ -1,0 +1,208 @@
+- navigation:
+  - button "返回首页": Madeshed·
+  - link "每日 Daily":
+    - /url: "#/daily"
+  - link "命盘 Chart":
+    - /url: "#/dashboard"
+  - link "流年大运 Forecast":
+    - /url: /chart-full.html
+  - link "月报 Report":
+    - /url: "#/report"
+  - link "命理咨询 Ask Master":
+    - /url: "#/fortune"
+  - link "设置 Account":
+    - /url: "#/account"
+  - generic "语言":
+    - button "中" [pressed]
+    - button "EN"
+  - generic: FREE
+  - generic: V
+- text: 推荐 ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ 🔒 ✓ ✓ ✓ ✓ ✓ ✓
+- generic: 2026 年 6 月 30 日 · 星期二
+- 'heading "今日: 谨慎 · 印" [level=1]'
+- generic: 流年 丙午· 流月 甲午· 流日 乙亥
+- strong: "示例历史:"
+- text: 在浅绿日交易 12 次 · 胜率 67% · 平均 +1.4%
+- generic: "48"
+- generic: 行动指数
+- generic: 仓位 20% · 底盘 52 · 四柱互动：流支亥与日支亥刑、时支巳冲。，轻仓确认
+- generic: 今日记录 · CHECK-IN
+- generic: 10 秒搞定
+- generic: 今天的交易结果?
+- button "📈 大赚":
+  - generic: 📈
+  - text: 大赚
+- button "🟢 赚":
+  - generic: 🟢
+  - text: 赚
+- button "⚪ 平":
+  - generic: ⚪
+  - text: 平
+- button "🔴 亏":
+  - generic: 🔴
+  - text: 亏
+- button "📉 大亏":
+  - generic: 📉
+  - text: 大亏
+- button "🚫 没交易":
+  - generic: 🚫
+  - text: 没交易
+- heading "个人真实历史" [level=2]
+- generic: 个人真实记录 · 近 1 月 · 交易样本 N=1 · 总记录 1
+- generic: 按命理颜色分组
+- generic: 胜率 · 样本数 · 结果分布
+- generic "统计范围":
+  - button "近 1 月"
+  - button "近 7 天"
+  - button "近 1 年"
+  - button "全部"
+  - button "自定义"
+- generic: 浅绿
+- generic: 浅绿日N=0
+- generic: 大赚 0
+- generic: 赚 0
+- generic: 平 0
+- generic: 亏 0
+- generic: 大亏 0
+- generic: —%
+- generic: N=0 太少
+- generic: 绿
+- generic: 绿日N=1
+- generic: 大赚 0
+- generic: 赚 1
+- generic: 平 0
+- generic: 亏 0
+- generic: 大亏 0
+- generic: 100%
+- generic: N=1 太少
+- generic: 黄
+- generic: 黄日N=0
+- generic: 大赚 0
+- generic: 赚 0
+- generic: 平 0
+- generic: 亏 0
+- generic: 大亏 0
+- generic: —%
+- generic: N=0 太少
+- generic: 橙
+- generic: 橙日N=0
+- generic: 大赚 0
+- generic: 赚 0
+- generic: 平 0
+- generic: 亏 0
+- generic: 大亏 0
+- generic: —%
+- generic: N=0 太少
+- generic: 红
+- generic: 红日N=0
+- generic: 大赚 0
+- generic: 赚 0
+- generic: 平 0
+- generic: 亏 0
+- generic: 大亏 0
+- generic: —%
+- generic: N=0 太少
+- strong: 右侧大百分比=胜率
+- text: ，表示该颜色命理状态下
+- strong: 大赚+赚 / 已交易
+- text: ；
+- strong: N=样本数
+- text: ；下面小字为
+- strong: 95%置信区间
+- text: ，样本少时只作参考。
+- generic "命理状态颜色说明":
+  - generic: 命理状态
+  - generic: 浅绿=高顺势
+  - generic: 适合按计划推进
+  - generic: 绿=顺势
+  - generic: 可正常操作，控制节奏
+  - generic: 黄=中性
+  - generic: 中性观望，轻仓验证
+  - generic: 橙=谨慎
+  - generic: 谨慎轻仓，少追单
+  - generic: 红=高风险
+  - generic: 高风险，优先防守
+- generic: 近 30 天日历
+- generic: 颜色=命理状态 · 标记=交易结果
+- button "查看全部历史"
+- generic: 日
+- generic: 一
+- generic: 二
+- generic: 三
+- generic: 四
+- generic: 五
+- generic: 六
+- generic "2026/6/1 · 无记录":
+  - generic: 6/1
+- generic "2026/6/2 · 无记录":
+  - generic: 6/2
+- generic "2026/6/3 · 无记录":
+  - generic: 6/3
+- generic "2026/6/4 · 无记录":
+  - generic: 6/4
+- generic "2026/6/5 · 无记录":
+  - generic: 6/5
+- generic "2026/6/6 · 无记录":
+  - generic: 6/6
+- generic "2026/6/7 · 无记录":
+  - generic: 6/7
+- generic "2026/6/8 · 无记录":
+  - generic: 6/8
+- generic "2026/6/9 · 无记录":
+  - generic: 6/9
+- generic "2026/6/10 · 无记录":
+  - generic: 6/10
+- generic "2026/6/11 · 无记录":
+  - generic: 6/11
+- generic "2026/6/12 · 无记录":
+  - generic: 6/12
+- generic "2026/6/13 · 无记录":
+  - generic: 6/13
+- generic "2026/6/14 · 无记录":
+  - generic: 6/14
+- generic "2026/6/15 · 无记录":
+  - generic: 6/15
+- generic "2026/6/16 · 无记录":
+  - generic: 6/16
+- generic "2026/6/17 · 无记录":
+  - generic: 6/17
+- generic "2026/6/18 · 无记录":
+  - generic: 6/18
+- generic "2026/6/19 · 无记录":
+  - generic: 6/19
+- generic "2026/6/20 · 无记录":
+  - generic: 6/20
+- generic "2026/6/21 · 无记录":
+  - generic: 6/21
+- generic "2026/6/22 · 无记录":
+  - generic: 6/22
+- generic "2026/6/23 · 无记录":
+  - generic: 6/23
+- generic "2026/6/24 · 无记录":
+  - generic: 6/24
+- generic "2026/6/25 · 无记录":
+  - generic: 6/25
+- generic "2026/6/26 · 无记录":
+  - generic: 6/26
+- generic "2026/6/27 · 无记录":
+  - generic: 6/27
+- generic "2026/6/28 · 无记录":
+  - generic: 6/28
+- generic "2026/6/29 · 绿=顺势 · 赚 · 真实记录":
+  - generic: 6/29
+  - generic: ✓
+- generic "2026/6/30 · 无记录":
+  - generic: 6/30
+- generic: 浅绿=高顺势
+- generic: 绿=顺势
+- generic: 黄=中性
+- generic: 橙=谨慎
+- generic: 红=高风险
+- generic: ✓✓=大赚 ✓=赚 —=平 X=亏 XX=大亏 ·=未交易 空白=无记录
+- generic: 💡
+- heading "系统发现的模式" [level=3]
+- generic: 📊 数据累积中
+- generic: 当前范围已记录 1 次交易。必须持续累积更多真实记录，至少 20 条后才适合看颜色胜率分组。
+- text: 想跨设备同步 / 接入券商 API 自动记录?
+- strong: 升级 PRO · ¥49/月
+- button "了解 PRO →"

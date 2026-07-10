@@ -1,0 +1,86 @@
+- navigation:
+  - button "返回首页": Madeshed·
+  - link "每日 Daily":
+    - /url: "#/daily"
+  - link "命盘 Chart":
+    - /url: "#/dashboard"
+  - link "流年大运 Forecast":
+    - /url: /chart-full.html
+  - link "月报 Report":
+    - /url: "#/report"
+  - link "命理咨询 Ask Master":
+    - /url: "#/fortune"
+  - link "设置 Account":
+    - /url: "#/account"
+  - generic "语言":
+    - button "中" [pressed]
+    - button "EN"
+  - generic: FREE
+  - generic: V
+- text: 推荐 ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ 🔒 ✓ ✓ ✓ ✓ ✓ ✓
+- generic: Account
+- heading "账号中心" [level=1]
+- paragraph: 管理命盘同步、邮箱验证、法律同意、会员权益、点数、账单和账号安全。
+- link "账号安全":
+  - /url: "#/account/security"
+- button "重新生成命盘"
+- generic: 当前命盘
+- generic: 出生日期
+- strong: 1991-03-18
+- generic: 出生时间
+- strong: 09:45
+- generic: 历法
+- strong: 公历输入
+- generic: 真太阳时
+- strong: 未校正
+- generic: 子时判定
+- strong: 非子时
+- generic: 性别
+- strong: 男
+- generic: 四柱
+- strong: 辛未 · 辛卯 · 丁亥 · 乙巳
+- generic: 本地数据
+- generic: 个人真实记录
+- strong: 1 条
+- generic: 数据位置
+- strong: 当前浏览器（登录后同步到 Supabase）
+- generic: 云端账号
+- strong: 未登录
+- generic: 云端同步
+- strong: 未登录，当前为本机数据
+- heading "账号状态" [level=2]
+- generic: 登录状态
+- strong: 未登录
+- generic: 账号邮箱
+- strong: 未登录
+- generic: 邮箱验证
+- strong: 未验证
+- generic: 法律同意
+- strong: 缺少：已完整
+- generic: 会员购买条件
+- strong: 需先完成邮箱验证和 waiver
+- generic: 删除申请
+- strong: 无申请
+- button "重发确认邮件"
+- button "确认必要条款"
+- link "查看风险免责声明":
+  - /url: "#/waiver"
+- generic: 确认必要条款会记录当前条款版本、时间和账号。
+- heading "会员与权益" [level=2]
+- generic: 免费用户
+- generic: 未开通 · 暂无到期日
+- generic: 问大师点数
+- strong: 0 点
+- generic: 账号绑定
+- strong: 未登录
+- generic: 报告权益
+- strong: 需单次解锁
+- button "开通最高级会员"
+- button "购买 10 点包"
+- generic: 最高级会员权益
+- generic: ✓ 全盘、流年大运、每月运程固定报告免费生成
+- generic: ✓ 7 天、月度、年度、全部历史详细交易报告免费生成
+- generic: ✓ 每月自动赠送 30 点问大师额度
+- generic: ✓ Stripe 官方订阅管理，可更新付款方式或取消续订
+- heading "云端同步状态" [level=2]
+- paragraph: 未登录，当前为本机数据

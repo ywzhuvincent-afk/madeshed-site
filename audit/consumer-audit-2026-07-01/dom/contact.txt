@@ -1,0 +1,26 @@
+- navigation:
+  - button "返回首页": Madeshed·
+  - link "每日 Daily":
+    - /url: "#/daily"
+  - link "命盘 Chart":
+    - /url: "#/dashboard"
+  - link "流年大运 Forecast":
+    - /url: /chart-full.html
+  - link "月报 Report":
+    - /url: "#/report"
+  - link "命理咨询 Ask Master":
+    - /url: "#/fortune"
+  - link "设置 Account":
+    - /url: "#/account"
+  - generic "语言":
+    - button "中" [pressed]
+    - button "EN"
+  - generic: FREE
+  - generic: V
+- text: 推荐 ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ 🔒 ✓ ✓ ✓ ✓ ✓ ✓
+- generic: Contact
+- heading "联系我们" [level=1]
+- paragraph: 如果你想试用正式版、反馈问题或讨论数据导入，请通过下面方式联系。
+- heading "联系入口" [level=2]
+- paragraph: 邮箱：support@madeshed.com
+- paragraph: 反馈时建议附上浏览器、设备和你遇到的页面路径，方便复现。

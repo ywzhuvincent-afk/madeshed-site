@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import vm from 'node:vm';
 
 const utf8 = 'utf8';
@@ -1493,12 +1493,14 @@ assert.ok(/action === 'list-prices'/.test(adminApi) && /action === 'update-price
 assert.ok(/function resolveEffectivePrice/.test(checkoutApi) && /resolveEffectivePrice\(priceId\)/.test(checkoutApi), '结账价格解析跟随商品 default_price，后台改价即时生效');
 const adminHtml = readFileSync('admin.html', utf8);
 assert.ok(/data-tab="prices"/.test(adminHtml) && /data-price-save/.test(adminHtml) && /list-prices/.test(adminHtml), '后台页含价格管理板块（列表+保存新价）');
-// 实时价格：页面价格与扣费同源（/api/prices=商品默认价），前端启动时水合；禁止编造的美元价
-const pricesApi = readFileSync('api/prices.js', utf8);
+// 实时价格：页面价格与扣费同源（health?action=prices=商品默认价），前端启动时水合；禁止编造的美元价
+// ⚠️ Vercel Hobby 上限 12 个 serverless 函数：api/ 下不得新增路由文件，公共能力并入现有端点 action 分发
 const catalogApi = readFileSync('api/_catalog.js', utf8);
-assert.ok(/resolveCatalogItem/.test(pricesApi) && /s-maxage/.test(pricesApi), '/api/prices 公开实时价格接口（CDN 缓存）');
+assert.ok(/action === 'prices'/.test(healthApi) && /s-maxage/.test(healthApi) && /publicPrices/.test(healthApi), 'health?action=prices 公开实时价格接口（CDN 缓存）');
+assert.ok(!existsSync('api/prices.js'), '不得存在独立 api/prices.js 路由（超 Vercel Hobby 12 函数上限会导致整个部署失败）');
+assert.ok(readdirSync('api').filter((f) => f.endsWith('.js') && !f.startsWith('_')).length <= 12, 'api/ 路由数必须 ≤12（Vercel Hobby 上限，超出=部署失败）');
 assert.ok(/export const PRODUCT_CATALOG/.test(catalogApi) && /default_price/.test(catalogApi), '_catalog.js 是商品目录唯一实现（跟随 default_price）');
-assert.ok(/function hydrateLivePrices/.test(index) && index.includes("fetch('/api/prices')"), '前端启动时用 /api/prices 水合全部价格显示');
+assert.ok(/function hydrateLivePrices/.test(index) && index.includes("fetch('/api/health?action=prices')"), '前端启动时用实时价格接口水合全部价格显示');
 assert.ok(!/priceEn:'\$/.test(index), '禁止编造美元价：英文价签用 CN¥（与实际扣费货币一致）');
 
 console.log('Static site checks passed');

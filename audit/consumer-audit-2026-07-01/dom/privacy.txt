@@ -1,0 +1,36 @@
+- navigation:
+  - button "返回首页": Madeshed·
+  - link "每日 Daily":
+    - /url: "#/daily"
+  - link "命盘 Chart":
+    - /url: "#/dashboard"
+  - link "流年大运 Forecast":
+    - /url: /chart-full.html
+  - link "月报 Report":
+    - /url: "#/report"
+  - link "命理咨询 Ask Master":
+    - /url: "#/fortune"
+  - link "设置 Account":
+    - /url: "#/account"
+  - generic "语言":
+    - button "中" [pressed]
+    - button "EN"
+  - generic: FREE
+  - generic: V
+- text: 推荐 ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ 🔒 ✓ ✓ ✓ ✓ ✓ ✓
+- generic: Privacy
+- heading "隐私政策" [level=1]
+- paragraph: 未登录时，数据只保存在当前浏览器；登录后，命盘和每日记录会尝试同步到 Supabase 云端。
+- heading "当前收集范围" [level=2]
+- list:
+  - listitem: 出生日期、时间、性别等命盘输入会先保存在本机 localStorage。
+  - listitem: 每日交易结果记录会先保存在本机 localStorage。
+  - listitem: "登录后，命盘会同步到 Supabase `profiles` 表，每日记录会同步到 `checkins` 表。"
+- heading "数据控制" [level=2]
+- paragraph: 当前阶段已具备账号级 RLS 隔离；后续会继续加入前台导出、删除账号和删除云端数据入口。
+- heading "会员账号与邮件" [level=2]
+- paragraph: 注册会员账号时，我们会使用 Supabase Auth 保存邮箱、加密后的密码凭证、邮箱确认状态和登录会话。确认邮件、密码重置邮件、邮箱变更邮件会通过认证邮件系统发送；生产环境会使用自有域名 SMTP 以提升送达率。
+- heading "法律同意与审计记录" [level=2]
+- paragraph: 当你注册、接受条款、购买会员、提交删除申请或重置密码时，系统会记录必要的账号事件、条款版本、时间、浏览器信息和经过哈希处理的 IP，用于安全、合规和客服核对。
+- heading "导出与删除" [level=2]
+- paragraph: 账号安全页提供本地数据导出入口；删除账号申请会写入云端记录，正式删除前建议先导出命盘、交易记录、报告和问大师历史。

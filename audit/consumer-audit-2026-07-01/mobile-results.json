@@ -1,0 +1,79 @@
+[
+  {
+    "route": "/",
+    "metrics": {
+      "bodyScrollWidth": 390,
+      "hasMobileButton": true,
+      "mobileButtonDisplay": "flex",
+      "scrollWidth": 390,
+      "visibleTextStart": "Madeshed·\n☰\nBeta · 内测中\n你的命盘×\n你的数据\n\n把八字流日评分、个人交易回测、行为科学干预,整合进一个决策仪表盘。\n\n不是算命——是基于你 90 天真实交易数据,告诉你在什么状态下胜率最高。\n\n免费试用 7 天\n→\n无需信用卡 · 试用结束后 ¥299 一次性买断\n¥299\n一次性买断\n10+\n支持品种\n中/EN\n双语界面\n辛\n未\n·\n辛\n卯\n·\n丁\n亥\n·\n乙\n巳\n今日行动指数\n48\n仓位 20%\n2026 流月走势\n个人回测: 你在亏损后 30 分钟内追单胜率仅 22% (N=9)\n三个核心,一个仪表盘\n\n每一项都基于科学方法 · 拒绝玄学滤镜\n\n🎯\n八字流日评分\n\n每日 5-100 分综合评分,基于扶抑用神 + 调候双轨。告诉你今天该激进还是保守,什么时段下单胜率高。\n\n📊\n个人回测护城河\n\n用了 90 天后,系统告诉你:「你睡眠好 + 流日喜的日子胜率 6",
+      "width": 390
+    }
+  },
+  {
+    "route": "#/signup",
+    "metrics": {
+      "bodyScrollWidth": 390,
+      "hasMobileButton": true,
+      "mobileButtonDisplay": "flex",
+      "scrollWidth": 390,
+      "visibleTextStart": "Madeshed·\n☰\nCREATE ACCOUNT\n注册会员账号\n\n注册后会发送确认邮件。确认邮箱并接受必要条款后，才可以购买会员、点数和付费报告。\n\n创建账号\n显示名称\n邮箱\n密码\n确认密码\n我已阅读并同意\n服务条款\n。\n我已阅读并同意\n隐私政策\n。\n我理解 Madeshed 不构成投资、金融、法律或医疗建议，交易盈亏由我自行承担。\n我理解 AI/命理内容只用于自我观察、复盘和节奏参考，不保证任何结果。\n我理解会员为自动续费数字服务，可在 Stripe 官方门户管理付款方式、发票和取消续订。\n我确认本人已满 18 岁，并具备自行承担决策风险的能力。\n注册并发送确认邮件\n已有账号？登录\n注册后请到邮箱点击确认链接；如果没有收到，请检查垃圾邮件或稍后重发。\n1. 注册\n邮箱 + 密码创建账号，并保存你的条款同意版本。\n2. 确认邮箱\n点击确认邮件后，全网站会默认使用同一份八字命盘。\n3. ",
+      "width": 390
+    }
+  },
+  {
+    "route": "#/dashboard",
+    "metrics": {
+      "bodyScrollWidth": 390,
+      "hasMobileButton": true,
+      "mobileButtonDisplay": "flex",
+      "scrollWidth": 390,
+      "visibleTextStart": "Madeshed·\n☰\n辛\n未\n·\n辛\n卯\n·\n丁\n亥\n·\n乙\n巳\n日元丁 · 火\n强弱中和 58 / 100\n月令卯 · 木火相生\n大运丁亥 · 第 4 柱\n2026.06.30\n星期二\n市场▲ 开盘中\n今日行动指数 · TODAY\n48\n谨慎 · 财运 42 · 底盘 52\n流日干支\n乙亥 (偏印 · 印)\n今日行动指数\n谨慎 48\n综合年月日\n中性 52\n流日触发\n中性 58\n结构分\n天干 60 · 地支 60 · 藏干 60\n专业因子\n调候 0 · 通根透干 5 · 综合 -3\n四柱互动\n日支刑\n财运\n偏印护身 42\n风险扣分\n-6 · 四柱互动：流支亥与日支亥刑、时支巳冲。\n操作建议\n标准仓位，等待确认后再动\n2026年6月 每日行动指数 · DAILY ACTION TREND\n流月\n流日\n当天\n今日 2026.06.30 · 均值 55 · 30号 行动指数 48\n100\n7",
+      "width": 390
+    }
+  },
+  {
+    "route": "#/daily",
+    "metrics": {
+      "bodyScrollWidth": 390,
+      "hasMobileButton": true,
+      "mobileButtonDisplay": "flex",
+      "scrollWidth": 390,
+      "visibleTextStart": "Madeshed·\n☰\n2026 年 6 月 30 日 · 星期二\n今日: 谨慎 · 印\n流年 丙午· 流月 甲午· 流日 乙亥\n示例历史: 在浅绿日交易 12 次 · 胜率 67% · 平均 +1.4%\n48\n行动指数\n仓位 20% · 底盘 52 · 四柱互动：流支亥与日支亥刑、时支巳冲。，轻仓确认\n今日记录 · CHECK-IN\n10 秒搞定\n今天的交易结果?\n📈\n大赚\n🟢\n赚\n⚪\n平\n🔴\n亏\n📉\n大亏\n🚫\n没交易\n个人真实历史\n个人真实记录 · 近 1 月 · 交易样本 N=1 · 总记录 1\n按命理颜色分组\n胜率 · 样本数 · 结果分布\n近 1 月\n近 7 天\n近 1 年\n全部\n自定义\n浅绿\n浅绿日N=0\n大赚 0\n赚 0\n平 0\n亏 0\n大亏 0\n—%\nN=0 太少\n绿\n绿日N=1\n大赚 0\n赚 1\n平 0\n亏 0\n大亏 0\n100%\nN=1 太少\n黄\n黄日N=0\n",
+      "width": 390
+    }
+  },
+  {
+    "route": "#/report",
+    "metrics": {
+      "bodyScrollWidth": 390,
+      "hasMobileButton": true,
+      "mobileButtonDisplay": "flex",
+      "scrollWidth": 390,
+      "visibleTextStart": "Madeshed·\n☰\nMONTHLY REPORT\n月报\n\n基于你保存的命盘和每日交易记录生成阶段性复盘；登录后会自动尝试同步到云端。\n\n去记录今日\n个人真实记录\n1\n保存在当前浏览器，登录后同步到云端。\n胜率\n100%\n交易样本 1 条 · 大赚 0 · 大亏 0\n当前命盘\n辛未 · 辛卯 · 丁亥 · 乙巳\n与 Dashboard / Daily / Forecast 共用同一份命盘。\n近 7 天\n近 1 月\n近 1 年\n全部历史\n当前使用个人真实记录。 近 1 月 · 样本不足\n记录天数\n1\n个人真实记录\n交易样本\n1\n大赚 0 · 大亏 0\n胜率\n100%\n大赚+赚 / 已交易 · 样本不足\n分组\tN\t胜率\t大赚\t大亏\n命理颜色\n绿\t1\t100%\t0\t0\n五行状态\n木\t1\t100%\t0\t0\n十神状态\n印\t1\t100%\t0\t0\n系统观察\n\n已开始积累你的个人真实记录；登录后会自动尝",
+      "width": 390
+    }
+  },
+  {
+    "route": "#/fortune",
+    "metrics": {
+      "bodyScrollWidth": 390,
+      "hasMobileButton": true,
+      "mobileButtonDisplay": "flex",
+      "scrollWidth": 390,
+      "visibleTextStart": "Madeshed·\n☰\nFORTUNE SERIES\n命理咨询 · Ask Master\n\n固定报告负责稳定、可控的专业解读；问大师负责重大问题的互动式咨询。所有判断都基于你保存的统一八字命盘、流年、大运和当前周期，不提供具体投资标的建议。\n\n返回仪表盘\n点数余额\n0 点\n普通问题消耗 1 点，重大决定深度分析消耗 3 点；最高级会员每月赠送 30 点，并免费解锁固定报告。\n购买 10 点包 · ¥99\n使用边界\n\n财运只按传统命理解释收入机会、破财风险、花费压力、事业财星和适合求稳/开拓的节奏，不提供具体投资标的建议；医疗、法律、极端风险问题会提示寻求专业帮助。\n\n全盘\n流年大运\n每月运程\n问大师\n历史记录\n付费命理报告\n\n全盘、流年大运、每月运程会用同一份命盘上下文生成，AI 只负责组织语言，核心判断来自结构化命理逻辑。\n\n全盘解读\n¥69\n一生格局、性格、婚姻、事业、财运、健康倾向，",
+      "width": 390
+    }
+  },
+  {
+    "route": "#/account",
+    "metrics": {
+      "bodyScrollWidth": 390,
+      "hasMobileButton": true,
+      "mobileButtonDisplay": "flex",
+      "scrollWidth": 390,
+      "visibleTextStart": "Madeshed·\n☰\nACCOUNT\n账号中心\n\n管理命盘同步、邮箱验证、法律同意、会员权益、点数、账单和账号安全。\n\n账号安全\n重新生成命盘\n当前命盘\n出生日期\n1991-03-18\n出生时间\n09:45\n历法\n公历输入\n真太阳时\n未校正\n子时判定\n非子时\n性别\n男\n四柱\n辛未 · 辛卯 · 丁亥 · 乙巳\n本地数据\n个人真实记录\n1 条\n数据位置\n当前浏览器（登录后同步到 Supabase）\n云端账号\n未登录\n云端同步\n未登录，当前为本机数据\n账号状态\n登录状态\n未登录\n账号邮箱\n未登录\n邮箱验证\n未验证\n法律同意\n缺少：已完整\n会员购买条件\n需先完成邮箱验证和 waiver\n删除申请\n无申请\n重发确认邮件\n确认必要条款\n查看风险免责声明\n确认必要条款会记录当前条款版本、时间和账号。\n会员与权益\n免费用户\n未开通 · 暂无到期日\n问大师点数\n0 点\n账号绑定\n未登录\n报告权益\n需单次",
+      "width": 390
+    }
+  }
+]

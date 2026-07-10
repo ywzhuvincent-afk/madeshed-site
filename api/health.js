@@ -1,7 +1,25 @@
-// Madeshed Bazi API - Health Check + Stripe self-diagnostics
+// Madeshed Bazi API - Health Check + Stripe self-diagnostics + 公开实时价格(?action=prices)
 // Vercel Serverless Function (Node.js runtime)
+// ⚠️ Vercel Hobby 计划上限 12 个 serverless 函数（api/ 下非 _ 前缀文件）——已满。
+//   新公共能力一律并入现有端点的 action 分发（如本文件），不要新建 api/*.js 路由，否则整个部署会失败。
 import { stripeGet } from './_stripe.js';
 import { createHash } from 'node:crypto';
+import { PRODUCT_CATALOG, resolveCatalogItem } from './_catalog.js';
+
+// 公开实时价格：页面价格显示的唯一权威来源（与结账实际扣费同源=商品当前默认价）。
+// 后台"价格管理"改价后这里即返回新价；CDN 缓存 5 分钟压低 Stripe 调用量。
+async function publicPrices(res) {
+  if (!process.env.STRIPE_SECRET_KEY) return res.status(503).json({ error: 'stripe_not_configured' });
+  const items = [];
+  for (const item of PRODUCT_CATALOG) {
+    try {
+      const r = await resolveCatalogItem(item);
+      if (r.status === 'ok') items.push({ key: r.key, amount: r.amount, currency: r.currency, interval: r.interval });
+    } catch (e) { /* 单个商品失败不影响其他 */ }
+  }
+  res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+  return res.status(200).json({ ok: true, items, fetchedAt: new Date().toISOString() });
+}
 
 function keyKind(k) {
   const s = String(k || '');
@@ -144,6 +162,13 @@ async function supabaseDiagnostics(res) {
 export default async function handler(req, res) {
   const url = new URL(req.url || '/', 'http://localhost');
   const action = String(req.query?.action || url.searchParams.get('action') || '').trim();
+  if (action === 'prices') {
+    try {
+      return await publicPrices(res);
+    } catch (error) {
+      return res.status(500).json({ error: 'prices_failed', message: String(error && error.message) });
+    }
+  }
   if (action === 'supabase-diagnostics') {
     try {
       return await supabaseDiagnostics(res);

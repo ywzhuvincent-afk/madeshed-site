@@ -1,0 +1,64 @@
+- navigation:
+  - button "返回首页": Madeshed·
+  - link "每日 Daily":
+    - /url: "#/daily"
+  - link "命盘 Chart":
+    - /url: "#/dashboard"
+  - link "流年大运 Forecast":
+    - /url: /chart-full.html
+  - link "月报 Report":
+    - /url: "#/report"
+  - link "命理咨询 Ask Master":
+    - /url: "#/fortune"
+  - link "设置 Account":
+    - /url: "#/account"
+  - generic "语言":
+    - button "中" [pressed]
+    - button "EN"
+  - generic: FREE
+  - generic: V
+- text: 推荐 ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ 🔒 ✓ ✓ ✓ ✓ ✓ ✓
+- generic: Create Account
+- heading "注册会员账号" [level=1]
+- paragraph: 注册后会发送确认邮件。确认邮箱并接受必要条款后，才可以购买会员、点数和付费报告。
+- heading "创建账号" [level=2]
+- generic: 显示名称
+- textbox "显示名称":
+  - /placeholder: 例如 Vincent
+- generic: 邮箱
+- textbox "邮箱":
+  - /placeholder: you@example.com
+- generic: 密码
+- textbox "密码":
+  - /placeholder: 至少 10 位
+- generic: 确认密码
+- textbox "确认密码"
+- generic "注册前必须确认的条款":
+  - checkbox "我已阅读并同意 服务条款 。"
+  - text: 我已阅读并同意
+  - link "服务条款":
+    - /url: "#/terms"
+  - text: 。
+  - checkbox "我已阅读并同意 隐私政策 。"
+  - text: 我已阅读并同意
+  - link "隐私政策":
+    - /url: "#/privacy"
+  - text: 。
+  - checkbox "我理解 Madeshed 不构成投资、金融、法律或医疗建议，交易盈亏由我自行承担。"
+  - text: 我理解 Madeshed 不构成投资、金融、法律或医疗建议，交易盈亏由我自行承担。
+  - checkbox "我理解 AI/命理内容只用于自我观察、复盘和节奏参考，不保证任何结果。"
+  - text: 我理解 AI/命理内容只用于自我观察、复盘和节奏参考，不保证任何结果。
+  - checkbox "我理解会员为自动续费数字服务，可在 Stripe 官方门户管理付款方式、发票和取消续订。"
+  - text: 我理解会员为自动续费数字服务，可在 Stripe 官方门户管理付款方式、发票和取消续订。
+  - checkbox "我确认本人已满 18 岁，并具备自行承担决策风险的能力。"
+  - text: 我确认本人已满 18 岁，并具备自行承担决策风险的能力。
+- button "注册并发送确认邮件"
+- link "已有账号？登录":
+  - /url: "#/login"
+- generic: 注册后请到邮箱点击确认链接；如果没有收到，请检查垃圾邮件或稍后重发。
+- strong: 1. 注册
+- generic: 邮箱 + 密码创建账号，并保存你的条款同意版本。
+- strong: 2. 确认邮箱
+- generic: 点击确认邮件后，全网站会默认使用同一份八字命盘。
+- strong: 3. 开通会员
+- generic: 邮箱确认和 waiver 完成后，才会进入 Stripe 安全付款页。

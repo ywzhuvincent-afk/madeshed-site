@@ -1,0 +1,122 @@
+- navigation:
+  - button "返回首页": Madeshed·
+  - link "每日 Daily":
+    - /url: "#/daily"
+  - link "命盘 Chart":
+    - /url: "#/dashboard"
+  - link "流年大运 Forecast":
+    - /url: /chart-full.html
+  - link "月报 Report":
+    - /url: "#/report"
+  - link "命理咨询 Ask Master":
+    - /url: "#/fortune"
+  - link "设置 Account":
+    - /url: "#/account"
+  - generic "语言":
+    - button "中" [pressed]
+    - button "EN"
+  - button "登录"
+- main:
+  - generic: Beta · 内测中
+  - heading "你的命盘× 你的数据" [level=1]:
+    - text: 你的命盘×
+    - text: 你的数据
+  - paragraph:
+    - text: 把
+    - strong: 八字流日评分
+    - text: 、
+    - strong: 个人交易回测
+    - text: 、
+    - strong: 行为科学干预
+    - text: ",整合进一个决策仪表盘。"
+    - text: 不是算命——是基于你 90 天真实交易数据,告诉你
+    - strong: 在什么状态下胜率最高
+    - text: 。
+  - button "免费试用 7 天 →":
+    - text: 免费试用 7 天
+    - generic: →
+  - generic: 无需信用卡 · 试用结束后 ¥299 一次性买断
+  - generic: ¥299
+  - generic: 一次性买断
+  - generic: 10+
+  - generic: 支持品种
+  - generic: 中/EN
+  - generic: 双语界面
+  - generic: 辛
+  - generic: 未
+  - generic: ·
+  - generic: 辛
+  - generic: 卯
+  - generic: ·
+  - generic: 丁
+  - generic: 亥
+  - generic: ·
+  - generic: 乙
+  - generic: 巳
+  - generic: 今日行动指数
+  - generic: "48"
+  - generic: 仓位 20%
+  - generic: 2026 流月走势
+  - strong: "个人回测:"
+  - text: 你在亏损后 30 分钟内追单胜率仅 22% (N=9)
+  - heading "三个核心,一个仪表盘" [level=2]
+  - paragraph: 每一项都基于科学方法 · 拒绝玄学滤镜
+  - generic: 🎯
+  - heading "八字流日评分" [level=3]
+  - paragraph: 每日 5-100 分综合评分,基于扶抑用神 + 调候双轨。告诉你今天该激进还是保守,什么时段下单胜率高。
+  - generic: 📊
+  - heading "个人回测护城河" [level=3]
+  - paragraph: 用了 90 天后,系统告诉你:「你睡眠好 + 流日喜的日子胜率 67%」。你真正信的不是八字,是你自己的数据。
+  - generic: 🛑
+  - heading "实时干预" [level=3]
+  - paragraph: 红灯日下单时弹窗提醒,亏损追单时强制 30 分钟冷静期,连胜过热时回归现实警告——在你犯错的瞬间拦截。
+  - heading "简单透明的定价" [level=2]
+  - paragraph: 核心功能买断 · 高级服务按需订阅
+  - text: 推荐
+  - generic: CORE · 核心
+  - generic: 一次性买断
+  - generic: ¥
+  - generic: "299"
+  - generic: / 永久
+  - paragraph: 所有核心功能,买断永久使用,不再续费
+  - list:
+    - listitem: ✓ 八字命盘排盘 + 喜用神判定
+    - listitem: ✓ 流年/流月/流日评分引擎
+    - listitem: ✓ 手动交易记录 + 个人胜率回测
+    - listitem: ✓ 实时干预弹窗
+    - listitem: ✓ 季度行为画像报告
+    - listitem: ✓ 中英双语界面
+  - button "免费试用 7 天"
+  - generic: PRO · 服务订阅
+  - generic: 高级服务
+  - generic: ¥
+  - generic: "49"
+  - generic: / 月
+  - paragraph: 在买断之上,按需开通高级服务
+  - list:
+    - listitem: ✓ 券商 API 直连 (老虎/雪盈/IB/富途)
+    - listitem: ✓ 云端量化回测引擎
+    - listitem: ✓ 跨设备数据同步
+    - listitem: ✓ 自动模式发现 (AI 挖掘个人 pattern)
+    - listitem: ✓ 优先支持
+  - button "了解 PRO →"
+  - generic: © 2026 Madeshed · 命盘 × 数据
+  - link "登录":
+    - /url: "#/login"
+  - link "注册":
+    - /url: "#/signup"
+  - link "关于":
+    - /url: "#/about"
+  - link "隐私政策":
+    - /url: "#/privacy"
+  - link "服务条款":
+    - /url: "#/terms"
+  - link "风险免责声明":
+    - /url: "#/waiver"
+  - link "联系我们":
+    - /url: "#/contact"
+  - strong: "风险提示:"
+  - text: Madeshed 提供的所有评分、回测、警示均为
+  - strong: 决策辅助工具
+  - text: ",不构成任何投资建议。任何基于本工具产生的交易决策与盈亏责任,均由用户自行承担。投资有风险,入市需谨慎。"
+- text: 🔒 ✓ ✓ ✓ ✓ ✓ ✓

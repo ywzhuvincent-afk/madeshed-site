@@ -1,0 +1,126 @@
+- navigation:
+  - button "返回首页": Madeshed·
+  - link "每日 Daily":
+    - /url: "#/daily"
+  - link "命盘 Chart":
+    - /url: "#/dashboard"
+  - link "流年大运 Forecast":
+    - /url: /chart-full.html
+  - link "月报 Report":
+    - /url: "#/report"
+  - link "命理咨询 Ask Master":
+    - /url: "#/fortune"
+  - link "设置 Account":
+    - /url: "#/account"
+  - generic "语言":
+    - button "中" [pressed]
+    - button "EN"
+  - generic: FREE
+  - generic: V
+- text: 推荐 ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ 🔒 ✓ ✓ ✓ ✓ ✓ ✓
+- generic: Monthly Report
+- heading "月报" [level=1]
+- paragraph: 基于你保存的命盘和每日交易记录生成阶段性复盘；登录后会自动尝试同步到云端。
+- button "去记录今日"
+- generic: 个人真实记录
+- generic: "1"
+- generic: 保存在当前浏览器，登录后同步到云端。
+- generic: 胜率
+- generic: 100%
+- generic: 交易样本 1 条 · 大赚 0 · 大亏 0
+- generic: 当前命盘
+- generic: 辛未 · 辛卯 · 丁亥 · 乙巳
+- generic: 与 Dashboard / Daily / Forecast 共用同一份命盘。
+- generic "报告统计范围":
+  - button "近 7 天"
+  - button "近 1 月"
+  - button "近 1 年"
+  - button "全部历史"
+- generic: 当前使用个人真实记录。 近 1 月 · 样本不足
+- generic: 记录天数
+- generic: "1"
+- generic: 个人真实记录
+- generic: 交易样本
+- generic: "1"
+- generic: 大赚 0 · 大亏 0
+- generic: 胜率
+- generic: 100%
+- generic: 大赚+赚 / 已交易 · 样本不足
+- table:
+  - rowgroup:
+    - row "分组 N 胜率 大赚 大亏":
+      - columnheader "分组"
+      - columnheader "N"
+      - columnheader "胜率"
+      - columnheader "大赚"
+      - columnheader "大亏"
+  - rowgroup:
+    - row "命理颜色":
+      - cell "命理颜色":
+        - strong: 命理颜色
+    - row "绿 1 100% 0 0":
+      - cell "绿"
+      - cell "1":
+        - strong: "1"
+      - cell "100%"
+      - cell "0"
+      - cell "0"
+    - row "五行状态":
+      - cell "五行状态":
+        - strong: 五行状态
+    - row "木 1 100% 0 0":
+      - cell "木"
+      - cell "1":
+        - strong: "1"
+      - cell "100%"
+      - cell "0"
+      - cell "0"
+    - row "十神状态":
+      - cell "十神状态":
+        - strong: 十神状态
+    - row "印 1 100% 0 0":
+      - cell "印"
+      - cell "1":
+        - strong: "1"
+      - cell "100%"
+      - cell "0"
+      - cell "0"
+- heading "系统观察" [level=2]
+- paragraph: 已开始积累你的个人真实记录；登录后会自动尝试同步到云端。
+- heading "付费详细报告" [level=2]
+- paragraph: 报告会结合统计、五行、十神、八字强弱、用神/忌神和未来周期，输出可执行的交易纪律。单次购买可解锁一份；最高级会员可免费生成全部报告。
+- generic: 7 天报告
+- generic: ¥29
+- generic: 短期状态、连续亏损、追单风险和下周纪律建议。
+- button "预览报告"
+- button "单次购买"
+- button "高级会员免费生成"
+- generic: 月度报告
+- generic: ¥79
+- generic: 核心付费报告，结合胜率、五行、十神、八字强弱和下月策略。
+- button "预览报告"
+- button "单次购买"
+- button "高级会员免费生成"
+- generic: 年度报告
+- generic: ¥199
+- generic: 全年交易命理画像，找出高胜率月份、危险周期和年度纪律。
+- button "预览报告"
+- button "单次购买"
+- button "高级会员免费生成"
+- generic: 全部历史报告
+- generic: ¥399
+- generic: 长期个人模型，沉淀最适合你的颜色、五行、十神和风控规则。
+- button "预览报告"
+- button "单次购买"
+- button "高级会员免费生成"
+- generic: 最高级会员
+- generic: ¥199/月
+- generic: 7 天、月度、年度和全部历史详细报告全部免费生成，并保留云端权益。
+- button "开通最高级会员"
+- heading "已自动生成的报告" [level=2]
+- paragraph: 系统会在你登录或访问报告中心时，按到期周期补生成 7 天、月度、年度和全部历史快照；登录后会同步到云端，方便以后回看。
+- generic: 全部历史报告 · 全部历史月度快照
+- generic: 2026-06-29 至 2026-06-29 · 样本不足
+- generic: 交易 1 次 · 胜率 100% · 大赚 0 · 大亏 0
+- generic: 完整报告待解锁
+- button "查看摘要"
