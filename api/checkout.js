@@ -36,11 +36,27 @@ const FORTUNE_PRODUCTS = {
 function checkoutLocale(req) {
   return String((req.body && req.body.locale) || '').toLowerCase() === 'en' ? 'en' : 'zh';
 }
-// 用 price_data 内联本地化商品名——金额/币种/订阅周期仍取自已配置的 price（价格权威、不改），
+// 价格解析：env 里的 price ID 只是"锚"，实际结账金额跟随该商品的当前 default_price——
+// 后台"价格管理"改价（新建价格并设为默认）后立即生效，无需改环境变量或重新部署。
+async function resolveEffectivePrice(priceId) {
+  const anchor = await stripeGet(`prices/${encodeURIComponent(priceId)}`);
+  try {
+    const productId = anchor && (typeof anchor.product === 'string' ? anchor.product : anchor.product && anchor.product.id);
+    if (!productId) return anchor;
+    const product = await stripeGet(`products/${encodeURIComponent(productId)}`);
+    const defaultPriceId = product && (typeof product.default_price === 'string' ? product.default_price : product.default_price && product.default_price.id);
+    if (defaultPriceId && defaultPriceId !== priceId) {
+      const dp = await stripeGet(`prices/${encodeURIComponent(defaultPriceId)}`);
+      if (dp && dp.active && dp.unit_amount) return dp;
+    }
+  } catch (e) { /* 解析失败退回锚价格，保证结账可用 */ }
+  return anchor;
+}
+// 用 price_data 内联本地化商品名——金额/币种/订阅周期取自解析后的有效价格（后台可改），
 // 只把展示名换成对应语言。取价失败则安全退回用 price ID（宁可名字是中文，也不让结账失败）。
 async function setLocalizedLineItem(params, priceId, nameZh, nameEn, locale) {
   let price = null;
-  try { price = await stripeGet(`prices/${encodeURIComponent(priceId)}`); } catch (e) { price = null; }
+  try { price = await resolveEffectivePrice(priceId); } catch (e) { price = null; }
   params.set('line_items[0][quantity]', '1');
   if (!price || !price.unit_amount || !price.currency) {
     params.set('line_items[0][price]', priceId);

@@ -1486,5 +1486,11 @@ assert.ok(!index.includes('确认邮箱后才能购买会员'), '前端购买提
 assert.ok(/function checkoutLocale/.test(checkoutApi) && /setLocalizedLineItem/.test(checkoutApi) && /params\.set\('locale', locale\)/.test(checkoutApi), '结账会话按语言传 locale + 用 price_data 本地化商品名');
 assert.ok(/labelEn:/.test(checkoutApi), '结账商品配置中英文各一份(label + labelEn)');
 assert.ok((index.match(/locale:\(typeof localeIsEn==='function'&&localeIsEn\(\)\)\?'en':'zh'/g) || []).length >= 4, '4 个购买入口都把当前站点语言传给结账接口');
+// 后台价格管理：list-prices/update-price（新建价格设为 default_price）+ 结账跟随商品默认价（改价即时生效）
+const adminApi = readFileSync('api/admin.js', utf8);
+assert.ok(/action === 'list-prices'/.test(adminApi) && /action === 'update-price'/.test(adminApi) && /default_price/.test(adminApi), 'admin API 提供价格列表与改价（default_price 流程）');
+assert.ok(/function resolveEffectivePrice/.test(checkoutApi) && /resolveEffectivePrice\(priceId\)/.test(checkoutApi), '结账价格解析跟随商品 default_price，后台改价即时生效');
+const adminHtml = readFileSync('admin.html', utf8);
+assert.ok(/data-tab="prices"/.test(adminHtml) && /data-price-save/.test(adminHtml) && /list-prices/.test(adminHtml), '后台页含价格管理板块（列表+保存新价）');
 
 console.log('Static site checks passed');

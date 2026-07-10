@@ -115,6 +115,7 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
     <div class="tabs">
       <button class="tab active" data-tab="overview">概览</button>
       <button class="tab" data-tab="users">用户</button>
+      <button class="tab" data-tab="prices">价格</button>
     </div>
 
     <div id="tab-overview">
@@ -135,6 +136,18 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
           <tbody id="user-rows"><tr><td colspan="8" class="empty">加载中…</td></tr></tbody>
         </table>
       </div>
+    </div>
+
+    <div id="tab-prices" class="hide">
+      <div class="section-h">价格管理</div>
+      <p class="muted" style="font-size:12px;line-height:1.7">改价 = 在同一 Stripe 商品上创建新价格并设为默认价（Stripe 标准做法，历史订单不受影响）。<b>新价格立即对新购买生效</b>；订阅类只影响新订户，已有订户仍按旧价续费。金额单位为价格显示货币的元。</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>商品</th><th>当前价</th><th>类型</th><th>新价格</th><th>操作</th><th>Stripe</th></tr></thead>
+          <tbody id="price-rows"><tr><td colspan="6" class="empty">加载中…</td></tr></tbody>
+        </table>
+      </div>
+      <p class="muted mono" id="price-msg" style="font-size:12px;margin-top:10px"></p>
     </div>
   </div>
 </div>
@@ -204,7 +217,47 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
     var tab=t.dataset.tab;
     $('tab-overview').classList.toggle('hide',tab!=='overview');
     $('tab-users').classList.toggle('hide',tab!=='users');
+    $('tab-prices').classList.toggle('hide',tab!=='prices');
+    if(tab==='prices'&&!state.pricesLoaded)loadPrices();
   });});
+
+  // ---------- prices ----------
+  function priceTypeLabel(x){return x.interval?('订阅 / '+(x.interval==='month'?'每月':x.interval)):'一次性';}
+  function fmtMoney(x){if(x.amount==null)return '—';var cur=(x.currency||'').toUpperCase();return (cur==='CNY'?'¥':cur+' ')+Number(x.amount).toLocaleString('en-US');}
+  async function loadPrices(){
+    var box=$('price-rows');box.innerHTML='<tr><td colspan="6" class="empty">从 Stripe 读取价格中…</td></tr>';
+    try{
+      var j=await api('list-prices');state.pricesLoaded=true;
+      var rows=(j.items||[]).map(function(x){
+        if(x.status!=='ok')return '<tr><td>'+esc(x.name)+'</td><td colspan="5" class="muted">不可用：'+esc(x.status)+(x.error?(' · '+esc(x.error)):'')+'</td></tr>';
+        return '<tr data-key="'+esc(x.key)+'">'
+          +'<td>'+esc(x.name)+'</td>'
+          +'<td class="mono">'+fmtMoney(x)+'</td>'
+          +'<td>'+priceTypeLabel(x)+'</td>'
+          +'<td><input class="search mono" style="width:110px" type="number" min="1" step="0.01" placeholder="'+esc(String(x.amount||''))+'" data-price-input="'+esc(x.key)+'"></td>'
+          +'<td><button class="btn sm" data-price-save="'+esc(x.key)+'">保存新价</button></td>'
+          +'<td><a class="muted" target="_blank" rel="noopener" href="https://dashboard.stripe.com/products/'+esc(x.productId)+'">打开 →</a></td>'
+          +'</tr>';
+      }).join('');
+      box.innerHTML=rows||'<tr><td colspan="6" class="empty">没有商品</td></tr>';
+    }catch(e){box.innerHTML='<tr><td colspan="6" class="empty">读取失败：'+esc(e.message)+'</td></tr>';}
+  }
+  document.addEventListener('click',async function(e){
+    var btn=e.target.closest('[data-price-save]');if(!btn)return;
+    var key=btn.getAttribute('data-price-save');
+    var input=document.querySelector('[data-price-input="'+key+'"]');
+    var amount=parseFloat(input&&input.value);
+    var msg=$('price-msg');
+    if(!Number.isFinite(amount)||amount<=0){msg.textContent='请输入大于 0 的新价格再保存。';return;}
+    if(!confirm('确认把该商品价格改为 '+amount+'？新价格立即对新购买生效。'))return;
+    btn.disabled=true;btn.textContent='保存中…';msg.textContent='';
+    try{
+      var j=await api('update-price',{},{method:'POST',body:{key:key,amount:amount}});
+      msg.textContent='✓ 已改价：'+j.key+' → '+j.amount+' '+(j.currency||'').toUpperCase()+'（新价格 '+j.newPriceId+'）。'+(j.note||'');
+      state.pricesLoaded=false;loadPrices();
+    }catch(err){msg.textContent='改价失败：'+err.message;}
+    btn.disabled=false;btn.textContent='保存新价';
+  });
 
   // ---------- overview ----------
   async function loadOverview(){

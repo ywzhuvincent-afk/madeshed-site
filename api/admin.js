@@ -348,18 +348,110 @@ async function whoami(req, res) {
   });
 }
 
-// 正确的商品中文名/描述（修复 Stripe 里被存成 ??? 的乱码名）——按价格环境变量定位商品并改名
+// 商品目录（后台价格管理 + 商品改名共用）：按价格环境变量锚定 Stripe 商品。
+// 改价采用 Stripe 标准做法：在同一商品上创建新价格并设为 default_price（价格对象金额不可改）；
+// 结账端(api/checkout.js resolveEffectivePrice)自动跟随商品当前默认价，改价立即生效、无需重新部署。
 const PRODUCT_NAME_MAP = [
-  { envs: ['STRIPE_CREDIT_PRICE_ID'], name: '问大师 10 点包', description: '问大师 AI 命理咨询 10 点点数包（普通问题 1 点、深度分析 3 点）。' },
-  { envs: ['STRIPE_ULTIMATE_PRICE_ID', 'STRIPE_MEMBERSHIP_PRICE_ID'], name: '最高级会员（订阅）', description: '固定命理报告免费生成 + 问大师每月赠送 30 点，适合高频咨询与长期复盘。' },
-  { envs: ['STRIPE_REPORT_7_PRICE_ID'], name: '交易复盘报告 · 近 7 天', description: '基于你的真实打卡记录生成的近 7 天交易复盘报告。' },
-  { envs: ['STRIPE_REPORT_30_PRICE_ID', 'STRIPE_REPORT_PRICE_ID'], name: '交易复盘报告 · 月度', description: '基于真实记录的月度交易复盘报告。' },
-  { envs: ['STRIPE_REPORT_365_PRICE_ID'], name: '交易复盘报告 · 年度', description: '基于真实记录的年度交易复盘报告。' },
-  { envs: ['STRIPE_REPORT_ALL_PRICE_ID'], name: '交易复盘报告 · 全部历史', description: '基于全部历史记录的交易复盘报告。' },
-  { envs: ['STRIPE_FORTUNE_FULL_PRICE_ID'], name: '八字全盘解读', description: '日主强弱、用神喜忌、婚姻、事业、财运、健康的长期主题解读。' },
-  { envs: ['STRIPE_FORTUNE_DAYUN_PRICE_ID'], name: '流年大运解读', description: '当前大运、今年流年、以及未来三年的高低节奏。' },
-  { envs: ['STRIPE_FORTUNE_MONTH_PRICE_ID'], name: '每月运程报告', description: '流月五行、财星与风险，本月适合推进 / 观望 / 避险的时间窗口。' }
+  { key: 'credit', envs: ['STRIPE_CREDIT_PRICE_ID'], name: '问大师 10 点包', description: '问大师 AI 命理咨询 10 点点数包（普通问题 1 点、深度分析 3 点）。' },
+  { key: 'ultimate', envs: ['STRIPE_ULTIMATE_PRICE_ID', 'STRIPE_MEMBERSHIP_PRICE_ID'], name: '最高级会员（订阅）', description: '固定命理报告免费生成 + 问大师每月赠送 30 点，适合高频咨询与长期复盘。' },
+  { key: 'report_7', envs: ['STRIPE_REPORT_7_PRICE_ID'], name: '交易复盘报告 · 近 7 天', description: '基于你的真实打卡记录生成的近 7 天交易复盘报告。' },
+  { key: 'report_30', envs: ['STRIPE_REPORT_30_PRICE_ID', 'STRIPE_REPORT_PRICE_ID'], name: '交易复盘报告 · 月度', description: '基于真实记录的月度交易复盘报告。' },
+  { key: 'report_365', envs: ['STRIPE_REPORT_365_PRICE_ID'], name: '交易复盘报告 · 年度', description: '基于真实记录的年度交易复盘报告。' },
+  { key: 'report_all', envs: ['STRIPE_REPORT_ALL_PRICE_ID'], name: '交易复盘报告 · 全部历史', description: '基于全部历史记录的交易复盘报告。' },
+  { key: 'fortune_full', envs: ['STRIPE_FORTUNE_FULL_PRICE_ID'], name: '八字全盘解读', description: '日主强弱、用神喜忌、婚姻、事业、财运、健康的长期主题解读。' },
+  { key: 'fortune_dayun', envs: ['STRIPE_FORTUNE_DAYUN_PRICE_ID'], name: '流年大运解读', description: '当前大运、今年流年、以及未来三年的高低节奏。' },
+  { key: 'fortune_month', envs: ['STRIPE_FORTUNE_MONTH_PRICE_ID'], name: '每月运程报告', description: '流月五行、财星与风险，本月适合推进 / 观望 / 避险的时间窗口。' }
 ];
+const ZERO_DECIMAL_CURRENCIES = ['jpy', 'krw', 'vnd', 'clp'];
+function toUnitAmount(amountMajor, currency) {
+  const zero = ZERO_DECIMAL_CURRENCIES.indexOf(String(currency || '').toLowerCase()) >= 0;
+  return Math.round(Number(amountMajor) * (zero ? 1 : 100));
+}
+function fromUnitAmount(unitAmount, currency) {
+  const zero = ZERO_DECIMAL_CURRENCIES.indexOf(String(currency || '').toLowerCase()) >= 0;
+  return Number(unitAmount) / (zero ? 1 : 100);
+}
+async function resolveCatalogItem(item, stripeGet, cleanEnvFn) {
+  let priceId = '';
+  for (const e of item.envs) { const v = cleanEnvFn(process.env[e]); if (v) { priceId = v; break; } }
+  if (!priceId) return { key: item.key, name: item.name, status: 'env_missing' };
+  const anchorPrice = await stripeGet(`prices/${encodeURIComponent(priceId)}`);
+  const productId = anchorPrice && (typeof anchorPrice.product === 'string' ? anchorPrice.product : anchorPrice.product && anchorPrice.product.id);
+  if (!productId) return { key: item.key, name: item.name, status: 'no_product' };
+  const product = await stripeGet(`products/${encodeURIComponent(productId)}`);
+  let effective = anchorPrice;
+  const defaultPriceId = product && (typeof product.default_price === 'string' ? product.default_price : product.default_price && product.default_price.id);
+  if (defaultPriceId && defaultPriceId !== priceId) {
+    const dp = await stripeGet(`prices/${encodeURIComponent(defaultPriceId)}`);
+    if (dp && dp.active && dp.unit_amount) effective = dp;
+  }
+  return {
+    key: item.key,
+    name: (product && product.name) || item.name,
+    status: 'ok',
+    productId,
+    anchorPriceId: priceId,
+    effectivePriceId: effective.id,
+    currency: effective.currency,
+    unitAmount: effective.unit_amount,
+    amount: fromUnitAmount(effective.unit_amount, effective.currency),
+    interval: (effective.recurring && effective.recurring.interval) || null
+  };
+}
+async function listPrices(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  const { cleanEnv, stripeGet } = await import('./_stripe.js');
+  if (!process.env.STRIPE_SECRET_KEY) return send(res, 503, { error: 'stripe_not_configured', message: 'Stripe 未配置。' });
+  const items = [];
+  for (const item of PRODUCT_NAME_MAP) {
+    try { items.push(await resolveCatalogItem(item, stripeGet, cleanEnv)); }
+    catch (error) { items.push({ key: item.key, name: item.name, status: 'error', error: String(error && error.message).slice(0, 120) }); }
+  }
+  return send(res, 200, { ok: true, items });
+}
+async function updatePrice(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { error: 'method_not_allowed' }); }
+  const { cleanEnv, stripeGet, stripeFormRequest } = await import('./_stripe.js');
+  const body = req.body || {};
+  const item = PRODUCT_NAME_MAP.find((x) => x.key === String(body.key || ''));
+  const amountMajor = Number(body.amount);
+  if (!item) return send(res, 400, { error: 'invalid_key', message: '商品 key 无效。' });
+  if (!Number.isFinite(amountMajor) || amountMajor <= 0 || amountMajor > 1000000) {
+    return send(res, 400, { error: 'invalid_amount', message: '价格无效：必须是大于 0 的数字。' });
+  }
+  try {
+    const current = await resolveCatalogItem(item, stripeGet, cleanEnv);
+    if (current.status !== 'ok') return send(res, 400, { error: 'catalog_unresolved', message: '无法定位该商品：' + current.status, item: current });
+    const unitAmount = toUnitAmount(amountMajor, current.currency);
+    const params = new URLSearchParams();
+    params.set('product', current.productId);
+    params.set('currency', current.currency);
+    params.set('unit_amount', String(unitAmount));
+    if (current.interval) params.set('recurring[interval]', current.interval);
+    params.set('metadata[source]', 'admin_price_update');
+    params.set('metadata[updated_by]', admin.email || '');
+    const newPrice = await stripeFormRequest('prices', params);
+    const dp = new URLSearchParams();
+    dp.set('default_price', newPrice.id);
+    await stripeFormRequest(`products/${encodeURIComponent(current.productId)}`, dp);
+    return send(res, 200, {
+      ok: true,
+      key: item.key,
+      productId: current.productId,
+      oldPriceId: current.effectivePriceId,
+      newPriceId: newPrice.id,
+      amount: amountMajor,
+      currency: current.currency,
+      interval: current.interval,
+      note: current.interval ? '订阅新价格只对新订户生效；已有订户仍按旧价续费（Stripe 标准行为）。' : '新价格立即对所有新购买生效。'
+    });
+  } catch (error) {
+    return send(res, 500, { error: 'price_update_failed', message: String(error && error.message).slice(0, 200) });
+  }
+}
 async function fixProductNames(req, res) {
   const admin = await requireAdmin(req, res);
   if (!admin) return;
@@ -399,9 +491,11 @@ export default async function handler(req, res) {
   if (action === 'set-membership') return setMembership(req, res);
   if (action === 'verify-email') return verifyEmail(req, res);
   if (action === 'fix-product-names') return fixProductNames(req, res);
+  if (action === 'list-prices') return listPrices(req, res);
+  if (action === 'update-price') return updatePrice(req, res);
   return send(res, 400, {
     error: 'invalid_admin_action',
     message: '后台接口 action 无效。',
-    actions: ['whoami', 'overview', 'users', 'user', 'grant-credits', 'set-membership', 'verify-email', 'fix-product-names']
+    actions: ['whoami', 'overview', 'users', 'user', 'grant-credits', 'set-membership', 'verify-email', 'fix-product-names', 'list-prices', 'update-price']
   });
 }
