@@ -224,6 +224,12 @@ async function handleCreditPack(session, metadata) {
   });
 }
 
+// 单次购买报告有效期：30 天（会员生成的不受此限）。到期后 _access 判为 expired、可再次购买。
+const REPORT_VALIDITY_DAYS = 30;
+function reportExpiryFromNow() {
+  return new Date(Date.now() + REPORT_VALIDITY_DAYS * 86400000).toISOString();
+}
+
 async function handleTradeReport(session, metadata) {
   if (!hasSupabaseService() || !metadata.user_id || !metadata.report_type) return;
   await supabaseInsert('report_entitlements', {
@@ -232,7 +238,7 @@ async function handleTradeReport(session, metadata) {
     source: 'purchase',
     status: 'active',
     stripe_session_id: session.id || '',
-    payload: { amount_total: session.amount_total, currency: session.currency }
+    payload: { amount_total: session.amount_total, currency: session.currency, expires_at: reportExpiryFromNow(), validity_days: REPORT_VALIDITY_DAYS }
   }, { upsert: true, onConflict: 'user_id,report_type' });
 }
 
@@ -245,7 +251,7 @@ async function handleFortuneReport(session, metadata) {
     report_type: type,
     target_period: null,
     title: '已解锁命理报告',
-    context: { stripe_session_id: session.id || '', product: 'fortune_report' },
+    context: { stripe_session_id: session.id || '', product: 'fortune_report', expires_at: reportExpiryFromNow(), validity_days: REPORT_VALIDITY_DAYS },
     report_html: '<div class="report-paywall">报告权益已解锁，请回到页面生成完整报告。</div>',
     access_level: 'paid'
   }, { upsert: true, onConflict: 'user_id,report_key' });

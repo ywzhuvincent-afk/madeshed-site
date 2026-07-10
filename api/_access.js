@@ -36,22 +36,43 @@ export async function activeUltimateMembership(userId) {
   return null;
 }
 
+// 单次购买的报告权益有效期（天）。会员生成的报告不受此限（会员在期内一直可生成）。
+export const REPORT_VALIDITY_DAYS = 30;
+// 无 expires_at 的历史记录视为长期有效（向后兼容，不追溯旧订单）
+function purchaseStillValid(expiresAt) {
+  if (!expiresAt) return true;
+  const t = new Date(expiresAt).getTime();
+  return Number.isFinite(t) ? t > Date.now() : true;
+}
+
 export async function hasTradeReportEntitlement(userId, reportType) {
   if (await activeUltimateMembership(userId)) return { ok: true, accessLevel: 'membership' };
   const rows = await supabaseSelect(
     'report_entitlements',
-    `user_id=eq.${encodeURIComponent(userId)}&report_type=eq.${encodeURIComponent(reportType)}&status=eq.active&select=id&limit=1`
+    `user_id=eq.${encodeURIComponent(userId)}&report_type=eq.${encodeURIComponent(reportType)}&status=eq.active&select=source,payload&limit=1`
   );
-  return rows.length ? { ok: true, accessLevel: 'paid' } : { ok: false, accessLevel: 'preview' };
+  const row = rows[0];
+  if (!row) return { ok: false, accessLevel: 'preview' };
+  if (row.source === 'membership' || row.source === 'admin') return { ok: true, accessLevel: 'paid' };
+  const expiresAt = row.payload && row.payload.expires_at;
+  return purchaseStillValid(expiresAt)
+    ? { ok: true, accessLevel: 'paid', expiresAt: expiresAt || null }
+    : { ok: false, accessLevel: 'expired', expiresAt: expiresAt || null };
 }
 
 export async function hasFortuneReportEntitlement(userId, reportType) {
   if (await activeUltimateMembership(userId)) return { ok: true, accessLevel: 'membership' };
   const rows = await supabaseSelect(
     'fortune_reports',
-    `user_id=eq.${encodeURIComponent(userId)}&report_type=eq.${encodeURIComponent(reportType)}&access_level=in.(paid,membership)&select=id&limit=1`
+    `user_id=eq.${encodeURIComponent(userId)}&report_type=eq.${encodeURIComponent(reportType)}&access_level=in.(paid,membership)&select=access_level,context&limit=1`
   );
-  return rows.length ? { ok: true, accessLevel: 'paid' } : { ok: false, accessLevel: 'preview' };
+  const row = rows[0];
+  if (!row) return { ok: false, accessLevel: 'preview' };
+  if (row.access_level === 'membership') return { ok: true, accessLevel: 'membership' };
+  const expiresAt = row.context && row.context.expires_at;
+  return purchaseStillValid(expiresAt)
+    ? { ok: true, accessLevel: 'paid', expiresAt: expiresAt || null }
+    : { ok: false, accessLevel: 'expired', expiresAt: expiresAt || null };
 }
 
 async function requireCloudUser(req) {

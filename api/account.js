@@ -172,8 +172,8 @@ async function purchaseHistory(req, res) {
   try {
     const [ledger, reports, fortunes, memberships] = await Promise.all([
       supabaseSelect('credit_ledger', `user_id=eq.${uid}&select=entry_type,amount,balance_after,reference_type,created_at,payload&order=created_at.desc&limit=50`),
-      supabaseSelect('report_entitlements', `user_id=eq.${uid}&select=report_type,status,created_at&order=created_at.desc&limit=20`),
-      supabaseSelect('fortune_reports', `user_id=eq.${uid}&select=report_type,access_level,updated_at&order=updated_at.desc&limit=20`),
+      supabaseSelect('report_entitlements', `user_id=eq.${uid}&select=report_type,status,source,payload,created_at&order=created_at.desc&limit=20`),
+      supabaseSelect('fortune_reports', `user_id=eq.${uid}&select=report_type,access_level,context,updated_at&order=updated_at.desc&limit=20`),
       supabaseSelect('memberships', `user_id=eq.${uid}&select=tier,status,current_period_end,payload,created_at&limit=1`)
     ]);
     return send(res, 200, { ok: true, ledger, reports, fortunes, membership: memberships[0] || null });

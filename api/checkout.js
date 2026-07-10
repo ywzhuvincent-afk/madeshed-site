@@ -1,5 +1,6 @@
 import { getUserFromRequest, hasSupabaseService, requireAccountReadyForPaidAction, supabaseSelect } from './_supabase.js';
 import { cleanEnv, priceFromEnv, siteOrigin, stripeFormRequest, stripeGet } from './_stripe.js';
+import { hasTradeReportEntitlement, hasFortuneReportEntitlement } from './_access.js';
 
 // 商品名中英文各自一份：结账页按用户语言显示各自语言（不混）。改名时两边都要改。
 const CREDIT_PACK_PRODUCT = {
@@ -238,22 +239,24 @@ async function createReportCheckout(req, res) {
   if (!item) return send(res, 400, { error: 'invalid_report_type', message: '报告类型无效。' });
   const locale = checkoutLocale(req);
 
-  // 防重复购买（曾为 major：已购权益按 (user,type) upsert，二次付款用户得不到任何新东西）
+  // 防重复购买，但仅拦"仍在有效期内"的权益——已过期(30天)的报告允许再次购买（曾为 major）
   try {
-    let owned = false;
-    if (item.kind === 'fortune_report') {
-      const rows = await supabaseSelect('fortune_reports', `user_id=eq.${encodeURIComponent(user.id)}&report_type=eq.${encodeURIComponent(item.type)}&access_level=eq.paid&select=id&limit=1`);
-      owned = rows.length > 0;
-    } else {
-      const rows = await supabaseSelect('report_entitlements', `user_id=eq.${encodeURIComponent(user.id)}&report_type=eq.${encodeURIComponent(item.type)}&status=eq.active&select=id&limit=1`);
-      owned = rows.length > 0;
-    }
-    if (owned) {
+    const ent = item.kind === 'fortune_report'
+      ? await hasFortuneReportEntitlement(user.id, item.type)
+      : await hasTradeReportEntitlement(user.id, item.type);
+    if (ent.ok) {
+      const isMember = ent.accessLevel === 'membership';
       return send(res, 409, {
         error: 'already_owned',
+        accessLevel: ent.accessLevel,
+        expiresAt: ent.expiresAt || null,
         message: locale === 'en'
-          ? 'You already own this report — open it from the report page, no need to buy again. You were not charged.'
-          : '你已购买过这份报告，直接在报告页生成/查看即可，无需重复购买——本次未扣费。'
+          ? (isMember
+            ? 'Your Ultimate membership already includes this report — generate it free from the report page. You were not charged.'
+            : 'You already own this report and it is still valid — open it from the report page, no need to buy again. You were not charged.')
+          : (isMember
+            ? '你的最高级会员已包含此报告，直接在报告页免费生成即可——本次未扣费。'
+            : '你已购买过这份报告且仍在有效期内，直接在报告页生成/查看即可，无需重复购买——本次未扣费。')
       });
     }
   } catch (e) { /* 权益查询失败不阻断购买 */ }
