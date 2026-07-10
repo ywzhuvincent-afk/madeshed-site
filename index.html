@@ -1347,7 +1347,7 @@ const EN_COPY={
     ['.hf-fine','Free · Calculated in your browser · Decide whether to save after you see it'],
     ['.hf-adv','Need lunar calendar or birthplace correction? Advanced setup'],
     ['.hero-fine','Start with a free BaZi chart and manual trade journal. Upgrade only when you want deeper reports, AI reflection, or cloud sync.'],
-    ['.hero-stat:nth-child(1) .v','$19/mo'],
+    ['.hero-stat:nth-child(1) .v','CN¥199/mo'],
     ['.hero-stat:nth-child(1) .k','Ultimate membership'],
     ['.hero-stat:nth-child(2) .k','Markets and assets'],
     ['.hero-stat:nth-child(3) .v','ZH/EN'],
@@ -1395,7 +1395,7 @@ const EN_COPY={
     ['#trend-explain','Click any point to review base timing, trigger strength, wealth signal, and behavioral risk. Scores describe timing and behavioral risk, not expected return.'],
     ['#yong-weight-note','Right-side values show favorable-element weight. They are not expected return. Positive means supportive timing, zero is neutral, negative means more risk control is needed.'],
     ['.fortune-entry strong','BaZi Advisor · Ask Master'],
-    ['.cta-t','Ultimate · $19/mo: automated reports, fixed BaZi reports, and monthly AI reflection credits for consistent review.'],
+    ['.cta-t','Ultimate · CN¥199/mo: automated reports, fixed BaZi reports, and monthly AI reflection credits for consistent review.'],
     ['.cta-b','Start Ultimate'],
     ['[data-view="daily"] .checkin-t','Today Check-In'],
     ['[data-view="daily"] .checkin-time','10 seconds'],
@@ -1497,7 +1497,7 @@ function localizeEnglishFortuneView(){
   setLocaleText('#fortune-tabs [data-fortune-tab="history"]','History');
   setLocaleText('[data-view="fortune"] .credit-box .account-row span','Credit Balance');
   setLocaleText('[data-view="fortune"] .credit-box .d','Normal questions cost 1 credit. Major decision reviews cost 3 credits. Ultimate includes monthly advisor credits.');
-  setLocaleText('[data-fortune-action="buy-credits"]','Buy 10 Credits - $9');
+  setLocaleText('[data-fortune-action="buy-credits"]','Buy 10 Credits - '+((typeof CREDIT_PACK_PRODUCT!=='undefined'&&CREDIT_PACK_PRODUCT.priceEn)||'CN¥99'));
   setLocaleText('[data-view="fortune"] .fortune-status .legal-block h2','Boundaries');
   setLocaleText('[data-view="fortune"] .fortune-status .legal-block p','Wealth readings discuss opportunity, pressure, spending, and risk rhythm. They do not provide ticker picks, entries, exits, or return promises.');
   setLocaleText('[data-view="fortune"] [data-fortune-panel="products"] .legal-block h2','Paid BaZi Reports');
@@ -2056,10 +2056,10 @@ const STRIPE_CHECKOUT_ENDPOINT='/api/checkout?action=report';
 const MEMBERSHIP_CHECKOUT_ENDPOINT='/api/checkout?action=membership';
 const CUSTOMER_PORTAL_ENDPOINT='/api/checkout?action=portal';
 const REPORT_PRODUCTS={
-  '7':{label:'7 天报告',period:'近 7 天',price:'¥29',priceEn:'$5',days:7,desc:'短期状态、连续亏损、追单风险和下周纪律建议。'},
-  '30':{label:'月度报告',period:'近 1 月',price:'¥79',priceEn:'$9',days:30,featured:true,desc:'核心付费报告，结合胜率、五行、十神、八字强弱和下月策略。'},
-  '365':{label:'年度报告',period:'近 1 年',price:'¥199',priceEn:'$29',days:365,desc:'全年交易命理画像，找出高胜率月份、危险周期和年度纪律。'},
-  all:{label:'全部历史报告',period:'全部历史',price:'¥399',priceEn:'$59',days:null,desc:'长期个人模型，沉淀最适合你的颜色、五行、十神和风控规则。'}
+  '7':{label:'7 天报告',period:'近 7 天',price:'¥29',priceEn:'CN¥29',days:7,desc:'短期状态、连续亏损、追单风险和下周纪律建议。'},
+  '30':{label:'月度报告',period:'近 1 月',price:'¥79',priceEn:'CN¥79',days:30,featured:true,desc:'核心付费报告，结合胜率、五行、十神、八字强弱和下月策略。'},
+  '365':{label:'年度报告',period:'近 1 年',price:'¥199',priceEn:'CN¥199',days:365,desc:'全年交易命理画像，找出高胜率月份、危险周期和年度纪律。'},
+  all:{label:'全部历史报告',period:'全部历史',price:'¥399',priceEn:'CN¥399',days:null,desc:'长期个人模型，沉淀最适合你的颜色、五行、十神和风控规则。'}
 };
 const FORTUNE_CREDITS_KEY='madeshed_fortune_credits_v1';
 const MASTER_HISTORY_KEY='madeshed_master_history_v1';
@@ -2075,14 +2075,44 @@ const ACCOUNT_STATUS_KEY='madeshed_account_status_v1';
 const PENDING_LEGAL_KEY='madeshed_pending_legal_acceptances_v1';
 const LEGAL_DOCUMENT_VERSIONS={terms:'2026-06-30',privacy:'2026-06-30',risk_waiver:'2026-06-30',ai_disclaimer:'2026-06-30',billing_terms:'2026-06-30'};
 const LEGALLY_REQUIRED_ACCEPTANCES=Object.keys(LEGAL_DOCUMENT_VERSIONS);
-const ULTIMATE_MEMBERSHIP_PRODUCT={label:'最高级会员',price:'¥199/月',priceEn:'$19/mo'};
-const CREDIT_PACK_PRODUCT={label:'问大师 10 点包',price:'¥99',priceEn:'$14',credits:10};
+const ULTIMATE_MEMBERSHIP_PRODUCT={label:'最高级会员',price:'¥199/月',priceEn:'CN¥199/mo'};
+const CREDIT_PACK_PRODUCT={label:'问大师 10 点包',price:'¥99',priceEn:'CN¥99',credits:10};
 const FORTUNE_PRODUCTS={
-  full:{label:'全盘解读',price:'¥69',priceEn:'$9',desc:'一生格局、性格、婚姻、事业、财运、健康倾向，适合建立长期人生底盘。',featured:true},
-  dayun:{label:'流年大运解读',price:'¥99',priceEn:'$14',desc:'当前大运、今年流年和未来 3 年关键节点，适合重大规划前查看。'},
-  month:{label:'每月运程',price:'¥29',priceEn:'$5',desc:'指定月份的婚姻、事业、财运、人际和风险提醒，适合短期节奏安排。'}
+  full:{label:'全盘解读',price:'¥69',priceEn:'CN¥69',desc:'一生格局、性格、婚姻、事业、财运、健康倾向，适合建立长期人生底盘。',featured:true},
+  dayun:{label:'流年大运解读',price:'¥99',priceEn:'CN¥99',desc:'当前大运、今年流年和未来 3 年关键节点，适合重大规划前查看。'},
+  month:{label:'每月运程',price:'¥29',priceEn:'CN¥29',desc:'指定月份的婚姻、事业、财运、人际和风险提醒，适合短期节奏安排。'}
 };
 function productDisplayPrice(product){return typeof localeIsEn==='function'&&localeIsEn()&&product.priceEn?product.priceEn:product.price;}
+/* 实时价格：页面显示的价格以 /api/prices（=Stripe 商品当前默认价，与实际扣费同源）为准。
+   后台"价格管理"改价后，页面各处价格自动跟随，杜绝"显示旧价、扣新价"的脱节。取不到时用上面的常量兜底。 */
+function hydrateLivePrices(){
+  try{
+    fetch('/api/prices').then(function(r){return r.json();}).then(function(j){
+      if(!j||!j.items||!j.items.length)return;
+      var by={};j.items.forEach(function(x){by[x.key]=x;});
+      var en=typeof localeIsEn==='function'&&localeIsEn();
+      function zhP(x){return '¥'+x.amount+(x.interval?'/月':'');}
+      function enP(x){return 'CN¥'+x.amount+(x.interval?'/mo':'');}
+      function setP(obj,x){if(obj&&x){obj.price=zhP(x);obj.priceEn=enP(x);}}
+      setP(CREDIT_PACK_PRODUCT,by.credit);setP(ULTIMATE_MEMBERSHIP_PRODUCT,by.ultimate);
+      setP(REPORT_PRODUCTS['7'],by.report_7);setP(REPORT_PRODUCTS['30'],by.report_30);setP(REPORT_PRODUCTS['365'],by.report_365);setP(REPORT_PRODUCTS.all,by.report_all);
+      setP(FORTUNE_PRODUCTS.full,by.fortune_full);setP(FORTUNE_PRODUCTS.dayun,by.fortune_dayun);setP(FORTUNE_PRODUCTS.month,by.fortune_month);
+      var PRICE_RE=/(CN)?[¥$]\s?\d+(\.\d+)?(\/(月|mo))?/;
+      function patchNode(el,x){if(el&&x&&PRICE_RE.test(el.textContent))el.textContent=el.textContent.replace(PRICE_RE,en?enP(x):zhP(x));}
+      if(by.ultimate){
+        document.querySelectorAll('.hero-stat .v').forEach(function(el){if(/(月|mo)/.test(el.textContent))patchNode(el,by.ultimate);});
+        patchNode(document.querySelector('.cta-t'),by.ultimate);
+        document.querySelectorAll('strong').forEach(function(el){if(/(最高级会员|Ultimate)\s*·/.test(el.textContent))patchNode(el,by.ultimate);});
+      }
+      if(by.credit){var btn=document.querySelector('[data-fortune-action="buy-credits"]');if(btn)btn.textContent=en?('Buy 10 Credits - '+enP(by.credit)):('购买 10 点包 · '+zhP(by.credit));}
+      if(typeof renderPaidReportProducts==='function')try{renderPaidReportProducts();}catch(e){}
+      if(typeof renderFortuneProducts==='function')try{renderFortuneProducts();}catch(e){}
+      window.__livePrices=by;
+    }).catch(function(){});
+  }catch(e){}
+}
+setTimeout(hydrateLivePrices,0);
+window.addEventListener('madeshed:locale-change',function(){setTimeout(hydrateLivePrices,80);});
 const MASTER_CATEGORY_LABELS={marriage:'婚姻感情',career:'事业工作',wealth:'财运收支',family:'家庭关系',health:'健康倾向',timing:'择日时机',life:'人生全局',custom:'自定义'};
 const MASTER_HORIZON_LABELS={short:'短期',month:'本月/指定月份',year:'今年/未来一年',dayun:'大运阶段',lifetime:'长期/一生'};
 let fortuneTab='full';

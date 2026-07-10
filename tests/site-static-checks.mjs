@@ -448,16 +448,17 @@ includesAll(chart, [
 
 assert.equal(index.includes('\u00a5299'), false, 'site should not show old ¥299 buyout pricing');
 assert.equal(index.includes('\u00a549'), false, 'site should not show old ¥49 PRO pricing');
+// 英文价签用 CN¥（与实际扣费货币一致）；旧断言曾钉死编造的 $ 价，已纠正
 includesAll(index, [
-  "priceEn:'$5'",
-  "priceEn:'$9'",
-  "priceEn:'$29'",
-  "priceEn:'$59'",
+  "priceEn:'CN¥29'",
+  "priceEn:'CN¥79'",
+  "priceEn:'CN¥199'",
+  "priceEn:'CN¥399'",
   'function productDisplayPrice(product)',
   "localeIsEn()&&product.priceEn?product.priceEn:product.price",
   "REPORT_PRODUCTS[type].priceEn",
   "FORTUNE_PRODUCTS[type].priceEn",
-], 'English USD pricing for paid products');
+], 'English pricing labels use CN¥ (same currency as actual charge)');
 assert.equal(index.includes('Beta ·'), false, 'production landing copy should not show beta badge');
 assert.equal(index.includes('href="#terms"'), false, 'onboarding terms link should use #/terms route');
 assert.equal(index.includes('href="#privacy"'), false, 'onboarding privacy link should use #/privacy route');
@@ -1492,5 +1493,12 @@ assert.ok(/action === 'list-prices'/.test(adminApi) && /action === 'update-price
 assert.ok(/function resolveEffectivePrice/.test(checkoutApi) && /resolveEffectivePrice\(priceId\)/.test(checkoutApi), '结账价格解析跟随商品 default_price，后台改价即时生效');
 const adminHtml = readFileSync('admin.html', utf8);
 assert.ok(/data-tab="prices"/.test(adminHtml) && /data-price-save/.test(adminHtml) && /list-prices/.test(adminHtml), '后台页含价格管理板块（列表+保存新价）');
+// 实时价格：页面价格与扣费同源（/api/prices=商品默认价），前端启动时水合；禁止编造的美元价
+const pricesApi = readFileSync('api/prices.js', utf8);
+const catalogApi = readFileSync('api/_catalog.js', utf8);
+assert.ok(/resolveCatalogItem/.test(pricesApi) && /s-maxage/.test(pricesApi), '/api/prices 公开实时价格接口（CDN 缓存）');
+assert.ok(/export const PRODUCT_CATALOG/.test(catalogApi) && /default_price/.test(catalogApi), '_catalog.js 是商品目录唯一实现（跟随 default_price）');
+assert.ok(/function hydrateLivePrices/.test(index) && index.includes("fetch('/api/prices')"), '前端启动时用 /api/prices 水合全部价格显示');
+assert.ok(!/priceEn:'\$/.test(index), '禁止编造美元价：英文价签用 CN¥（与实际扣费货币一致）');
 
 console.log('Static site checks passed');
