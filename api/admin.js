@@ -435,6 +435,32 @@ async function fixProductNames(req, res) {
   return send(res, 200, { ok: true, updated: results.filter((r) => r.status === 'updated').length, results });
 }
 
+// 一键把履约所需事件补进 Stripe webhook endpoint（幂等：合并现有 enabled_events，不删任何已订阅事件）。
+// dashboard 的事件选择器是自定义组件、自动化不可靠，用 API 直接更新最稳。
+async function addWebhookEvents(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  const { stripeGet, stripeFormRequest } = await import('./_stripe.js');
+  if (!process.env.STRIPE_SECRET_KEY) return send(res, 503, { error: 'stripe_not_configured' });
+  const WANT = ['invoice.payment_failed', 'charge.dispute.created', 'checkout.session.async_payment_succeeded', 'checkout.session.async_payment_failed'];
+  try {
+    const list = await stripeGet('webhook_endpoints?limit=30');
+    const ep = ((list && list.data) || []).find((e) => /stripe-webhook/.test(e.url || ''));
+    if (!ep) return send(res, 404, { error: 'endpoint_not_found', message: '未找到 /api/stripe-webhook 的 webhook endpoint。' });
+    const current = ep.enabled_events || [];
+    if (current.indexOf('*') >= 0) return send(res, 200, { ok: true, note: 'endpoint 已监听全部事件(*)，无需添加', before: current.length });
+    const missing = WANT.filter((e) => current.indexOf(e) < 0);
+    if (!missing.length) return send(res, 200, { ok: true, already: true, before: current.length, addedCount: 0 });
+    const merged = Array.from(new Set(current.concat(WANT)));
+    const params = new URLSearchParams();
+    merged.forEach((e) => params.append('enabled_events[]', e));
+    const updated = await stripeFormRequest(`webhook_endpoints/${encodeURIComponent(ep.id)}`, params);
+    return send(res, 200, { ok: true, endpoint: ep.url, before: current.length, after: (updated.enabled_events || []).length, addedCount: missing.length });
+  } catch (error) {
+    return send(res, 500, { error: 'add_events_failed', message: String(error && (error.detail && error.detail.error && error.detail.error.message || error.message)).slice(0, 200) });
+  }
+}
+
 export default async function handler(req, res) {
   const action = requestAction(req);
   if (action === 'whoami') return whoami(req, res);
@@ -447,6 +473,7 @@ export default async function handler(req, res) {
   if (action === 'fix-product-names') return fixProductNames(req, res);
   if (action === 'list-prices') return listPrices(req, res);
   if (action === 'update-price') return updatePrice(req, res);
+  if (action === 'add-webhook-events') return addWebhookEvents(req, res);
   return send(res, 400, {
     error: 'invalid_admin_action',
     message: '后台接口 action 无效。',
