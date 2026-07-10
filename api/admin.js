@@ -10,7 +10,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || 'https://tkltasrbhjqwurybcyxo.s
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // Admin allowlist. Set ADMIN_EMAILS in Vercel (comma separated) to control who can
 // open the back office. Falls back to the owner email so it works out of the box.
-const ADMIN_EMAILS = String(process.env.ADMIN_EMAILS || 'ywzhuvincent@gmail.com')
+const ADMIN_EMAILS = String(process.env.ADMIN_EMAILS || 'zhuvincent@hotmail.com,ywzhuvincent@gmail.com')
   .split(',')
   .map((s) => s.trim().toLowerCase())
   .filter(Boolean);
