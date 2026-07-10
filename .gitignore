@@ -1,2 +1,10 @@
 # 本地审计产物（截图/DOM 记录，含真实命盘渲染），不上库、不随 Vercel 公开托管
 audit/
+
+# 密钥与本地环境（绝不入库）
+.env
+.env.*
+
+# 依赖与部署缓存
+node_modules/
+.vercel/
