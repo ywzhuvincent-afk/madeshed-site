@@ -1526,4 +1526,23 @@ assert.ok(/reportExpiryFromNow\(\)/.test(stripeWebhookApi) && /expires_at: repor
 assert.ok(/hasTradeReportEntitlement|hasFortuneReportEntitlement/.test(checkoutApi) && /import \{ hasTradeReportEntitlement/.test(checkoutApi), '结账防重复用到期判定（过期报告允许续买）');
 assert.ok(/单次购买 · 30天有效/.test(index) && /Buy · 30-day/.test(index), '报告 CTA 标注"单次购买·30天有效"（承诺与实现一致）');
 
+// 8) 钱路对抗式预检修复（10 项确认缺陷）
+// 8.1 结账去重查询失败 fail-closed，不放行创建付款
+assert.ok(checkoutApi.includes("error: 'entitlement_check_unavailable'"), '结账：权益查询失败 fail-closed 返回 503，不重复扣款');
+// 8.2/8.3 报告授予按 session 幂等 + 退款保留 session_id 防复权
+includesAll(stripeWebhookApi, ['existing[0].stripe_session_id === sid', 'existing[0].context.stripe_session_id === sid', 'stripe_session_id: ctx.session_id || null'], 'webhook：报告授予按 session 幂等 + 退款保留 session_id 防复权');
+// 8.9 授予存 payment_intent + 退款 session 解析失败按 payment_intent 兜底撤权
+includesAll(stripeWebhookApi, ['payment_intent: session.payment_intent || null', 'payload->>payment_intent=eq.', 'context->>payment_intent=eq.'], 'webhook：授予存 payment_intent + 退款按 payment_intent 兜底回查撤权');
+// 8.10 累计部分退款判定改用 charge.amount_refunded
+assert.ok(stripeWebhookApi.includes('Number(charge?.amount_refunded || refund?.amount || 0)'), 'webhook：full_refund 用累计 charge.amount_refunded 判定');
+// 8.4/8.5 命理权益只认 <type>-entitlement 行且 eq.paid；会员由 activeUltimateMembership 独立判定
+assert.ok(accessApi.includes("reportType + '-entitlement')") && accessApi.includes('&access_level=eq.paid'), '_access：命理权益只查专属 entitlement 行且 eq.paid');
+assert.ok(!accessApi.includes('access_level=in.(paid,membership)'), '_access：不再匹配 membership 内容行（堵会员到期免费泄漏）');
+// 8.6 前端访问缓存/徽章尊重 expires_at（交易 + 命理）
+includesAll(index, ['a.expires&&a.expires[String(type)]', 'expires:exp', 'r.expiresAt&&new Date(r.expiresAt).getTime()<=Date.now()'], '前端：报告访问缓存/徽章尊重 expires_at，不再把已过期显示为已解锁');
+// 8.7 会员状态文案 locale-aware，EN 不泄漏中文
+assert.ok(/enm=\{active:'Active'/.test(index) && /Payment issue/.test(index), '前端：membershipStatusText 中英分离，EN 不泄漏中文会员状态');
+// 8.8 购买记录非 active 状态本地化，不暴露 raw token
+assert.ok(/refunded:en\?'refunded':'已退款'/.test(index), '前端：购买记录已退款/已取消/已到期本地化显示');
+
 console.log('Static site checks passed');

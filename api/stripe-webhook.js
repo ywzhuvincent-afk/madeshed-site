@@ -232,26 +232,42 @@ function reportExpiryFromNow() {
 
 async function handleTradeReport(session, metadata) {
   if (!hasSupabaseService() || !metadata.user_id || !metadata.report_type) return;
+  const sid = session.id || '';
+  // 幂等 + 防退款复权：同一 checkout session 已处理过（active 或 refunded）→ 不重复履约、不把已退款翻回 active、
+  // 不因事件重投滑动 30 天有效期。过期后复购会带新的 session id，正常授予新窗口。
+  const existing = await supabaseSelect(
+    'report_entitlements',
+    `user_id=eq.${encodeURIComponent(metadata.user_id)}&report_type=eq.${encodeURIComponent(metadata.report_type)}&select=stripe_session_id&limit=1`
+  );
+  if (existing[0] && existing[0].stripe_session_id === sid) return;
   await supabaseInsert('report_entitlements', {
     user_id: metadata.user_id,
     report_type: metadata.report_type,
     source: 'purchase',
     status: 'active',
-    stripe_session_id: session.id || '',
-    payload: { amount_total: session.amount_total, currency: session.currency, expires_at: reportExpiryFromNow(), validity_days: REPORT_VALIDITY_DAYS }
+    stripe_session_id: sid,
+    payload: { amount_total: session.amount_total, currency: session.currency, payment_intent: session.payment_intent || null, expires_at: reportExpiryFromNow(), validity_days: REPORT_VALIDITY_DAYS }
   }, { upsert: true, onConflict: 'user_id,report_type' });
 }
 
 async function handleFortuneReport(session, metadata) {
   if (!hasSupabaseService() || !metadata.user_id || !metadata.fortune_report_type) return;
   const type = metadata.fortune_report_type;
+  const sid = session.id || '';
+  // 幂等 + 防退款复权：读权益行 context.stripe_session_id，同一 session 重投（含退款后重投）直接跳过。
+  // 退款时 markFortuneReportRefunded 会保留原 session_id，使此守卫在退款后仍能匹配到同一会话。
+  const existing = await supabaseSelect(
+    'fortune_reports',
+    `user_id=eq.${encodeURIComponent(metadata.user_id)}&report_key=eq.${encodeURIComponent(type + '-entitlement')}&select=context&limit=1`
+  );
+  if (existing[0] && existing[0].context && existing[0].context.stripe_session_id === sid) return;
   await supabaseInsert('fortune_reports', {
     user_id: metadata.user_id,
     report_key: `${type}-entitlement`,
     report_type: type,
     target_period: null,
     title: '已解锁命理报告',
-    context: { stripe_session_id: session.id || '', product: 'fortune_report', expires_at: reportExpiryFromNow(), validity_days: REPORT_VALIDITY_DAYS },
+    context: { stripe_session_id: sid, payment_intent: session.payment_intent || null, product: 'fortune_report', expires_at: reportExpiryFromNow(), validity_days: REPORT_VALIDITY_DAYS },
     report_html: '<div class="report-paywall">报告权益已解锁，请回到页面生成完整报告。</div>',
     access_level: 'paid'
   }, { upsert: true, onConflict: 'user_id,report_key' });
@@ -286,10 +302,32 @@ async function resolveRefundContext(event) {
   let membership = null;
   if (subscriptionId) membership = await membershipForSubscription(subscriptionId);
   if (!membership && charge?.customer) membership = await membershipForCustomer(charge.customer);
-  const product = metadata.product || (subscriptionId ? 'membership' : '');
-  const userId = metadata.user_id || membership?.user_id || null;
+  let product = metadata.product || (subscriptionId ? 'membership' : '');
+  let userId = metadata.user_id || membership?.user_id || null;
+  let reportType = metadata.report_type || null;
+  let fortuneReportType = metadata.fortune_report_type || null;
+  let sessionId = session?.id || null;
+  // 兜底：session 解析不出 product（拒付晚到 / session 老化 / Stripe list 抖动）但有 payment_intent 时，
+  // 按 payment_intent 回查已授予的权益行恢复 product/user/type，保证退款/拒付仍能撤权（曾为静默不撤销缺陷）。
+  if (!product && payment_intent) {
+    const tr = await supabaseSelect('report_entitlements', `payload->>payment_intent=eq.${encodeURIComponent(payment_intent)}&select=user_id,report_type,stripe_session_id&limit=1`);
+    if (tr[0]) {
+      product = 'report';
+      userId = userId || tr[0].user_id;
+      reportType = reportType || tr[0].report_type;
+      sessionId = sessionId || tr[0].stripe_session_id || null;
+    } else {
+      const fr = await supabaseSelect('fortune_reports', `context->>payment_intent=eq.${encodeURIComponent(payment_intent)}&select=user_id,report_type&limit=1`);
+      if (fr[0]) {
+        product = 'fortune_report';
+        userId = userId || fr[0].user_id;
+        fortuneReportType = fortuneReportType || fr[0].report_type;
+      }
+    }
+  }
   const refund_id = refund?.id || `${charge?.id || event.id}-refund`;
-  const amountRefunded = Number(refund?.amount || charge?.amount_refunded || 0);
+  // 累计退款判定：优先取 charge.amount_refunded（Stripe 累计值），使多笔部分退款累计达 100% 能正确判为 full_refund 并撤权。
+  const amountRefunded = Number(charge?.amount_refunded || refund?.amount || 0);
   const amountTotal = Number(session?.amount_total || charge?.amount || 0);
   return {
     product,
@@ -299,9 +337,9 @@ async function resolveRefundContext(event) {
     charge_id: charge?.id || refund?.charge || null,
     customer_id: session?.customer || charge?.customer || membership?.stripe_customer_id || null,
     subscription_id: subscriptionId || membership?.stripe_subscription_id || null,
-    session_id: session?.id || null,
-    report_type: metadata.report_type || null,
-    fortune_report_type: metadata.fortune_report_type || null,
+    session_id: sessionId,
+    report_type: reportType,
+    fortune_report_type: fortuneReportType,
     credits: Number(metadata.credits) || 10,
     amount_refunded: amountRefunded,
     amount_total: amountTotal,
@@ -388,6 +426,7 @@ async function markFortuneReportRefunded(ctx) {
       access_level: 'preview',
       context: {
         refunded: true,
+        stripe_session_id: ctx.session_id || null,
         refund_id: ctx.refund_id,
         payment_intent: ctx.payment_intent,
         charge_id: ctx.charge_id,

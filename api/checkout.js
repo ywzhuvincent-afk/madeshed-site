@@ -240,26 +240,35 @@ async function createReportCheckout(req, res) {
   const locale = checkoutLocale(req);
 
   // 防重复购买，但仅拦"仍在有效期内"的权益——已过期(30天)的报告允许再次购买（曾为 major）
+  // 权益查询失败必须 fail-closed：Supabase 抖动时若放行创建付款，会对已持有有效报告的用户重复扣款（曾为确认缺陷）。
+  let ent;
   try {
-    const ent = item.kind === 'fortune_report'
+    ent = item.kind === 'fortune_report'
       ? await hasFortuneReportEntitlement(user.id, item.type)
       : await hasTradeReportEntitlement(user.id, item.type);
-    if (ent.ok) {
-      const isMember = ent.accessLevel === 'membership';
-      return send(res, 409, {
-        error: 'already_owned',
-        accessLevel: ent.accessLevel,
-        expiresAt: ent.expiresAt || null,
-        message: locale === 'en'
-          ? (isMember
-            ? 'Your Ultimate membership already includes this report — generate it free from the report page. You were not charged.'
-            : 'You already own this report and it is still valid — open it from the report page, no need to buy again. You were not charged.')
-          : (isMember
-            ? '你的最高级会员已包含此报告，直接在报告页免费生成即可——本次未扣费。'
-            : '你已购买过这份报告且仍在有效期内，直接在报告页生成/查看即可，无需重复购买——本次未扣费。')
-      });
-    }
-  } catch (e) { /* 权益查询失败不阻断购买 */ }
+  } catch (e) {
+    return send(res, 503, {
+      error: 'entitlement_check_unavailable',
+      message: locale === 'en'
+        ? 'We could not verify your existing report access right now. No charge was created — please try again in a moment.'
+        : '暂时无法核对你已有的报告权益，本次未创建付款，请稍后再试。'
+    });
+  }
+  if (ent.ok) {
+    const isMember = ent.accessLevel === 'membership';
+    return send(res, 409, {
+      error: 'already_owned',
+      accessLevel: ent.accessLevel,
+      expiresAt: ent.expiresAt || null,
+      message: locale === 'en'
+        ? (isMember
+          ? 'Your Ultimate membership already includes this report — generate it free from the report page. You were not charged.'
+          : 'You already own this report and it is still valid — open it from the report page, no need to buy again. You were not charged.')
+        : (isMember
+          ? '你的最高级会员已包含此报告，直接在报告页免费生成即可——本次未扣费。'
+          : '你已购买过这份报告且仍在有效期内，直接在报告页生成/查看即可，无需重复购买——本次未扣费。')
+    });
+  }
   const price = priceFromEnv(item.config.priceEnv);
   if (!process.env.STRIPE_SECRET_KEY || !price.value) {
     return send(res, 503, {

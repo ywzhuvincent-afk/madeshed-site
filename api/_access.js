@@ -62,13 +62,15 @@ export async function hasTradeReportEntitlement(userId, reportType) {
 
 export async function hasFortuneReportEntitlement(userId, reportType) {
   if (await activeUltimateMembership(userId)) return { ok: true, accessLevel: 'membership' };
+  // 只认权威的“<type>-entitlement”权益行（唯一带 expires_at），且必须 access_level='paid'。
+  // 不再匹配任何 membership 内容行——会员访问已由上面的 activeUltimateMembership 独立判定，
+  // 否则会员到期后残留的 access_level='membership' 内容行会永久免费泄漏（曾为 paywall leak）。
   const rows = await supabaseSelect(
     'fortune_reports',
-    `user_id=eq.${encodeURIComponent(userId)}&report_type=eq.${encodeURIComponent(reportType)}&access_level=in.(paid,membership)&select=access_level,context&limit=1`
+    `user_id=eq.${encodeURIComponent(userId)}&report_key=eq.${encodeURIComponent(reportType + '-entitlement')}&access_level=eq.paid&select=context&limit=1`
   );
   const row = rows[0];
   if (!row) return { ok: false, accessLevel: 'preview' };
-  if (row.access_level === 'membership') return { ok: true, accessLevel: 'membership' };
   const expiresAt = row.context && row.context.expires_at;
   return purchaseStillValid(expiresAt)
     ? { ok: true, accessLevel: 'paid', expiresAt: expiresAt || null }
