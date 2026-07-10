@@ -1,4 +1,2 @@
-.vercel
-.env*
-supabase/.temp/
-node_modules/
+# 本地审计产物（截图/DOM 记录，含真实命盘渲染），不上库、不随 Vercel 公开托管
+audit/
