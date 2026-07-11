@@ -1732,7 +1732,7 @@ function localizeEnglishFortuneWidgets(){var bal=document.getElementById('fortun
 function localizeEnglishFortuneProducts(){var box=document.getElementById('fortune-products');if(box&&box.children.length){box.querySelectorAll('.report-product').forEach(function(card){var btn=card.querySelector('[data-fortune-report-type]'),type=btn&&btn.dataset.fortuneReportType,t=card.querySelector('.t'),d=card.querySelector('.d'),p=card.querySelector('.p'),badge=card.querySelector('.report-badge');if(type==='full'){if(t)t.textContent='Full Chart Reading';if(p&&FORTUNE_PRODUCTS[type].priceEn)p.textContent=FORTUNE_PRODUCTS[type].priceEn;if(d)d.textContent='Day Master, favorable elements, long-term themes, relationship, career, wealth rhythm, and health tendencies.';}if(type==='dayun'){if(t)t.textContent='Luck Pillar Reading';if(p&&FORTUNE_PRODUCTS[type].priceEn)p.textContent=FORTUNE_PRODUCTS[type].priceEn;if(d)d.textContent='Current 10-year cycle, annual rhythm, and key planning windows for the next three years.';}if(type==='month'){if(t)t.textContent='Monthly Timing Reading';if(p&&FORTUNE_PRODUCTS[type].priceEn)p.textContent=FORTUNE_PRODUCTS[type].priceEn;if(d)d.textContent='Month-level timing, relationship, career, cash-flow pressure, social energy, and risk reminders.';}if(!type){if(t)t.textContent='Ultimate Membership';if(p)p.textContent=productDisplayPrice(ULTIMATE_MEMBERSHIP_PRODUCT);if(d)d.textContent='Generate fixed reports and receive monthly advisor credits for repeated review.';}if(badge)badge.textContent='Single unlock';card.querySelectorAll('button').forEach(function(b){if(b.dataset.fortuneAction==='preview-report')b.textContent='Preview';else if(b.dataset.fortuneAction==='buy-report')b.textContent='Buy Once';else if(b.dataset.fortuneAction==='generate-report')b.textContent='Generate Report';else if(b.dataset.membershipAction)b.textContent='Start Ultimate';});});}}
 function localizeEnglishMembershipPanel(){var box=document.getElementById('membership-panel');if(!box||!box.children.length)return;box.querySelectorAll('.tier').forEach(function(el,i){el.textContent=i===0?'Membership Status':'Ultimate Benefits';});box.querySelectorAll('.status').forEach(function(el){el.textContent=enCleanValue(el.textContent);});box.querySelectorAll('.account-row').forEach(function(row,i){var s=row.querySelector('span'),v=row.querySelector('strong');if(i===0&&s)s.textContent='Advisor Credits';if(i===1&&s)s.textContent='Account';if(i===2&&s)s.textContent='Report Access';if(v){v.textContent=enCleanValue(v.textContent).replace(/\u56fa\u5b9a\u62a5\u544a\u514d\u8d39/g,'Fixed reports included').replace(/\u9700\u5355\u6b21\u89e3\u9501/g,'Buy reports individually');}});var benefits=box.querySelector('.membership-benefits');if(benefits)benefits.innerHTML='<span>Full chart, luck cycle, and monthly BaZi reports included</span><span>7-day, monthly, annual, and full-history trading reports included</span><span>30 advisor credits granted monthly</span><span>Stripe billing portal for payment method, invoice, and cancellation management</span>';box.querySelectorAll('button').forEach(function(btn){if(btn.dataset.membershipAction==='portal')btn.textContent='Manage Billing';else if(btn.dataset.membershipAction)btn.textContent='Start Ultimate';else if(btn.dataset.fortuneAction==='buy-credits')btn.textContent='Buy 10 Credits';});}
 function localizeEnglishAccountRows(){document.querySelectorAll('#account-profile .account-row,#account-storage .account-row,#account-status-list .account-row').forEach(function(row){var label=row.querySelector('span'),value=row.querySelector('strong'),t=label&&label.textContent;if(!label)return;if(/^\u51fa\u751f\u65e5\u671f$/.test(t))label.textContent='Birth Date';if(/^\u51fa\u751f\u65f6\u95f4$/.test(t))label.textContent='Birth Time';if(/^\u5386\u6cd5$/.test(t)){label.textContent='Calendar';if(value)value.textContent=/\u519c/.test(value.textContent)?'Lunar calendar input':'Solar calendar input';}if(/\u771f\u592a\u9633\u65f6/.test(t)){label.textContent='True Solar Time';if(value)value.textContent=value.textContent.replace(/\u5206/g,'min').replace(/\u672a\u6821\u6b63/g,'Not corrected');}if(/\u5b50\u65f6/.test(t)){label.textContent='Zi Hour Rule';if(value)value.textContent=/\u665a/.test(value.textContent)?'Late Zi hour uses next-day rule':(/\u65e9/.test(value.textContent)?'Early Zi hour':'Not Zi hour');}if(/\u6027\u522b/.test(t)){label.textContent='Gender';if(value)value.textContent=/\u5973/.test(value.textContent)?'Female':'Male';}if(/\u56db\u67f1/.test(t))label.textContent='Four Pillars';if(/\u4e2a\u4eba\u771f\u5b9e\u8bb0\u5f55/.test(t)){label.textContent='Journal Records';if(value)value.textContent=enCleanValue(value.textContent);}if(/\u6570\u636e\u4f4d\u7f6e/.test(t)){label.textContent='Data Location';if(value)value.textContent='This browser (syncs to Supabase after login)';}if(/\u4e91\u7aef\u8d26\u53f7/.test(t)){label.textContent='Cloud Account';if(value)value.textContent=enCleanValue(value.textContent);}if(/\u4e91\u7aef\u540c\u6b65/.test(t)){label.textContent='Cloud Sync';if(value)value.textContent='Not signed in. Local browser data only.';}if(/\u767b\u5f55\u72b6\u6001/.test(t)){label.textContent='Login Status';if(value)value.textContent=enCleanValue(value.textContent);}if(/\u8d26\u53f7\u90ae\u7bb1/.test(t))label.textContent='Account Email';if(/\u90ae\u7bb1\u9a8c\u8bc1/.test(t)){label.textContent='Email Verification';if(value)value.textContent=enCleanValue(value.textContent);}if(/\u6cd5\u5f8b\u540c\u610f/.test(t)){label.textContent='Legal Consent';if(value)value.textContent=/\u767b\u5f55/.test(value.textContent)?'Sign in to check account status':enCleanValue(value.textContent);}if(/\u4f1a\u5458\u8d2d\u4e70\u6761\u4ef6/.test(t)){label.textContent='Membership Eligibility';if(value)value.textContent=/\u8bf7\u5148/.test(value.textContent)?'Sign in and verify email first':enCleanValue(value.textContent);}if(/\u5220\u9664\u7533\u8bf7/.test(t)){label.textContent='Deletion Request';if(value)value.textContent=enCleanValue(value.textContent);}});}
-function localizeStaticContent(){const en=localeIsEn();document.title=en?EN_COPY.title:'Madeshed · 国学投资助手';EN_COPY.text.forEach(function(x){setLocaleText(x[0],x[1]);});EN_COPY.html.forEach(function(x){setLocaleHtml(x[0],x[1]);});EN_COPY.nav.forEach(function(x){setLocaleText(x[0],x[1]);});EN_COPY.attrs.forEach(function(x){setLocaleAttr(x[0],x[1],x[2]);});localizeEnglishWholeSite();localizeDynamicContent();}
+function localizeStaticContent(){const en=localeIsEn();document.title=en?EN_COPY.title:'Madeshed · 国学投资助手';EN_COPY.text.forEach(function(x){setLocaleText(x[0],x[1]);});EN_COPY.html.forEach(function(x){setLocaleHtml(x[0],x[1]);});EN_COPY.nav.forEach(function(x){setLocaleText(x[0],x[1]);});EN_COPY.attrs.forEach(function(x){setLocaleAttr(x[0],x[1],x[2]);});localizeEnglishWholeSite();localizeDynamicContent();if(typeof applyLivePriceNodes==='function')applyLivePriceNodes();}
 function localizeDynamicContent(){if(!localeIsEn())return;document.querySelectorAll('.m-score-tag,.today-meta').forEach(function(el){el.textContent='Action Mode: Full Plan';});document.querySelectorAll('.m-score-label').forEach(function(el){el.textContent='Daily Action Index';});document.querySelectorAll('.score-l').forEach(function(el){if(/财运|底盘|仓位|Position/i.test(el.textContent))el.textContent='Full Plan Mode · risk-aware execution';});const trend=document.getElementById('trend-explain');if(trend&&/流日|底盘|收益率|点击/.test(trend.textContent))trend.textContent='Scores describe timing and behavioral risk, not expected return. Review the base timing, trigger strength, wealth signal, and risk penalty before trading.';}
 function scoreBandEn(score){var n=Number(score);if(!Number.isFinite(n))return'—';if(n>=82)return'Strong Momentum';if(n>=70)return'Favorable';if(n>=56)return'Neutral';if(n>=44)return'Cautious';return'High Risk';}
 function positionAdviceEn(position,score){var p=String(position||''),n=Number(score);if(p.indexOf('%')>=0)return p+' planned max exposure';if(!Number.isFinite(n))return'Generate your chart to see guidance';if(n<=44)return'Stand aside or paper-trade only';if(n>=70)return'Trade planned setups only; avoid revenge sizing';return'Wait for confirmation; keep size reduced';}
@@ -2126,29 +2126,45 @@ const FORTUNE_PRODUCTS={
 function productDisplayPrice(product){return typeof localeIsEn==='function'&&localeIsEn()&&product.priceEn?product.priceEn:product.price;}
 /* 实时价格：页面显示的价格以 /api/prices（=Stripe 商品当前默认价，与实际扣费同源）为准。
    后台"价格管理"改价后，页面各处价格自动跟随，杜绝"显示旧价、扣新价"的脱节。取不到时用上面的常量兜底。 */
+// 把写死在 HTML/EN_COPY 里的价格节点，用 live 价（window.__livePrices）覆盖，并同步刷新
+// localeOriginalText 缓存——否则语言切换/重渲染会用 setLocaleText 的缓存把 live 价还原成写死的 ¥199。
+// 由 localizeStaticContent 末尾调用，确保 live 价永远是最后一次写入（中英文都盖得住）。
+function applyLivePriceNodes(){
+  var by=window.__livePrices;if(!by||!by.ultimate)return;
+  var en=typeof localeIsEn==='function'&&localeIsEn();
+  var u=by.ultimate;
+  var monthTxt=en?('CN¥'+u.amount+'/mo'):('¥'+u.amount+'/月');
+  // 只匹配"月费"（会员价）——一次性报告价不带 /月，天然不会被误伤（年度报告 ¥199 保持原样）。
+  var MONTH_RE=/(CN)?[¥$]\s?\d+(\.\d+)?\s?\/\s?(月|mo)/;
+  document.querySelectorAll('body *').forEach(function(el){
+    if(el.children.length)return; // 只改叶子节点，避免破坏含子元素的容器
+    var tn=el.tagName;if(tn==='SCRIPT'||tn==='STYLE')return;
+    var t=el.textContent;if(!t||!MONTH_RE.test(t))return;
+    el.textContent=t.replace(MONTH_RE,monthTxt);
+    // 同步刷新 setLocaleText 的缓存，否则切换语言/重渲染会把 live 价还原成写死值。
+    if(el.dataset&&'localeOriginalText' in el.dataset)el.dataset.localeOriginalText=el.textContent;
+  });
+  // 定价卡把 ¥ / 199 / 月 拆成三个 span：只改"开通会员"那张卡里的数字。
+  var subBtn=document.querySelector('[data-membership-action="subscribe"]');
+  var pcard=subBtn&&subBtn.closest?subBtn.closest('.pricing-card'):null;
+  if(pcard){var pe=pcard.querySelector('.pricing-amount .price');if(pe)pe.textContent=String(u.amount);}
+  if(by.credit){var btn=document.querySelector('[data-fortune-action="buy-credits"]');if(btn)btn.textContent=en?('Buy 10 Credits - CN¥'+by.credit.amount):('购买 10 点包 · ¥'+by.credit.amount);}
+}
 function hydrateLivePrices(){
   try{
     fetch('/api/health?action=prices').then(function(r){return r.json();}).then(function(j){
       if(!j||!j.items||!j.items.length)return;
       var by={};j.items.forEach(function(x){by[x.key]=x;});
-      var en=typeof localeIsEn==='function'&&localeIsEn();
       function zhP(x){return '¥'+x.amount+(x.interval?'/月':'');}
       function enP(x){return 'CN¥'+x.amount+(x.interval?'/mo':'');}
       function setP(obj,x){if(obj&&x){obj.price=zhP(x);obj.priceEn=enP(x);}}
       setP(CREDIT_PACK_PRODUCT,by.credit);setP(ULTIMATE_MEMBERSHIP_PRODUCT,by.ultimate);
       setP(REPORT_PRODUCTS['7'],by.report_7);setP(REPORT_PRODUCTS['30'],by.report_30);setP(REPORT_PRODUCTS['365'],by.report_365);setP(REPORT_PRODUCTS.all,by.report_all);
       setP(FORTUNE_PRODUCTS.full,by.fortune_full);setP(FORTUNE_PRODUCTS.dayun,by.fortune_dayun);setP(FORTUNE_PRODUCTS.month,by.fortune_month);
-      var PRICE_RE=/(CN)?[¥$]\s?\d+(\.\d+)?(\/(月|mo))?/;
-      function patchNode(el,x){if(el&&x&&PRICE_RE.test(el.textContent))el.textContent=el.textContent.replace(PRICE_RE,en?enP(x):zhP(x));}
-      if(by.ultimate){
-        document.querySelectorAll('.hero-stat .v').forEach(function(el){if(/(月|mo)/.test(el.textContent))patchNode(el,by.ultimate);});
-        patchNode(document.querySelector('.cta-t'),by.ultimate);
-        document.querySelectorAll('strong').forEach(function(el){if(/(最高级会员|Ultimate)\s*·/.test(el.textContent))patchNode(el,by.ultimate);});
-      }
-      if(by.credit){var btn=document.querySelector('[data-fortune-action="buy-credits"]');if(btn)btn.textContent=en?('Buy 10 Credits - '+enP(by.credit)):('购买 10 点包 · '+zhP(by.credit));}
+      window.__livePrices=by;
+      applyLivePriceNodes();
       if(typeof renderPaidReportProducts==='function')try{renderPaidReportProducts();}catch(e){}
       if(typeof renderFortuneProducts==='function')try{renderFortuneProducts();}catch(e){}
-      window.__livePrices=by;
     }).catch(function(){});
   }catch(e){}
 }

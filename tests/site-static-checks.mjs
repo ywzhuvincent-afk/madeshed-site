@@ -1544,5 +1544,7 @@ includesAll(index, ['a.expires&&a.expires[String(type)]', 'expires:exp', 'r.expi
 assert.ok(/enm=\{active:'Active'/.test(index) && /Payment issue/.test(index), '前端：membershipStatusText 中英分离，EN 不泄漏中文会员状态');
 // 8.8 购买记录非 active 状态本地化，不暴露 raw token
 assert.ok(/refunded:en\?'refunded':'已退款'/.test(index), '前端：购买记录已退款/已取消/已到期本地化显示');
+// 9) 后台改价后落地页价格跟随 live 价：applyLivePriceNodes 覆盖所有会员月费节点 + 定价卡 + 更新 localeOriginalText 缓存；localize 末尾兜底调用
+includesAll(index, ['function applyLivePriceNodes', "'localeOriginalText' in el.dataset", ".pricing-amount .price", 'if(typeof applyLivePriceNodes'], '改价后落地页价格跟随 live 价（覆盖 hero/CTA/定价卡 + 防 localize 还原）');
 
 console.log('Static site checks passed');
