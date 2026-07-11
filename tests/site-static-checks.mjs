@@ -1578,6 +1578,7 @@ includesAll(checkoutApi, ['activeSaleAmount(parseSale(product)', 'saleUnit < uni
 assert.ok(/sale: r\.sale \?/.test(healthApi) && /s-maxage=60/.test(healthApi), 'health：公开价格返回 sale 窗口 + 缓存降至 60s');
 includesAll(adminApi, ["action === 'set-sale'", "action === 'clear-sale'", 'async function setSale', 'async function clearSale', 'sale_not_lower'], 'admin：set-sale/clear-sale 写商品 metadata（特价须低于原价 + 时间窗校验）');
 includesAll(adminHtml, ['id="sale-key"', 'set-sale', 'clear-sale', 'toLocalInput'], 'admin.html：特价活动面板（选商品/金额/起止/清除，本地时间→ISO）');
+includesAll(adminHtml, ['this.showPicker()', 'data-sale-preset', 'dtLocalStr'], 'admin.html：特价时间点击弹日历 + 快捷时段预设（不再手输 mm/dd/yyyy）');
 includesAll(index, ['function saleFor', 'function priceDisplayHTML', 'class="price-old"', 'class="sale-window"'], 'index：划线原价 + 特价 + 小字活动时间段，活动期外自动恢复');
 
 console.log('Static site checks passed');

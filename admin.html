@@ -155,11 +155,20 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
         <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">商品<select id="sale-key" class="search" style="min-width:170px"></select></label>
         <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">人民币特价 ¥<input id="sale-cny" class="search mono" type="number" min="1" step="0.01" style="width:90px"></label>
         <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">美元特价 $<input id="sale-usd" class="search mono" type="number" min="1" step="0.01" style="width:90px"></label>
-        <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">开始<input id="sale-start" class="search" type="datetime-local"></label>
-        <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">结束<input id="sale-end" class="search" type="datetime-local"></label>
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">开始<input id="sale-start" class="search" type="datetime-local" onclick="try{this.showPicker()}catch(e){}" title="点击弹出日历"></label>
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">结束<input id="sale-end" class="search" type="datetime-local" onclick="try{this.showPicker()}catch(e){}" title="点击弹出日历"></label>
         <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">活动名<input id="sale-label" class="search" maxlength="60" placeholder="如 开业特惠" style="width:150px"></label>
         <button class="btn" id="sale-save">保存特价</button>
         <button class="btn sm" id="sale-clear">清除该商品特价</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:12px">
+        <span class="muted">快捷时段（点输入框也可弹日历）：</span>
+        <button class="btn sm" data-sale-preset="0">现在起 · 不限结束</button>
+        <button class="btn sm" data-sale-preset="3">现在起 3 天</button>
+        <button class="btn sm" data-sale-preset="7">现在起 7 天</button>
+        <button class="btn sm" data-sale-preset="14">现在起 14 天</button>
+        <button class="btn sm" data-sale-preset="30">现在起 30 天</button>
+        <button class="btn sm" data-sale-preset="clear">清空时间</button>
       </div>
       <p class="muted mono" id="sale-msg" style="font-size:12px;margin-top:8px"></p>
       <div id="sale-list" style="font-size:12px;margin-top:6px"></div>
@@ -308,6 +317,16 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
   });
 
   document.addEventListener('change',function(e){if(e.target&&e.target.id==='sale-key')fillSaleInputs();});
+  // 快捷时段：一键填 开始=现在、结束=现在+N 天（本机时区，datetime-local 格式）
+  function dtLocalStr(d){var p=function(n){return String(n).padStart(2,'0');};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());}
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('[data-sale-preset]');if(!b)return;e.preventDefault();
+    var v=b.getAttribute('data-sale-preset');
+    if(v==='clear'){$('sale-start').value='';$('sale-end').value='';return;}
+    var days=Number(v)||0;
+    $('sale-start').value=dtLocalStr(new Date());
+    $('sale-end').value=days>0?dtLocalStr(new Date(Date.now()+days*86400000)):'';
+  });
   document.addEventListener('click',async function(e){
     var save=e.target.closest('#sale-save'),clear=e.target.closest('#sale-clear');
     if(!save&&!clear)return;
