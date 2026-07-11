@@ -1,7 +1,7 @@
 import { getUserFromRequest, hasSupabaseService, requireAccountReadyForPaidAction, supabaseSelect } from './_supabase.js';
 import { cleanEnv, priceFromEnv, siteOrigin, stripeFormRequest, stripeGet } from './_stripe.js';
 import { hasTradeReportEntitlement, hasFortuneReportEntitlement } from './_access.js';
-import { resolveCurrencyPrice } from './_catalog.js';
+import { resolveCurrencyPrice, parseSale, activeSaleAmount, toUnitAmount } from './_catalog.js';
 
 // 商品名中英文各自一份：结账页按用户语言显示各自语言（不混）。改名时两边都要改。
 const CREDIT_PACK_PRODUCT = {
@@ -42,23 +42,24 @@ function checkoutLocale(req) {
 // 后台"价格管理"改价（新建价格并设为默认）后立即生效，无需改环境变量或重新部署。
 async function resolveEffectivePrice(priceId) {
   const anchor = await stripeGet(`prices/${encodeURIComponent(priceId)}`);
+  let product = null;
   try {
     const productId = anchor && (typeof anchor.product === 'string' ? anchor.product : anchor.product && anchor.product.id);
-    if (!productId) return anchor;
-    const product = await stripeGet(`products/${encodeURIComponent(productId)}`);
+    if (!productId) return { price: anchor, product: null };
+    product = await stripeGet(`products/${encodeURIComponent(productId)}`);
     const defaultPriceId = product && (typeof product.default_price === 'string' ? product.default_price : product.default_price && product.default_price.id);
     if (defaultPriceId && defaultPriceId !== priceId) {
       const dp = await stripeGet(`prices/${encodeURIComponent(defaultPriceId)}`);
-      if (dp && dp.active && dp.unit_amount) return dp;
+      if (dp && dp.active && dp.unit_amount) return { price: dp, product };
     }
   } catch (e) { /* 解析失败退回锚价格，保证结账可用 */ }
-  return anchor;
+  return { price: anchor, product };
 }
 // 用 price_data 内联本地化商品名——金额/币种/订阅周期取自解析后的有效价格（后台可改），
 // 只把展示名换成对应语言。取价失败则安全退回用 price ID（宁可名字是中文，也不让结账失败）。
 async function setLocalizedLineItem(params, priceId, nameZh, nameEn, locale) {
-  let price = null;
-  try { price = await resolveEffectivePrice(priceId); } catch (e) { price = null; }
+  let price = null, product = null;
+  try { const r = await resolveEffectivePrice(priceId); price = r.price; product = r.product; } catch (e) { price = null; }
   params.set('line_items[0][quantity]', '1');
   if (!price || !price.unit_amount || !price.currency) {
     params.set('line_items[0][price]', priceId);
@@ -76,6 +77,15 @@ async function setLocalizedLineItem(params, priceId, nameZh, nameEn, locale) {
       }
     } catch (e) { /* 退回人民币价 */ }
   }
+  // 特价：活动期内按当前币种特价收款（服务端独立按 start/end 判定，绝不信前端；划线只是展示）。
+  // 该币种没配特价则维持原价。解析失败按原价，绝不让结账失败。
+  try {
+    const saleMajor = activeSaleAmount(parseSale(product), currency, Date.now());
+    if (saleMajor != null && saleMajor > 0) {
+      const saleUnit = toUnitAmount(saleMajor, currency);
+      if (Number.isFinite(saleUnit) && saleUnit > 0 && saleUnit < unitAmount) unitAmount = saleUnit;
+    }
+  } catch (e) { /* 按原价 */ }
   params.set('line_items[0][price_data][currency]', currency);
   params.set('line_items[0][price_data][unit_amount]', String(unitAmount));
   params.set('line_items[0][price_data][product_data][name]', locale === 'en' ? nameEn : nameZh);

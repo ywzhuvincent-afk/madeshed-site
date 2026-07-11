@@ -14,10 +14,15 @@ async function publicPrices(res) {
   for (const item of PRODUCT_CATALOG) {
     try {
       const r = await resolveCatalogItem(item);
-      if (r.status === 'ok') items.push({ key: r.key, amount: r.amount, currency: r.currency, usd: r.usd ? r.usd.amount : null, interval: r.interval });
+      if (r.status === 'ok') items.push({
+        key: r.key, amount: r.amount, currency: r.currency, usd: r.usd ? r.usd.amount : null, interval: r.interval,
+        // 特价：把窗口与两币种金额原样下发，是否生效由前端按 start/end 实时判定（不受下方 CDN 缓存影响）。
+        sale: r.sale ? { cny: r.sale.amountCny, usd: r.sale.amountUsd, startAt: r.sale.startAt, endAt: r.sale.endAt, label: r.sale.label } : null
+      });
     } catch (e) { /* 单个商品失败不影响其他 */ }
   }
-  res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+  // 缓存 60s（原 300s）：让"新配置的特价窗口"更快出现在前端；是否处于活动期由客户端按 start/end 判定，缓存不影响正确性。
+  res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
   return res.status(200).json({ ok: true, items, fetchedAt: new Date().toISOString() });
 }
 

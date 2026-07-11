@@ -1548,11 +1548,19 @@ assert.ok(/refunded:en\?'refunded':'已退款'/.test(index), '前端：购买记
 includesAll(index, ['function applyLivePriceNodes', "'localeOriginalText' in el.dataset", ".pricing-amount .price", 'if(typeof applyLivePriceNodes'], '改价后落地页价格跟随 live 价（覆盖 hero/CTA/定价卡 + 防 localize 还原）');
 // 10) 按语言分币种：英文站按美元收（美元副价，不设默认；未配则退回人民币）
 includesAll(catalogApi, ['export async function resolveCurrencyPrice', 'usd'], '_catalog：美元副价解析 + resolveCatalogItem 输出 usd');
-includesAll(checkoutApi, ['import { resolveCurrencyPrice }', "resolveCurrencyPrice(productId, 'usd')"], '结账：英文站解析美元价覆盖币种/金额，无则退回人民币');
+includesAll(checkoutApi, ['resolveCurrencyPrice', "resolveCurrencyPrice(productId, 'usd')"], '结账：英文站解析美元价覆盖币种/金额，无则退回人民币');
 includesAll(adminApi, ['const isDefaultCurrency', "reqCurrency || String(current.currency)"], 'admin：改价按币种，人民币设默认价、美元只作副价');
 assert.ok(!/default_price.*newPrice\.id[\s\S]*else/.test(adminApi) || /美元价只作副价/.test(adminApi), 'admin：美元价不设 default_price（避免带偏人民币结账）');
 assert.ok(/usd: r\.usd \? r\.usd\.amount : null/.test(healthApi), 'health：公开价格返回美元副价');
 includesAll(index, ["x.usd!=null?('$'+x.usd)", 'var useUsd=en&&u.usd!=null'], '前端：英文态用 $+美元价展示，无美元价退回 CN¥');
 assert.ok(/data-price-input-usd/.test(adminHtml) && /美元价/.test(adminHtml), '后台价格表含美元价列 + 美元输入');
+
+// 9) 特价系统（限时促销）：metadata 存储 + 结账真扣特价 + 展示划线 + 后台面板
+includesAll(catalogApi, ['export function parseSale', 'export function saleActive', 'export function activeSaleAmount', 'sale: parseSale(product)'], '_catalog：特价从商品 metadata 解析 + 有效期判定 + resolveCatalogItem 输出 sale');
+includesAll(checkoutApi, ['activeSaleAmount(parseSale(product)', 'saleUnit < unitAmount'], 'checkout：活动期按当前币种特价扣款，且特价不得高于原价（服务端独立判定，不信前端）');
+assert.ok(/sale: r\.sale \?/.test(healthApi) && /s-maxage=60/.test(healthApi), 'health：公开价格返回 sale 窗口 + 缓存降至 60s');
+includesAll(adminApi, ["action === 'set-sale'", "action === 'clear-sale'", 'async function setSale', 'async function clearSale', 'sale_not_lower'], 'admin：set-sale/clear-sale 写商品 metadata（特价须低于原价 + 时间窗校验）');
+includesAll(adminHtml, ['id="sale-key"', 'set-sale', 'clear-sale', 'toLocalInput'], 'admin.html：特价活动面板（选商品/金额/起止/清除，本地时间→ISO）');
+includesAll(index, ['function saleFor', 'function priceDisplayHTML', 'class="price-old"', 'class="sale-window"'], 'index：划线原价 + 特价 + 小字活动时间段，活动期外自动恢复');
 
 console.log('Static site checks passed');

@@ -44,6 +44,40 @@ export async function resolveCurrencyPrice(productId, currency) {
   };
 }
 
+// 特价（限时促销）：存于 Stripe 商品 metadata，无需数据库表。
+// sale_cny / sale_usd = 各币种特价金额（主单位，>0 才算配置了该币种特价）；
+// sale_start / sale_end = ISO 时间（可空表示不限该端）；sale_label = 活动名。
+export function parseSale(product) {
+  const m = (product && product.metadata) || {};
+  const cny = Number(m.sale_cny);
+  const usd = Number(m.sale_usd);
+  const hasCny = Number.isFinite(cny) && cny > 0;
+  const hasUsd = Number.isFinite(usd) && usd > 0;
+  if (!hasCny && !hasUsd) return null;
+  return {
+    amountCny: hasCny ? cny : null,
+    amountUsd: hasUsd ? usd : null,
+    startAt: m.sale_start || null,
+    endAt: m.sale_end || null,
+    label: m.sale_label || ''
+  };
+}
+// 是否在活动期内（now 缺省取当前时间）。start/end 任一为空表示该端不限。
+export function saleActive(sale, now) {
+  if (!sale) return false;
+  const t = Number.isFinite(now) ? now : Date.now();
+  if (sale.startAt) { const s = Date.parse(sale.startAt); if (Number.isFinite(s) && t < s) return false; }
+  if (sale.endAt) { const e = Date.parse(sale.endAt); if (Number.isFinite(e) && t > e) return false; }
+  return true;
+}
+// 取活动期内、指定币种的特价金额（无则 null）。
+export function activeSaleAmount(sale, currency, now) {
+  if (!saleActive(sale, now)) return null;
+  const cur = String(currency || '').toLowerCase();
+  const amt = cur === 'usd' ? sale.amountUsd : sale.amountCny;
+  return (Number.isFinite(amt) && amt > 0) ? amt : null;
+}
+
 export async function resolveCatalogItem(item) {
   let priceId = '';
   for (const e of item.envs) { const v = cleanEnv(process.env[e]); if (v) { priceId = v; break; } }
@@ -77,6 +111,7 @@ export async function resolveCatalogItem(item) {
     unitAmount: effective.unit_amount,
     amount: fromUnitAmount(effective.unit_amount, effective.currency),
     interval: (effective.recurring && effective.recurring.interval) || null,
-    usd
+    usd,
+    sale: parseSale(product)
   };
 }

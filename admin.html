@@ -148,6 +148,21 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
         </table>
       </div>
       <p class="muted mono" id="price-msg" style="font-size:12px;margin-top:10px"></p>
+
+      <div class="section-h" style="margin-top:24px">特价活动（限时促销）</div>
+      <p class="muted" style="font-size:12px;line-height:1.7">给任意商品设<b>限时特价</b>：填特价金额 + 起止时间，主页与商品卡会显示 <s>原价</s> 特价 + 小字活动时间段，<b>结账按特价扣款</b>；活动未到 / 过期自动恢复原价。特价必须低于原价。清空即取消。时间按<b>你本机时区</b>填写（自动转换）。</p>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">商品<select id="sale-key" class="search" style="min-width:170px"></select></label>
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">人民币特价 ¥<input id="sale-cny" class="search mono" type="number" min="1" step="0.01" style="width:90px"></label>
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">美元特价 $<input id="sale-usd" class="search mono" type="number" min="1" step="0.01" style="width:90px"></label>
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">开始<input id="sale-start" class="search" type="datetime-local"></label>
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">结束<input id="sale-end" class="search" type="datetime-local"></label>
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">活动名<input id="sale-label" class="search" maxlength="60" placeholder="如 开业特惠" style="width:150px"></label>
+        <button class="btn" id="sale-save">保存特价</button>
+        <button class="btn sm" id="sale-clear">清除该商品特价</button>
+      </div>
+      <p class="muted mono" id="sale-msg" style="font-size:12px;margin-top:8px"></p>
+      <div id="sale-list" style="font-size:12px;margin-top:6px"></div>
     </div>
   </div>
 </div>
@@ -245,7 +260,31 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
           +'</tr>';
       }).join('');
       box.innerHTML=rows||'<tr><td colspan="8" class="empty">没有商品</td></tr>';
+      state.priceItems=(j.items||[]).filter(function(x){return x.status==='ok';});
+      renderSaleUI();
     }catch(e){box.innerHTML='<tr><td colspan="8" class="empty">读取失败：'+esc(e.message)+'</td></tr>';}
+  }
+  // ---------- 特价活动 ----------
+  function toLocalInput(iso){if(!iso)return'';var d=new Date(iso);if(isNaN(d))return'';var local=new Date(d.getTime()-d.getTimezoneOffset()*60000);return local.toISOString().slice(0,16);}
+  function saleSummary(x){var s=x.sale;if(!s||(s.cny==null&&s.usd==null))return '<span class="muted">无</span>';
+    var now=Date.now(),started=!s.startAt||Date.parse(s.startAt)<=now,ended=s.endAt&&Date.parse(s.endAt)<now,active=started&&!ended;
+    var parts=[];if(s.cny!=null)parts.push('¥'+s.cny);if(s.usd!=null)parts.push('$'+s.usd);
+    var win=(s.startAt?fmtDateTime(s.startAt):'不限')+' → '+(s.endAt?fmtDateTime(s.endAt):'不限');
+    var status=active?'<b style="color:#2ecc71">进行中</b>':(ended?'<span class="muted">已结束</span>':'<span style="color:#f39c12">未开始</span>');
+    return parts.join(' / ')+' · '+status+' · '+esc(win)+(s.label?(' · '+esc(s.label)):'');
+  }
+  function renderSaleUI(){
+    var sel=$('sale-key'),list=$('sale-list'),items=state.priceItems||[];
+    if(sel){var cur=sel.value;sel.innerHTML=items.map(function(x){return '<option value="'+esc(x.key)+'">'+esc(x.name)+'</option>';}).join('');if(cur)sel.value=cur;fillSaleInputs();}
+    if(list){list.innerHTML='<b>当前特价：</b><br>'+items.map(function(x){return esc(x.name)+'：'+saleSummary(x);}).join('<br>');}
+  }
+  function fillSaleInputs(){
+    var sel=$('sale-key');if(!sel)return;var x=(state.priceItems||[]).find(function(i){return i.key===sel.value;});var s=x&&x.sale;
+    $('sale-cny').value=s&&s.cny!=null?s.cny:'';
+    $('sale-usd').value=s&&s.usd!=null?s.usd:'';
+    $('sale-start').value=s?toLocalInput(s.startAt):'';
+    $('sale-end').value=s?toLocalInput(s.endAt):'';
+    $('sale-label').value=s&&s.label?s.label:'';
   }
   document.addEventListener('click',async function(e){
     var btn=e.target.closest('[data-price-save]');if(!btn)return;
@@ -266,6 +305,36 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
       state.pricesLoaded=false;loadPrices();
     }catch(err){msg.textContent='保存失败：'+err.message;}
     btn.disabled=false;btn.textContent='保存';
+  });
+
+  document.addEventListener('change',function(e){if(e.target&&e.target.id==='sale-key')fillSaleInputs();});
+  document.addEventListener('click',async function(e){
+    var save=e.target.closest('#sale-save'),clear=e.target.closest('#sale-clear');
+    if(!save&&!clear)return;
+    var key=$('sale-key').value,msg=$('sale-msg');
+    if(!key){msg.textContent='请先选择商品。';return;}
+    if(clear){
+      if(!confirm('确认清除【'+key+'】的特价？页面将恢复原价。'))return;
+      clear.disabled=true;msg.textContent='清除中…';
+      try{await api('clear-sale',{},{method:'POST',body:{key:key}});msg.textContent='✓ 已清除特价：'+key;state.pricesLoaded=false;loadPrices();}
+      catch(err){msg.textContent='清除失败：'+err.message;}
+      clear.disabled=false;return;
+    }
+    var cny=parseFloat($('sale-cny').value),usd=parseFloat($('sale-usd').value);
+    var hasCny=Number.isFinite(cny)&&cny>0,hasUsd=Number.isFinite(usd)&&usd>0;
+    if(!hasCny&&!hasUsd){msg.textContent='请至少填人民币或美元特价（大于 0）。';return;}
+    var sv=$('sale-start').value,ev=$('sale-end').value;
+    // 本机本地时间 → ISO(UTC)，避免服务端(UTC)误解本地时间
+    var startIso=sv?new Date(sv).toISOString():'',endIso=ev?new Date(ev).toISOString():'';
+    if(startIso&&endIso&&Date.parse(endIso)<=Date.parse(startIso)){msg.textContent='结束时间必须晚于开始时间。';return;}
+    if(!confirm('确认给【'+key+'】设特价？'+(hasCny?(' ¥'+cny):'')+(hasUsd?(' $'+usd):'')+(sv?(' 从 '+sv):'')+(ev?(' 到 '+ev):'')+'。结账将按特价扣款。'))return;
+    save.disabled=true;save.textContent='保存中…';msg.textContent='';
+    try{
+      var j=await api('set-sale',{},{method:'POST',body:{key:key,cny:hasCny?cny:'',usd:hasUsd?usd:'',start:startIso,end:endIso,label:($('sale-label').value||'').trim()}});
+      msg.textContent='✓ 特价已保存：'+j.key+(hasCny?(' ¥'+j.cny):'')+(hasUsd?(' $'+j.usd):'')+'。约 1 分钟内前端刷新可见（活动期外自动恢复原价）。';
+      state.pricesLoaded=false;loadPrices();
+    }catch(err){msg.textContent='保存失败：'+err.message;}
+    save.disabled=false;save.textContent='保存特价';
   });
 
   // ---------- overview ----------

@@ -422,6 +422,71 @@ async function updatePrice(req, res) {
     return send(res, 500, { error: 'price_update_failed', message: String(error && error.message).slice(0, 200) });
   }
 }
+
+// 特价：写入 Stripe 商品 metadata（sale_cny/sale_usd/sale_start/sale_end/sale_label）。
+// 展示层划线、结账层按特价扣款、时间窗判定统一读这些字段（见 _catalog.parseSale/saleActive）。
+async function setSale(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { error: 'method_not_allowed' }); }
+  const { stripeFormRequest } = await import('./_stripe.js');
+  const body = req.body || {};
+  const item = PRODUCT_NAME_MAP.find((x) => x.key === String(body.key || ''));
+  if (!item) return send(res, 400, { error: 'invalid_key', message: '商品 key 无效。' });
+  const parseAmt = (v) => (v == null || v === '') ? null : Number(v);
+  const cny = parseAmt(body.cny);
+  const usd = parseAmt(body.usd);
+  if ((cny != null && !(cny > 0)) || (usd != null && !(usd > 0))) {
+    return send(res, 400, { error: 'invalid_amount', message: '特价必须是大于 0 的数字。' });
+  }
+  if (cny == null && usd == null) return send(res, 400, { error: 'no_amount', message: '请至少填人民币或美元特价。' });
+  if (body.start && Number.isNaN(Date.parse(body.start))) return send(res, 400, { error: 'invalid_start', message: '开始时间无法识别。' });
+  if (body.end && Number.isNaN(Date.parse(body.end))) return send(res, 400, { error: 'invalid_end', message: '结束时间无法识别。' });
+  const start = body.start ? new Date(body.start).toISOString() : '';
+  const end = body.end ? new Date(body.end).toISOString() : '';
+  if (start && end && Date.parse(end) <= Date.parse(start)) {
+    return send(res, 400, { error: 'bad_window', message: '结束时间必须晚于开始时间。' });
+  }
+  try {
+    const current = await resolveCatalogItem(item);
+    if (current.status !== 'ok') return send(res, 400, { error: 'catalog_unresolved', message: '无法定位该商品：' + current.status, item: current });
+    // 特价不得高于原价（防误配成"涨价"）：与当前人民币价对比。
+    if (cny != null && current.amount != null && cny >= current.amount) {
+      return send(res, 400, { error: 'sale_not_lower', message: `人民币特价（¥${cny}）必须低于原价 ¥${current.amount}。` });
+    }
+    const label = String(body.label || '').slice(0, 60);
+    const params = new URLSearchParams();
+    params.set('metadata[sale_cny]', cny != null ? String(cny) : '');
+    params.set('metadata[sale_usd]', usd != null ? String(usd) : '');
+    params.set('metadata[sale_start]', start);
+    params.set('metadata[sale_end]', end);
+    params.set('metadata[sale_label]', label);
+    await stripeFormRequest(`products/${encodeURIComponent(current.productId)}`, params);
+    return send(res, 200, { ok: true, key: item.key, productId: current.productId, cny, usd, start, end, label, regular: current.amount });
+  } catch (error) {
+    return send(res, 500, { error: 'sale_update_failed', message: String(error && error.message).slice(0, 200) });
+  }
+}
+
+async function clearSale(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { error: 'method_not_allowed' }); }
+  const { stripeFormRequest } = await import('./_stripe.js');
+  const item = PRODUCT_NAME_MAP.find((x) => x.key === String((req.body || {}).key || ''));
+  if (!item) return send(res, 400, { error: 'invalid_key', message: '商品 key 无效。' });
+  try {
+    const current = await resolveCatalogItem(item);
+    if (current.status !== 'ok') return send(res, 400, { error: 'catalog_unresolved', message: '无法定位该商品：' + current.status, item: current });
+    const params = new URLSearchParams();
+    // Stripe 把 metadata 键设为空字符串即删除该键。
+    ['sale_cny', 'sale_usd', 'sale_start', 'sale_end', 'sale_label'].forEach((k) => params.set(`metadata[${k}]`, ''));
+    await stripeFormRequest(`products/${encodeURIComponent(current.productId)}`, params);
+    return send(res, 200, { ok: true, key: item.key, cleared: true });
+  } catch (error) {
+    return send(res, 500, { error: 'sale_clear_failed', message: String(error && error.message).slice(0, 200) });
+  }
+}
 async function fixProductNames(req, res) {
   const admin = await requireAdmin(req, res);
   if (!admin) return;
@@ -489,10 +554,12 @@ export default async function handler(req, res) {
   if (action === 'fix-product-names') return fixProductNames(req, res);
   if (action === 'list-prices') return listPrices(req, res);
   if (action === 'update-price') return updatePrice(req, res);
+  if (action === 'set-sale') return setSale(req, res);
+  if (action === 'clear-sale') return clearSale(req, res);
   if (action === 'add-webhook-events') return addWebhookEvents(req, res);
   return send(res, 400, {
     error: 'invalid_admin_action',
     message: '后台接口 action 无效。',
-    actions: ['whoami', 'overview', 'users', 'user', 'grant-credits', 'set-membership', 'verify-email', 'fix-product-names', 'list-prices', 'update-price']
+    actions: ['whoami', 'overview', 'users', 'user', 'grant-credits', 'set-membership', 'verify-email', 'fix-product-names', 'list-prices', 'update-price', 'set-sale', 'clear-sale']
   });
 }
