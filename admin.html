@@ -316,7 +316,7 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
     if(clear){
       if(!confirm('确认清除【'+key+'】的特价？页面将恢复原价。'))return;
       clear.disabled=true;msg.textContent='清除中…';
-      try{await api('clear-sale',{},{method:'POST',body:{key:key}});msg.textContent='✓ 已清除特价：'+key;state.pricesLoaded=false;loadPrices();}
+      try{await api('clear-sale',{},{method:'POST',body:{key:key}});msg.textContent='✓ 已清除特价：'+key;var itc=(state.priceItems||[]).find(function(i){return i.key===key;});if(itc)itc.sale=null;renderSaleUI();state.pricesLoaded=false;loadPrices();}
       catch(err){msg.textContent='清除失败：'+err.message;}
       clear.disabled=false;return;
     }
@@ -332,6 +332,7 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
     try{
       var j=await api('set-sale',{},{method:'POST',body:{key:key,cny:hasCny?cny:'',usd:hasUsd?usd:'',start:startIso,end:endIso,label:($('sale-label').value||'').trim()}});
       msg.textContent='✓ 特价已保存：'+j.key+(hasCny?(' ¥'+j.cny):'')+(hasUsd?(' $'+j.usd):'')+'。约 1 分钟内前端刷新可见（活动期外自动恢复原价）。';
+      var its=(state.priceItems||[]).find(function(i){return i.key===j.key;});if(its)its.sale={cny:hasCny?cny:null,usd:hasUsd?usd:null,startAt:startIso||null,endAt:endIso||null,label:($('sale-label').value||'').trim()};renderSaleUI();
       state.pricesLoaded=false;loadPrices();
     }catch(err){msg.textContent='保存失败：'+err.message;}
     save.disabled=false;save.textContent='保存特价';
