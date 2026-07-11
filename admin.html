@@ -140,11 +140,11 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
 
     <div id="tab-prices" class="hide">
       <div class="section-h">价格管理</div>
-      <p class="muted" style="font-size:12px;line-height:1.7">改价 = 在同一 Stripe 商品上创建新价格并设为默认价（Stripe 标准做法，历史订单不受影响）。<b>新价格立即对新购买生效</b>；订阅类只影响新订户，已有订户仍按旧价续费。金额单位为价格显示货币的元。</p>
+      <p class="muted" style="font-size:12px;line-height:1.7">改价 = 在同一 Stripe 商品上创建新价格（Stripe 标准做法，历史订单不受影响）。<b>人民币价=商品默认价</b>，中文站结账与页面主价都用它；<b>美元价=副价，英文站结账用</b>（未设时英文站自动退回人民币价）。任一列填了数字点"保存"即生效；订阅类只影响新订户。金额单位为该币种的元/美元。</p>
       <div class="tbl-wrap">
         <table>
-          <thead><tr><th>商品</th><th>当前价</th><th>类型</th><th>新价格</th><th>操作</th><th>Stripe</th></tr></thead>
-          <tbody id="price-rows"><tr><td colspan="6" class="empty">加载中…</td></tr></tbody>
+          <thead><tr><th>商品</th><th>当前价(¥)</th><th>美元价($)</th><th>类型</th><th>新人民币价</th><th>新美元价</th><th>操作</th><th>Stripe</th></tr></thead>
+          <tbody id="price-rows"><tr><td colspan="8" class="empty">加载中…</td></tr></tbody>
         </table>
       </div>
       <p class="muted mono" id="price-msg" style="font-size:12px;margin-top:10px"></p>
@@ -224,39 +224,46 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
   // ---------- prices ----------
   function priceTypeLabel(x){return x.interval?('订阅 / '+(x.interval==='month'?'每月':x.interval)):'一次性';}
   function fmtMoney(x){if(x.amount==null)return '—';var cur=(x.currency||'').toUpperCase();return (cur==='CNY'?'¥':cur+' ')+Number(x.amount).toLocaleString('en-US');}
+  function fmtUsd(x){return x.usd!=null?('$'+Number(x.usd).toLocaleString('en-US')):'<span class="muted">未设</span>';}
   async function loadPrices(){
-    var box=$('price-rows');box.innerHTML='<tr><td colspan="6" class="empty">从 Stripe 读取价格中…</td></tr>';
+    var box=$('price-rows');box.innerHTML='<tr><td colspan="8" class="empty">从 Stripe 读取价格中…</td></tr>';
     try{
       var j=await api('list-prices');state.pricesLoaded=true;
       var rows=(j.items||[]).map(function(x){
-        if(x.status!=='ok')return '<tr><td>'+esc(x.name)+'</td><td colspan="5" class="muted">不可用：'+esc(x.status)+(x.error?(' · '+esc(x.error)):'')+'</td></tr>';
+        if(x.status!=='ok')return '<tr><td>'+esc(x.name)+'</td><td colspan="7" class="muted">不可用：'+esc(x.status)+(x.error?(' · '+esc(x.error)):'')+'</td></tr>';
         return '<tr data-key="'+esc(x.key)+'">'
           +'<td>'+esc(x.name)+'</td>'
           +'<td class="mono">'+fmtMoney(x)+'</td>'
+          +'<td class="mono">'+fmtUsd(x)+'</td>'
           +'<td>'+priceTypeLabel(x)+'</td>'
-          +'<td><input class="search mono" style="width:110px" type="number" min="1" step="0.01" placeholder="'+esc(String(x.amount||''))+'" data-price-input="'+esc(x.key)+'"></td>'
-          +'<td><button class="btn sm" data-price-save="'+esc(x.key)+'">保存新价</button></td>'
+          +'<td><input class="search mono" style="width:90px" type="number" min="1" step="0.01" placeholder="'+esc(String(x.amount||''))+'" data-price-input="'+esc(x.key)+'"></td>'
+          +'<td><input class="search mono" style="width:90px" type="number" min="1" step="0.01" placeholder="'+esc(x.usd!=null?String(x.usd):'未设')+'" data-price-input-usd="'+esc(x.key)+'"></td>'
+          +'<td><button class="btn sm" data-price-save="'+esc(x.key)+'">保存</button></td>'
           +'<td><a class="muted" target="_blank" rel="noopener" href="https://dashboard.stripe.com/products/'+esc(x.productId)+'">打开 →</a></td>'
           +'</tr>';
       }).join('');
-      box.innerHTML=rows||'<tr><td colspan="6" class="empty">没有商品</td></tr>';
-    }catch(e){box.innerHTML='<tr><td colspan="6" class="empty">读取失败：'+esc(e.message)+'</td></tr>';}
+      box.innerHTML=rows||'<tr><td colspan="8" class="empty">没有商品</td></tr>';
+    }catch(e){box.innerHTML='<tr><td colspan="8" class="empty">读取失败：'+esc(e.message)+'</td></tr>';}
   }
   document.addEventListener('click',async function(e){
     var btn=e.target.closest('[data-price-save]');if(!btn)return;
     var key=btn.getAttribute('data-price-save');
-    var input=document.querySelector('[data-price-input="'+key+'"]');
-    var amount=parseFloat(input&&input.value);
+    var cnyInput=document.querySelector('[data-price-input="'+key+'"]');
+    var usdInput=document.querySelector('[data-price-input-usd="'+key+'"]');
+    var cny=parseFloat(cnyInput&&cnyInput.value),usd=parseFloat(usdInput&&usdInput.value);
+    var hasCny=Number.isFinite(cny)&&cny>0,hasUsd=Number.isFinite(usd)&&usd>0;
     var msg=$('price-msg');
-    if(!Number.isFinite(amount)||amount<=0){msg.textContent='请输入大于 0 的新价格再保存。';return;}
-    if(!confirm('确认把该商品价格改为 '+amount+'？新价格立即对新购买生效。'))return;
+    if(!hasCny&&!hasUsd){msg.textContent='请至少填一个大于 0 的新价格（人民币或美元）再保存。';return;}
+    if(!confirm('确认保存？'+(hasCny?(' 人民币→¥'+cny):'')+(hasUsd?(' 美元→$'+usd):'')+'。新价立即对新购买生效。'))return;
     btn.disabled=true;btn.textContent='保存中…';msg.textContent='';
     try{
-      var j=await api('update-price',{},{method:'POST',body:{key:key,amount:amount}});
-      msg.textContent='✓ 已改价：'+j.key+' → '+j.amount+' '+(j.currency||'').toUpperCase()+'（新价格 '+j.newPriceId+'）。'+(j.note||'');
+      var done=[];
+      if(hasCny){var jc=await api('update-price',{},{method:'POST',body:{key:key,amount:cny}});done.push('人民币 ¥'+jc.amount);}
+      if(hasUsd){var ju=await api('update-price',{},{method:'POST',body:{key:key,amount:usd,currency:'usd'}});done.push('美元 $'+ju.amount);}
+      msg.textContent='✓ 已保存：'+key+' → '+done.join(' · ')+'。人民币价立即生效；美元价用于英文站结账。';
       state.pricesLoaded=false;loadPrices();
-    }catch(err){msg.textContent='改价失败：'+err.message;}
-    btn.disabled=false;btn.textContent='保存新价';
+    }catch(err){msg.textContent='保存失败：'+err.message;}
+    btn.disabled=false;btn.textContent='保存';
   });
 
   // ---------- overview ----------

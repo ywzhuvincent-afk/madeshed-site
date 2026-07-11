@@ -24,6 +24,26 @@ export function fromUnitAmount(unitAmount, currency) {
   return Number(unitAmount) / (zero ? 1 : 100);
 }
 
+// 查同一 Stripe 商品下指定币种的"当前生效价"。人民币价由 default_price 驱动（见 resolveCatalogItem/
+// resolveEffectivePrice）；美元价不设默认，取该商品最新的 active 美元价（改价时会停用旧美元价保证唯一）。
+export async function resolveCurrencyPrice(productId, currency) {
+  if (!productId || !currency) return null;
+  const cur = String(currency).toLowerCase();
+  const list = await stripeGet(`prices?product=${encodeURIComponent(productId)}&active=true&limit=100`);
+  const prices = list && Array.isArray(list.data) ? list.data : [];
+  const matches = prices.filter((p) => p && p.active && p.unit_amount && String(p.currency).toLowerCase() === cur);
+  if (!matches.length) return null;
+  matches.sort((a, b) => (b.created || 0) - (a.created || 0));
+  const p = matches[0];
+  return {
+    priceId: p.id,
+    currency: p.currency,
+    unitAmount: p.unit_amount,
+    amount: fromUnitAmount(p.unit_amount, p.currency),
+    interval: (p.recurring && p.recurring.interval) || null
+  };
+}
+
 export async function resolveCatalogItem(item) {
   let priceId = '';
   for (const e of item.envs) { const v = cleanEnv(process.env[e]); if (v) { priceId = v; break; } }
@@ -38,6 +58,14 @@ export async function resolveCatalogItem(item) {
     const dp = await stripeGet(`prices/${encodeURIComponent(defaultPriceId)}`);
     if (dp && dp.active && dp.unit_amount) effective = dp;
   }
+  // 美元副价（英文站结账用）——默认价本身就是美元时不再重复解析。
+  let usd = null;
+  try {
+    if (String(effective.currency).toLowerCase() !== 'usd') {
+      const u = await resolveCurrencyPrice(productId, 'usd');
+      if (u) usd = { priceId: u.priceId, amount: u.amount, currency: u.currency };
+    }
+  } catch (e) { usd = null; }
   return {
     key: item.key,
     name: (product && product.name) || item.name,
@@ -48,6 +76,7 @@ export async function resolveCatalogItem(item) {
     currency: effective.currency,
     unitAmount: effective.unit_amount,
     amount: fromUnitAmount(effective.unit_amount, effective.currency),
-    interval: (effective.recurring && effective.recurring.interval) || null
+    interval: (effective.recurring && effective.recurring.interval) || null,
+    usd
   };
 }

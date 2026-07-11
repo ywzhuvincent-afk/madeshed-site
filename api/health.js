@@ -14,7 +14,7 @@ async function publicPrices(res) {
   for (const item of PRODUCT_CATALOG) {
     try {
       const r = await resolveCatalogItem(item);
-      if (r.status === 'ok') items.push({ key: r.key, amount: r.amount, currency: r.currency, interval: r.interval });
+      if (r.status === 'ok') items.push({ key: r.key, amount: r.amount, currency: r.currency, usd: r.usd ? r.usd.amount : null, interval: r.interval });
     } catch (e) { /* 单个商品失败不影响其他 */ }
   }
   res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');

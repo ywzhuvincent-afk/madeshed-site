@@ -1,6 +1,7 @@
 import { getUserFromRequest, hasSupabaseService, requireAccountReadyForPaidAction, supabaseSelect } from './_supabase.js';
 import { cleanEnv, priceFromEnv, siteOrigin, stripeFormRequest, stripeGet } from './_stripe.js';
 import { hasTradeReportEntitlement, hasFortuneReportEntitlement } from './_access.js';
+import { resolveCurrencyPrice } from './_catalog.js';
 
 // 商品名中英文各自一份：结账页按用户语言显示各自语言（不混）。改名时两边都要改。
 const CREDIT_PACK_PRODUCT = {
@@ -63,8 +64,20 @@ async function setLocalizedLineItem(params, priceId, nameZh, nameEn, locale) {
     params.set('line_items[0][price]', priceId);
     return;
   }
-  params.set('line_items[0][price_data][currency]', price.currency);
-  params.set('line_items[0][price_data][unit_amount]', String(price.unit_amount));
+  let currency = price.currency;
+  let unitAmount = price.unit_amount;
+  // 英文站按美元收款：该商品若配了美元副价则用美元；否则安全退回人民币价（结账绝不因缺美元价而失败）。
+  if (locale === 'en') {
+    try {
+      const productId = typeof price.product === 'string' ? price.product : (price.product && price.product.id);
+      if (productId) {
+        const usd = await resolveCurrencyPrice(productId, 'usd');
+        if (usd && usd.unitAmount) { currency = usd.currency; unitAmount = usd.unitAmount; }
+      }
+    } catch (e) { /* 退回人民币价 */ }
+  }
+  params.set('line_items[0][price_data][currency]', currency);
+  params.set('line_items[0][price_data][unit_amount]', String(unitAmount));
   params.set('line_items[0][price_data][product_data][name]', locale === 'en' ? nameEn : nameZh);
   if (price.recurring && price.recurring.interval) {
     params.set('line_items[0][price_data][recurring][interval]', price.recurring.interval);

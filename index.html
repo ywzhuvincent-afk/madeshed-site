@@ -2133,22 +2133,26 @@ function applyLivePriceNodes(){
   var by=window.__livePrices;if(!by||!by.ultimate)return;
   var en=typeof localeIsEn==='function'&&localeIsEn();
   var u=by.ultimate;
-  var monthTxt=en?('CN¥'+u.amount+'/mo'):('¥'+u.amount+'/月');
+  // 英文站且该商品配了美元副价→显示美元；否则退回 CN¥/¥（与结账口径一致：英文没配美元价就按人民币收）。
+  var useUsd=en&&u.usd!=null;
+  var amt=useUsd?u.usd:u.amount;
+  var sym=useUsd?'$':(en?'CN¥':'¥');
+  var monthTxt=sym+amt+(en?'/mo':'/月');
   // 只匹配"月费"（会员价）——一次性报告价不带 /月，天然不会被误伤（年度报告 ¥199 保持原样）。
   var MONTH_RE=/(CN)?[¥$]\s?\d+(\.\d+)?\s?\/\s?(月|mo)/;
   document.querySelectorAll('body *').forEach(function(el){
     if(el.children.length)return; // 只改叶子节点，避免破坏含子元素的容器
     var tn=el.tagName;if(tn==='SCRIPT'||tn==='STYLE')return;
     var t=el.textContent;if(!t||!MONTH_RE.test(t))return;
-    el.textContent=t.replace(MONTH_RE,monthTxt);
+    el.textContent=t.replace(MONTH_RE,function(){return monthTxt;}); // 函数式替换：避免 monthTxt 里的 "$29" 被当成 $2 反向引用
     // 同步刷新 setLocaleText 的缓存，否则切换语言/重渲染会把 live 价还原成写死值。
     if(el.dataset&&'localeOriginalText' in el.dataset)el.dataset.localeOriginalText=el.textContent;
   });
-  // 定价卡把 ¥ / 199 / 月 拆成三个 span：只改"开通会员"那张卡里的数字。
+  // 定价卡把 币种 / 数字 / 周期 拆成三个 span：只改"开通会员"那张卡里的币种符号和数字。
   var subBtn=document.querySelector('[data-membership-action="subscribe"]');
   var pcard=subBtn&&subBtn.closest?subBtn.closest('.pricing-card'):null;
-  if(pcard){var pe=pcard.querySelector('.pricing-amount .price');if(pe)pe.textContent=String(u.amount);}
-  if(by.credit){var btn=document.querySelector('[data-fortune-action="buy-credits"]');if(btn)btn.textContent=en?('Buy 10 Credits - CN¥'+by.credit.amount):('购买 10 点包 · ¥'+by.credit.amount);}
+  if(pcard){var pe=pcard.querySelector('.pricing-amount .price');if(pe)pe.textContent=String(amt);var ce=pcard.querySelector('.pricing-amount .currency');if(ce)ce.textContent=useUsd?'$':'¥';}
+  if(by.credit){var cUsd=en&&by.credit.usd!=null;var ca=cUsd?by.credit.usd:by.credit.amount;var cs=cUsd?'$':(en?'CN¥':'¥');var btn=document.querySelector('[data-fortune-action="buy-credits"]');if(btn)btn.textContent=en?('Buy 10 Credits - '+cs+ca):('购买 10 点包 · ¥'+by.credit.amount);}
 }
 function hydrateLivePrices(){
   try{
@@ -2156,7 +2160,7 @@ function hydrateLivePrices(){
       if(!j||!j.items||!j.items.length)return;
       var by={};j.items.forEach(function(x){by[x.key]=x;});
       function zhP(x){return '¥'+x.amount+(x.interval?'/月':'');}
-      function enP(x){return 'CN¥'+x.amount+(x.interval?'/mo':'');}
+      function enP(x){return (x.usd!=null?('$'+x.usd):('CN¥'+x.amount))+(x.interval?'/mo':'');}
       function setP(obj,x){if(obj&&x){obj.price=zhP(x);obj.priceEn=enP(x);}}
       setP(CREDIT_PACK_PRODUCT,by.credit);setP(ULTIMATE_MEMBERSHIP_PRODUCT,by.ultimate);
       setP(REPORT_PRODUCTS['7'],by.report_7);setP(REPORT_PRODUCTS['30'],by.report_30);setP(REPORT_PRODUCTS['365'],by.report_365);setP(REPORT_PRODUCTS.all,by.report_all);

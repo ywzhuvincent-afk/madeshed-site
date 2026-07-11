@@ -368,10 +368,11 @@ async function updatePrice(req, res) {
   const admin = await requireAdmin(req, res);
   if (!admin) return;
   if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { error: 'method_not_allowed' }); }
-  const { stripeFormRequest } = await import('./_stripe.js');
+  const { stripeFormRequest, stripeGet } = await import('./_stripe.js');
   const body = req.body || {};
   const item = PRODUCT_NAME_MAP.find((x) => x.key === String(body.key || ''));
   const amountMajor = Number(body.amount);
+  const reqCurrency = String(body.currency || '').toLowerCase(); // ''=商品当前币种(人民币,设默认价)；'usd'=美元副价
   if (!item) return send(res, 400, { error: 'invalid_key', message: '商品 key 无效。' });
   if (!Number.isFinite(amountMajor) || amountMajor <= 0 || amountMajor > 1000000) {
     return send(res, 400, { error: 'invalid_amount', message: '价格无效：必须是大于 0 的数字。' });
@@ -379,18 +380,30 @@ async function updatePrice(req, res) {
   try {
     const current = await resolveCatalogItem(item);
     if (current.status !== 'ok') return send(res, 400, { error: 'catalog_unresolved', message: '无法定位该商品：' + current.status, item: current });
-    const unitAmount = toUnitAmount(amountMajor, current.currency);
+    const currency = reqCurrency || String(current.currency).toLowerCase();
+    const isDefaultCurrency = currency === String(current.currency).toLowerCase();
+    const unitAmount = toUnitAmount(amountMajor, currency);
     const params = new URLSearchParams();
     params.set('product', current.productId);
-    params.set('currency', current.currency);
+    params.set('currency', currency);
     params.set('unit_amount', String(unitAmount));
     if (current.interval) params.set('recurring[interval]', current.interval);
     params.set('metadata[source]', 'admin_price_update');
     params.set('metadata[updated_by]', admin.email || '');
     const newPrice = await stripeFormRequest('prices', params);
-    const dp = new URLSearchParams();
-    dp.set('default_price', newPrice.id);
-    await stripeFormRequest(`products/${encodeURIComponent(current.productId)}`, dp);
+    if (isDefaultCurrency) {
+      // 人民币价=商品默认价（驱动结账与页面主价）。
+      const dp = new URLSearchParams();
+      dp.set('default_price', newPrice.id);
+      await stripeFormRequest(`products/${encodeURIComponent(current.productId)}`, dp);
+    } else {
+      // 美元价只作副价，绝不设为默认（否则人民币结账被带偏）；停用该商品旧的同币种价，保证"最新 active 美元价"唯一。
+      try {
+        const list = await stripeGet(`prices?product=${encodeURIComponent(current.productId)}&active=true&limit=100`);
+        const olds = ((list && list.data) || []).filter((p) => p && p.id !== newPrice.id && String(p.currency).toLowerCase() === currency);
+        for (const p of olds) { const d = new URLSearchParams(); d.set('active', 'false'); await stripeFormRequest(`prices/${encodeURIComponent(p.id)}`, d); }
+      } catch (e) { /* 停用旧美元价失败不阻断——resolveCurrencyPrice 取最新 active 仍正确 */ }
+    }
     return send(res, 200, {
       ok: true,
       key: item.key,
@@ -398,9 +411,12 @@ async function updatePrice(req, res) {
       oldPriceId: current.effectivePriceId,
       newPriceId: newPrice.id,
       amount: amountMajor,
-      currency: current.currency,
+      currency,
+      isDefault: isDefaultCurrency,
       interval: current.interval,
-      note: current.interval ? '订阅新价格只对新订户生效；已有订户仍按旧价续费（Stripe 标准行为）。' : '新价格立即对所有新购买生效。'
+      note: !isDefaultCurrency
+        ? '美元副价已保存（英文站结账使用）；人民币默认价不变。'
+        : (current.interval ? '订阅新价格只对新订户生效；已有订户仍按旧价续费（Stripe 标准行为）。' : '新价格立即对所有新购买生效。')
     });
   } catch (error) {
     return send(res, 500, { error: 'price_update_failed', message: String(error && error.message).slice(0, 200) });
