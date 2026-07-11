@@ -224,7 +224,9 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
   // ---------- prices ----------
   function priceTypeLabel(x){return x.interval?('订阅 / '+(x.interval==='month'?'每月':x.interval)):'一次性';}
   function fmtMoney(x){if(x.amount==null)return '—';var cur=(x.currency||'').toUpperCase();return (cur==='CNY'?'¥':cur+' ')+Number(x.amount).toLocaleString('en-US');}
-  function fmtUsd(x){return x.usd!=null?('$'+Number(x.usd).toLocaleString('en-US')):'<span class="muted">未设</span>';}
+  // list-prices 经 resolveCatalogItem 返回的 usd 是对象 {priceId,amount,currency}（health 接口才是纯数字）——两种都兼容。
+  function usdAmount(x){var u=x&&x.usd;if(u==null)return null;return (typeof u==='object')?(u.amount!=null?u.amount:null):u;}
+  function fmtUsd(x){var a=usdAmount(x);return a!=null?('$'+Number(a).toLocaleString('en-US')):'<span class="muted">未设</span>';}
   async function loadPrices(){
     var box=$('price-rows');box.innerHTML='<tr><td colspan="8" class="empty">从 Stripe 读取价格中…</td></tr>';
     try{
@@ -237,7 +239,7 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
           +'<td class="mono">'+fmtUsd(x)+'</td>'
           +'<td>'+priceTypeLabel(x)+'</td>'
           +'<td><input class="search mono" style="width:90px" type="number" min="1" step="0.01" placeholder="'+esc(String(x.amount||''))+'" data-price-input="'+esc(x.key)+'"></td>'
-          +'<td><input class="search mono" style="width:90px" type="number" min="1" step="0.01" placeholder="'+esc(x.usd!=null?String(x.usd):'未设')+'" data-price-input-usd="'+esc(x.key)+'"></td>'
+          +'<td><input class="search mono" style="width:90px" type="number" min="1" step="0.01" placeholder="'+esc((function(){var a=usdAmount(x);return a!=null?String(a):'未设';})())+'" data-price-input-usd="'+esc(x.key)+'"></td>'
           +'<td><button class="btn sm" data-price-save="'+esc(x.key)+'">保存</button></td>'
           +'<td><a class="muted" target="_blank" rel="noopener" href="https://dashboard.stripe.com/products/'+esc(x.productId)+'">打开 →</a></td>'
           +'</tr>';
