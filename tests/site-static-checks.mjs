@@ -709,7 +709,7 @@ includesAll(index, [
   'function outcomeMark',
   'class="hm-date"',
   'class="hm-mark"',
-  '浅绿=高顺势',
+  '浅绿=顺势',
   '颜色=命理状态',
 ], 'heatmap visible dates and legend meanings');
 
@@ -1448,12 +1448,18 @@ assert.ok(!index.includes('STRIPE_SECRET_KEY'), 'frontend must not expose STRIPE
 
 // ===== 全站一致性审计回归守卫（2026-07-08）：钉死本轮修复，防止再退化 =====
 // 1) 分数→颜色分档必须与引擎标签分档一致(82/70/56/44)，禁止回到 70/60/50/40
+//    颜色梯度：深绿(green)=强顺势 > 浅绿(green-l)=顺势 > 黄 > 橙 > 红（越深越强，2026-07-11 调整）
 includesAll(index, [
-  "if(n>=82)return'green-l';if(n>=70)return'green';if(n>=56)return'yellow';if(n>=44)return'orange';return'red';",
-  "'green-l':'强顺势'",
+  "if(n>=82)return'green';if(n>=70)return'green-l';if(n>=56)return'yellow';if(n>=44)return'orange';return'red';",
+  "'green':'强顺势'",
+  "'green-l':'顺势'",
   'function positionAdviceZh(score)',
   'function marketOpenNow()',
-], '分数→颜色/仓位分档与引擎一致，市场状态非写死');
+], '分数→颜色/仓位分档与引擎一致；深绿=强顺势、浅绿=顺势');
+// 颜色↔强弱：绿(深)=强顺势、浅绿=顺势（越深越强），全站一致（前端 + 服务端 actionBand + chart-full）
+assert.ok(/绿=强顺势/.test(index) && /浅绿=顺势/.test(index), '图例：绿=强顺势、浅绿=顺势');
+assert.ok(/score >= 82\) return \{ color: '绿'/.test(baziRuntimeApi) && /score >= 70\) return \{ color: '浅绿'/.test(baziRuntimeApi), '服务端 actionBand：强顺势=绿、顺势=浅绿');
+assert.ok(/s>=82\?'#26A69A':\(s>=70\?'#4DD0E1'/.test(chart), 'chart-full ldColor：强顺势=深绿(#26A69A)、顺势=浅绿(#4DD0E1)');
 assert.ok(!/if\(n>=70\)return'green-l';if\(n>=60\)return'green';if\(n>=50\)return'yellow';if\(n>=40\)return'orange'/.test(index), 'scoreToColor 不得退回旧 70/60/50/40 分档');
 // 2) 服务端 actionBand 必须对齐引擎分档/标签
 includesAll(baziRuntimeApi, ["score >= 82", "label: '强顺势'", "position: '80%'"], '服务端 actionBand 对齐引擎 82/70/56/44');

@@ -875,7 +875,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 <div class="card score">
   <div class="card-t" style="margin-bottom:4px;">今日行动指数 · TODAY</div>
   <div class="score-n">78</div>
-  <div class="score-l">浅绿 · 仓位 80%</div>
+  <div class="score-l">浅绿 · 仓位 60%</div>
   <div class="score-d">
     <div class="row"><span class="k">流日干支</span><span class="v mono">辛卯</span></div>
     <div class="row"><span class="k">相性总分</span><span class="v mono">+34.5</span></div>
@@ -943,7 +943,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 <div class="pillars-line">流年 <span class="cn">丙午</span><span class="sep">·</span> 流月 <span class="cn">甲午</span><span class="sep">·</span> 流日 <span class="cn">辛卯</span></div>
 <div class="insight"><strong>开始记录:</strong> 每天收盘后花 10 秒打卡，这里会显示你在同类命理日子的真实胜率。</div>
 </div>
-<div class="today-r"><div class="today-score">78</div><div class="today-tag">浅绿</div><div class="today-meta">仓位 80% · 按计划交易</div></div>
+<div class="today-r"><div class="today-score">78</div><div class="today-tag">浅绿</div><div class="today-meta">仓位 60% · 按计划交易</div></div>
 </div>
 
 <div class="checkin-card" id="checkin-card">
@@ -977,8 +977,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 <div class="weekday-row"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
 <div class="heatmap" id="heatmap"></div>
 <div class="hm-legend">
-  <div class="item"><span class="dot" style="background:rgba(77,208,225,.6);"></span>浅绿=高顺势</div>
-  <div class="item"><span class="dot" style="background:rgba(38,166,154,.6);"></span>绿=顺势</div>
+  <div class="item"><span class="dot" style="background:rgba(38,166,154,.6);"></span>绿=强顺势</div>
+  <div class="item"><span class="dot" style="background:rgba(77,208,225,.6);"></span>浅绿=顺势</div>
   <div class="item"><span class="dot" style="background:rgba(247,183,49,.6);"></span>黄=中性</div>
   <div class="item"><span class="dot" style="background:rgba(255,138,101,.6);"></span>橙=谨慎</div>
   <div class="item"><span class="dot" style="background:rgba(239,83,80,.6);"></span>红=高风险</div>
@@ -2045,10 +2045,10 @@ setSelectedCity(selectedCity);
 // ========== DAILY ==========
 const COLORS=['green-l','green','yellow','orange','red'];
 const COLOR_NAMES={'green-l':'浅绿','green':'绿','yellow':'黄','orange':'橙','red':'红'};
-const COLOR_MEANING={'green-l':'强顺势','green':'顺势','yellow':'中性','orange':'谨慎','red':'高风险'};
-const COLOR_MEANING_DESC={'green-l':'适合按计划推进','green':'可正常操作，控制节奏','yellow':'中性观望，轻仓验证','orange':'谨慎轻仓，少追单','red':'高风险，优先防守'};
-const TRUE_WINRATE={'green-l':.67,'green':.55,'yellow':.45,'orange':.32,'red':.20};
-const TRUE_AVG={'green-l':1.4,'green':.8,'yellow':-.1,'orange':-.9,'red':-1.6};
+const COLOR_MEANING={'green':'强顺势','green-l':'顺势','yellow':'中性','orange':'谨慎','red':'高风险'};
+const COLOR_MEANING_DESC={'green':'适合按计划推进','green-l':'可正常操作，控制节奏','yellow':'中性观望，轻仓验证','orange':'谨慎轻仓，少追单','red':'高风险，优先防守'};
+const TRUE_WINRATE={'green':.67,'green-l':.55,'yellow':.45,'orange':.32,'red':.20};
+const TRUE_AVG={'green':1.4,'green-l':.8,'yellow':-.1,'orange':-.9,'red':-1.6};
 const OUTCOME_META={big_win:{label:'大赚',mark:'✓✓',tone:'win',icon:'📈'},win:{label:'赚',mark:'✓',tone:'win',icon:'🟢'},flat:{label:'平',mark:'—',tone:'flat',icon:'⚪'},loss:{label:'亏',mark:'X',tone:'loss',icon:'🔴'},big_loss:{label:'大亏',mark:'XX',tone:'loss',icon:'📉'},notrade:{label:'未交易',mark:'·',tone:'notrade',icon:'🚫'}};
 const TRADE_OUTCOMES=['big_win','win','flat','loss','big_loss'];
 
@@ -2079,7 +2079,7 @@ function normalizeDateKey(value){const m=String(value||'').match(/^(\d{4})[.-](\
 function parseYmdDate(value){const key=normalizeDateKey(value);if(!key)return null;const m=key.match(/^(\d{4})-(\d{2})-(\d{2})$/);return new Date(+m[1],+m[2]-1,+m[3]);}
 /* 颜色分档与引擎行动指数标签分档(trendScoreLabel/actionScore)完全一致：82/70/56/44。
    之前用 70/60/50/40，导致同一分数"颜色"与"文字标签"讲两套话（如 中性分被涂顺势绿）。 */
-function scoreToColor(score,label){const n=Number(score);if(Number.isFinite(n)){if(n>=82)return'green-l';if(n>=70)return'green';if(n>=56)return'yellow';if(n>=44)return'orange';return'red';}var L=String(label||'');if(/强顺势/.test(L))return'green-l';if(/高风险/.test(L))return'red';if(/顺势/.test(L))return'green';if(/谨慎/.test(L))return'orange';if(/中性/.test(L))return'yellow';return'yellow';}
+function scoreToColor(score,label){const n=Number(score);if(Number.isFinite(n)){if(n>=82)return'green';if(n>=70)return'green-l';if(n>=56)return'yellow';if(n>=44)return'orange';return'red';}var L=String(label||'');if(/强顺势/.test(L))return'green';if(/高风险/.test(L))return'red';if(/顺势/.test(L))return'green-l';if(/谨慎/.test(L))return'orange';if(/中性/.test(L))return'yellow';return'yellow';}
 var BAND_HEX={'green-l':'#4DD0E1','green':'#26A69A','yellow':'#F7B731','orange':'#FF8A65','red':'#EF5350'};
 var BAND_RGB={'green-l':'77,208,225','green':'38,166,154','yellow':'247,183,49','orange':'255,138,101','red':'239,83,80'};
 function bandColor(score){return BAND_HEX[scoreToColor(score)]||'#8B949E';}
@@ -2287,7 +2287,7 @@ function syncRangeButtons(){document.querySelectorAll('#stats-range-controls [da
 function setStatsRange(type){statsRange={type:type,start:statsRange.start,end:statsRange.end};syncRangeButtons();renderDailyStats();}
 function applyStatsCustomRange(){statsRange={type:'custom',start:document.getElementById('stats-start')?.value||null,end:document.getElementById('stats-end')?.value||null};syncRangeButtons();renderDailyStats();}
 function updateStatsHeader(allEntries,filtered,empty){const title=document.getElementById('stats-title'),meta=document.getElementById('stats-meta');if(title)title.textContent='个人真实历史';if(meta){const range=getRangeLabel(statsRange);const n=tradedCount(filtered);const total=filtered.length;meta.textContent=empty?`还没有记录 · ${range} · 每天收盘后花 10 秒打卡，系统会统计你在不同命理状态下的真实胜率`:`个人真实记录 · ${range} · 交易样本 N=${n} · 总记录 ${total}`;}}
-function enColorName(c){return {'green-l':'strong-favorable','green':'favorable','yellow':'neutral','orange':'caution','red':'high-risk'}[c]||c;}
+function enColorName(c){return {'green':'strong-favorable','green-l':'favorable','yellow':'neutral','orange':'caution','red':'high-risk'}[c]||c;}
 function setDailyInsight(){var el=document.querySelector('[data-view="daily"] .today-l .insight');if(!el)return;var st=window.__todayState||{},score=st.score;var en=typeof localeIsEn==='function'&&localeIsEn();if(score==null){el.innerHTML=en?'<strong>Start logging:</strong> record your close each day and your real win rate on similar days will show up here.':'<strong>开始记录:</strong> 每天收盘后花 10 秒打卡，这里会显示你在同类命理日子的真实胜率。';return;}var color=scoreToColor(score),traded=getActualEntries().filter(function(e){return isTradeOutcome(e.outcome);}),same=traded.filter(function(e){return e.color===color;}),n=same.length;if(n>0){var wins=same.filter(function(e){return isWinOutcome(e.outcome);}).length,rate=Math.round(wins/n*100),small=n<5;el.innerHTML=en?('<strong>Your record:</strong> on '+enColorName(color)+' days you traded <span style="color:var(--text);font-family:var(--font-mono);font-weight:600;">'+n+'</span> time'+(n>1?'s':'')+' · win rate <span style="color:var(--green);font-family:var(--font-mono);font-weight:600;">'+rate+'%</span>'+(small?' <span style="color:var(--text-3)">(small sample)</span>':'')):('<strong>你的记录:</strong> 在'+COLOR_NAMES[color]+'日交易 <span style="color:var(--text);font-family:var(--font-mono);font-weight:600;">'+n+' 次</span> · 胜率 <span style="color:var(--green);font-family:var(--font-mono);font-weight:600;">'+rate+'%</span>'+(small?' <span style="color:var(--text-3)">(样本少，仅参考)</span>':''));}else{el.innerHTML=en?('<strong>Start logging:</strong> no trades logged on '+enColorName(color)+' days yet — keep logging to unlock your real win rate.'):('<strong>开始记录:</strong> 同类('+COLOR_NAMES[color]+')日还没有交易记录，继续每天打卡即可解锁你的真实胜率。');}}
 function formatHeatmapDate(date){return `${date.getMonth()+1}/${date.getDate()}`;}
 function outcomeMark(outcome){return(OUTCOME_META[canonicalOutcome(outcome)]||OUTCOME_META.notrade).mark;}

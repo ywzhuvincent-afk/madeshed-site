@@ -64,8 +64,8 @@ export function parseCityParam(value) {
 // 分档/标签/仓位与引擎 actionScore（trendScoreLabel 82/70/56/44 + position 80/60/40/20/观望）完全一致，
 // 使 /api/score、/api/monthly 的 标签/颜色/仓位 与用户在仪表盘看到的逐档相等。
 export function actionBand(score) {
-  if (score >= 82) return { color: '浅绿', label: '强顺势', position: '80%', positionPct: 0.80, advice: '可按计划顺势推进，仍控制仓位上限' };
-  if (score >= 70) return { color: '绿', label: '顺势', position: '60%', positionPct: 0.60, advice: '可正常执行计划，避免临时加码' };
+  if (score >= 82) return { color: '绿', label: '强顺势', position: '80%', positionPct: 0.80, advice: '可按计划顺势推进，仍控制仓位上限' };
+  if (score >= 70) return { color: '浅绿', label: '顺势', position: '60%', positionPct: 0.60, advice: '可正常执行计划，避免临时加码' };
   if (score >= 56) return { color: '黄', label: '中性', position: '40%', positionPct: 0.40, advice: '标准仓位，等待确认后再动' };
   if (score >= 44) return { color: '橙', label: '谨慎', position: '20%', positionPct: 0.20, advice: '轻仓确认、控制风险，少追单' };
   return { color: '红', label: '高风险', position: '观望', positionPct: 0, advice: '观望或轻仓，优先防守' };

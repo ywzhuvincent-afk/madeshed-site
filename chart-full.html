@@ -805,7 +805,7 @@
   }
 
   /* 流日明细：点某一天，展示该日行动指数的完整拆解（口径与仪表盘/服务端同一引擎） */
-  function ldColor(s){return s>=82?'#4DD0E1':(s>=70?'#26A69A':(s>=56?'#F7B731':(s>=44?'#FF8A65':'#EF5350')));}
+  function ldColor(s){return s>=82?'#26A69A':(s>=70?'#4DD0E1':(s>=56?'#F7B731':(s>=44?'#FF8A65':'#EF5350')));}
   function hideDayDetail(){var b=document.getElementById('ld-detail');if(b){b.className='ld-detail';b.innerHTML='';}}
   /* 英文态：把引擎输出的中文命理值译成英文（值层，不止标签） */
   var LD_ELM={'火':'Fire','水':'Water','木':'Wood','金':'Metal','土':'Earth'};
