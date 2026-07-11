@@ -1460,6 +1460,9 @@ includesAll(index, [
 assert.ok(/绿=强顺势/.test(index) && /浅绿=顺势/.test(index), '图例：绿=强顺势、浅绿=顺势');
 assert.ok(/score >= 82\) return \{ color: '绿'/.test(baziRuntimeApi) && /score >= 70\) return \{ color: '浅绿'/.test(baziRuntimeApi), '服务端 actionBand：强顺势=绿、顺势=浅绿');
 assert.ok(/s>=82\?'#26A69A':\(s>=70\?'#4DD0E1'/.test(chart), 'chart-full ldColor：强顺势=深绿(#26A69A)、顺势=浅绿(#4DD0E1)');
+// 动态重建的日历/状态图例（zh restoreChineseDailyWidgets + en localizeEnglishDailyWidgets/ScoreEducation）不得残留旧“浅绿=强”
+assert.ok(!index.includes('浅绿=高顺势') && !index.includes('Light Green = strong'), '不得残留旧图例（浅绿=强）：含动态重建的中英日历/状态图例');
+assert.ok(index.includes('Green = strong support') && index.includes('Light Green = supportive'), 'EN 图例：深绿=strong support、浅绿=supportive');
 assert.ok(!/if\(n>=70\)return'green-l';if\(n>=60\)return'green';if\(n>=50\)return'yellow';if\(n>=40\)return'orange'/.test(index), 'scoreToColor 不得退回旧 70/60/50/40 分档');
 // 2) 服务端 actionBand 必须对齐引擎分档/标签
 includesAll(baziRuntimeApi, ["score >= 82", "label: '强顺势'", "position: '80%'"], '服务端 actionBand 对齐引擎 82/70/56/44');
