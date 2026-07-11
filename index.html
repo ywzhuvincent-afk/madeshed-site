@@ -1906,12 +1906,23 @@ function handlePurchaseReturn(rawHash){
     setTimeout(function(){resync(true);showPurchaseToast(en?'✅ Entitlements refreshed — check your balance/badge.':'✅ 权益已刷新，请查看余额/徽章。',true,6000);},8000);
   }
 }
+// 返回用户判定：本机已生成过命盘（有 profile）或已登录 → 视为老用户
+function isReturningUser(){
+  try{ if(JSON.parse(localStorage.getItem('madeshed_profile_v1')||'null')) return true; }catch(e){}
+  return !!window.__cloudUser;
+}
 function router(){
   /* hash 允许携带 query（Stripe 支付回跳 #/fortune?credits=success）：路由匹配前剥离 query，
      否则 HASH_TO_VIEW 精确匹配失败、付完款的用户会被丢回营销首页（曾为 blocker）。 */
   const rawHash = (location.hash || '#/').slice(1);
   const hash = rawHash.split('?')[0];
-  const view = HASH_TO_VIEW[hash] || 'landing';
+  let view = HASH_TO_VIEW[hash] || 'landing';
+  // 老用户打开"营销首页/根路径"→ 直接落到今日行动指数（与生成命盘后跳转一致）；新访客保留首页看产品介绍。
+  // 只拦根路径：登录回调/密码重置/支付回跳/任何深链一律放行。replaceState 就地改址，无闪屏、不污染历史（back 不回首页）。
+  if(view==='landing' && isReturningUser()){
+    view='dashboard';
+    try{ history.replaceState(null,'',location.pathname+'#/dashboard'); }catch(e){ location.hash='#/dashboard'; }
+  }
   if(rawHash.indexOf('?')>=0&&typeof handlePurchaseReturn==='function')handlePurchaseReturn(rawHash);
   document.querySelectorAll('.view').forEach(el => el.classList.toggle('active', el.dataset.view === view));
   document.body.classList.toggle('is-landing', view === 'landing');
@@ -2524,7 +2535,12 @@ const CLOUD_SYNC_STATE='madeshed_cloud_sync_v1';
       if(typeof renderAccount==='function')renderAccount();
     }
     window.supa.auth.getSession().then(function(r){
-      if(r.data.session)bootstrapCloudSync(r.data.session);
+      if(r.data.session){
+        bootstrapCloudSync(r.data.session);
+        // 已登录但停在营销首页（如换设备、本机无命盘，初次 router 判不出是老用户）→ 会话恢复后进今日仪表盘
+        var h=location.hash||'';
+        if(h===''||h==='#'||h==='#/')go('/dashboard');
+      }
       else setCloudStatus('未登录，当前为本机数据','info');
       if((location.hash||'').indexOf('/auth/callback')>=0&&window.renderAuthCallback)window.renderAuthCallback();
     });

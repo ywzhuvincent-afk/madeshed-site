@@ -1469,6 +1469,8 @@ assert.ok(/const COLORS=\['green','green-l','yellow','orange','red'\]/.test(inde
 assert.ok(index.includes('✓✓ 大赚 | ✓ 赚 | — 平 | X 亏 | XX 大亏 | · 未交易 | 空白 无记录'), 'zh 标记图例：| 分隔、整洁');
 assert.ok(index.includes('✓✓ Big win | ✓ Win | — Flat | X Loss | XX Big loss | · No trade | (blank) No record'), 'EN 标记图例：同步整洁化');
 assert.ok(!index.includes('✓✓=大赚'), '不得残留旧标记图例（✓✓=大赚 run-on）');
+// 老用户打开根路径直接进仪表盘（新访客保留营销首页）；只拦 landing，深链放行
+assert.ok(/function isReturningUser/.test(index) && index.includes("view==='landing' && isReturningUser()"), '路由：老用户(有命盘或已登录)打开首页→今日仪表盘，新访客保留营销首页');
 assert.ok(!/if\(n>=70\)return'green-l';if\(n>=60\)return'green';if\(n>=50\)return'yellow';if\(n>=40\)return'orange'/.test(index), 'scoreToColor 不得退回旧 70/60/50/40 分档');
 // 2) 服务端 actionBand 必须对齐引擎分档/标签
 includesAll(baziRuntimeApi, ["score >= 82", "label: '强顺势'", "position: '80%'"], '服务端 actionBand 对齐引擎 82/70/56/44');
