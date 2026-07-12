@@ -212,7 +212,7 @@ includesAll(index, [
   "if(typeof renderDailyStats==='function')renderDailyStats();",
   "if(typeof renderReport==='function')renderReport();",
   "rerenderLocaleSurfaces();",
-  "url.searchParams.set('lang',l==='en'?'en':'zh')",
+  "url.searchParams.set('lang',l==='en'?'en':(l==='zh-Hant'?'zh-hant':'zh'))",
   "const initialUrlLocale=localeFromUrl()",
   "const storedLocale=initialUrlLocale||readStoredLocale()",
   "if(!storedLocale)document.body.classList.add('language-pending')",
@@ -1471,6 +1471,9 @@ assert.ok(index.includes('✓✓ Big win | ✓ Win | — Flat | X Loss | XX Big 
 assert.ok(!index.includes('✓✓=大赚'), '不得残留旧标记图例（✓✓=大赚 run-on）');
 // 老用户打开根路径直接进仪表盘（新访客保留营销首页）；只拦 landing，深链放行
 assert.ok(/function isReturningUser/.test(index) && index.includes("view==='landing' && isReturningUser()"), '路由：老用户(有命盘或已登录)打开首页→今日仪表盘，新访客保留营销首页');
+// 繁体中文：3 语言 + 运行时简→繁转换（简体唯一源）
+includesAll(index, ['function localeIsHant', 'function applyHantAfterRender', 'function ensureS2T', 'function restoreHant', 'opencc-js', 'data-language-choice="zh-Hant"', 'data-locale-switch="zh-Hant"', '繁體中文'], '繁体：3 语言选择器 + opencc 运行时简→繁转换');
+assert.ok(/'zh-hant'|zh-hant/.test(index) && /return'zh-Hant'/.test(index), '繁体：normalizeLocale 归一化 zh-Hant');
 assert.ok(!/if\(n>=70\)return'green-l';if\(n>=60\)return'green';if\(n>=50\)return'yellow';if\(n>=40\)return'orange'/.test(index), 'scoreToColor 不得退回旧 70/60/50/40 分档');
 // 2) 服务端 actionBand 必须对齐引擎分档/标签
 includesAll(baziRuntimeApi, ["score >= 82", "label: '强顺势'", "position: '80%'"], '服务端 actionBand 对齐引擎 82/70/56/44');

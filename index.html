@@ -691,7 +691,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   <div class="language-card">
     <div class="language-brand">Madeshed<span class="dot">·</span></div>
     <div class="language-options" role="group" aria-label="Choose language">
-      <button class="language-choice" type="button" data-language-choice="zh-CN">中文</button>
+      <button class="language-choice" type="button" data-language-choice="zh-CN">简体中文</button>
+      <button class="language-choice" type="button" data-language-choice="zh-Hant">繁體中文</button>
       <button class="language-choice" type="button" data-language-choice="en">English</button>
     </div>
   </div>
@@ -710,7 +711,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     </div>
   </div>
   <div class="nav-right">
-    <div class="lang" aria-label="语言"><button class="active" type="button" data-locale-switch="zh-CN" aria-pressed="true">中</button><button type="button" data-locale-switch="en" aria-pressed="false">EN</button></div>
+    <div class="lang" aria-label="语言"><button class="active" type="button" data-locale-switch="zh-CN" aria-pressed="true">简</button><button type="button" data-locale-switch="zh-Hant" aria-pressed="false">繁</button><button type="button" data-locale-switch="en" aria-pressed="false">EN</button></div>
     <button class="btn-signin" id="btn-signin" data-auth-action="signin">登录</button>
     <span class="pro hide" id="nav-pro">PRO</span>
     <div class="nav-user" id="nav-user">
@@ -732,7 +733,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <a href="#/fortune" data-route="/fortune">命理咨询 Ask Master</a>
     <a href="#/account" data-route="/account">设置 Account</a>
     <div class="mobile-actions">
-      <div class="lang" aria-label="语言"><button class="active" type="button" data-locale-switch="zh-CN" aria-pressed="true">中</button><button type="button" data-locale-switch="en" aria-pressed="false">EN</button></div>
+      <div class="lang" aria-label="语言"><button class="active" type="button" data-locale-switch="zh-CN" aria-pressed="true">简</button><button type="button" data-locale-switch="zh-Hant" aria-pressed="false">繁</button><button type="button" data-locale-switch="en" aria-pressed="false">EN</button></div>
       <button class="btn-signin" type="button" id="mobile-signin" data-signed-in="0">登录</button>
     </div>
   </div>
@@ -1320,11 +1321,11 @@ const HASH_TO_VIEW = {'':'landing','/':'landing','/onboarding':'onboarding','/da
 const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
 const mobileMenu = document.getElementById('mobile-menu');
 const LOCALE_KEY='madeshed_locale_v1';
-function normalizeLocale(locale){const raw=String(locale||'').toLowerCase();return raw.indexOf('en')===0?'en':'zh-CN';}
+function normalizeLocale(locale){const raw=String(locale||'').toLowerCase();if(raw.indexOf('en')===0)return'en';if(raw==='zh-hant'||raw==='zh-tw'||raw==='zh-hk'||raw==='zh-mo'||raw.indexOf('hant')>=0||raw.indexOf('-tw')>=0||raw.indexOf('-hk')>=0||raw.indexOf('-mo')>=0)return'zh-Hant';return'zh-CN';}
 function browserPreferredLocale(){return normalizeLocale((navigator.languages&&navigator.languages[0])||navigator.language||'zh-CN');}
-function localeFromUrl(){try{const params=new URLSearchParams(location.search);const raw=params.get('lang')||params.get('locale')||params.get('language');if(!raw)return null;const value=String(raw).toLowerCase();if(value==='zh'||value==='cn'||value.indexOf('zh')===0)return'zh-CN';if(value==='en'||value.indexOf('en')===0)return'en';return null;}catch(e){return null;}}
+function localeFromUrl(){try{const params=new URLSearchParams(location.search);const raw=params.get('lang')||params.get('locale')||params.get('language');if(!raw)return null;const value=String(raw).toLowerCase();if(value.indexOf('hant')>=0||value==='zh-tw'||value==='zh-hk'||value==='zh-mo'||value.indexOf('-tw')>=0||value.indexOf('-hk')>=0)return'zh-Hant';if(value==='zh'||value==='cn'||value.indexOf('zh')===0)return'zh-CN';if(value==='en'||value.indexOf('en')===0)return'en';return null;}catch(e){return null;}}
 function defaultLocale(){return'en';}
-function syncLocaleUrl(locale){try{const url=new URL(location.href),had=url.searchParams.has('lang')||url.searchParams.has('locale')||url.searchParams.has('language');if(!had)return;const l=normalizeLocale(locale);url.searchParams.delete('locale');url.searchParams.delete('language');url.searchParams.set('lang',l==='en'?'en':'zh');history.replaceState(null,'',url.pathname+url.search+url.hash);}catch(e){}}
+function syncLocaleUrl(locale){try{const url=new URL(location.href),had=url.searchParams.has('lang')||url.searchParams.has('locale')||url.searchParams.has('language');if(!had)return;const l=normalizeLocale(locale);url.searchParams.delete('locale');url.searchParams.delete('language');url.searchParams.set('lang',l==='en'?'en':(l==='zh-Hant'?'zh-hant':'zh'));history.replaceState(null,'',url.pathname+url.search+url.hash);}catch(e){}}
 function readStoredLocale(){try{const raw=localStorage.getItem(LOCALE_KEY);return raw?normalizeLocale(raw):null;}catch(e){return null;}}
 function writeStoredLocale(locale){try{localStorage.setItem(LOCALE_KEY,normalizeLocale(locale));}catch(e){}}
 function setLocaleButtons(locale){const l=normalizeLocale(locale);document.querySelectorAll('[data-locale-switch]').forEach(btn=>{const active=normalizeLocale(btn.dataset.localeSwitch)===l;btn.classList.toggle('active',active);btn.setAttribute('aria-pressed',active?'true':'false');});}
@@ -1439,6 +1440,7 @@ const EN_COPY={
   ]
 };
 function localeIsEn(){return normalizeLocale(document.body&&document.body.dataset.locale)==='en';}
+function localeIsHant(){return normalizeLocale(document.body&&document.body.dataset.locale)==='zh-Hant';}
 function setLocaleText(selector,value){document.querySelectorAll(selector).forEach(function(el){if(!el.dataset.localeOriginalText)el.dataset.localeOriginalText=el.textContent;el.textContent=localeIsEn()?value:el.dataset.localeOriginalText;});}
 function setLocaleHtml(selector,value){document.querySelectorAll(selector).forEach(function(el){if(!el.dataset.localeOriginalHtml)el.dataset.localeOriginalHtml=el.innerHTML;el.innerHTML=localeIsEn()?value:el.dataset.localeOriginalHtml;});}
 function setLocaleAttr(selector,attr,value){document.querySelectorAll(selector).forEach(function(el){const key='localeOriginalAttr'+attr.replace(/[^a-z0-9]/gi,'');if(!el.dataset[key])el.dataset[key]=el.getAttribute(attr)||'';if(localeIsEn())el.setAttribute(attr,value);else el.setAttribute(attr,el.dataset[key]);});}
@@ -1843,9 +1845,29 @@ function localizeDynamicContent(){if(!localeIsEn())return;var state=todayStateFo
 function elementNameEn(value){var map={wood:'Wood',fire:'Fire',earth:'Earth',metal:'Metal',water:'Water','\u6728':'Wood','\u706b':'Fire','\u571f':'Earth','\u91d1':'Metal','\u6c34':'Water'};return map[value]||value||'--';}
 function strengthNameEn(strength){var cat=strength&&typeof strength==='object'?(strength.category||strength.label):null,m={'太弱':'Very Weak','偏弱':'Weak','中和':'Balanced','均衡':'Balanced','偏强':'Strong','太强':'Very Strong'};if(cat&&m[cat])return m[cat];var n=Number(strength&&typeof strength==='object'?strength.score:strength);if(!Number.isFinite(n))return'Neutral';return n<=24?'Very Weak':(n<=42?'Weak':(n<58?'Balanced':(n<=78?'Strong':'Very Strong')));}
 function localizeEnglishMetaContent(){if(!localeIsEn())return;var p=window.__profile,metaRoot=document.querySelector('.dash-hero .pillars')&&document.querySelector('.dash-hero .pillars').parentElement;if(metaRoot){var ks=metaRoot.querySelectorAll('.dash-meta .k'),vs=metaRoot.querySelectorAll('.dash-meta .v');['Day Master','Strength','Month Branch','Luck Pillar'].forEach(function(label,i){if(ks[i])ks[i].textContent=label;});if(p&&vs[0])vs[0].textContent=(p.dayStem||'--')+' - '+elementNameEn(p.dayElement);if(p&&vs[1])vs[1].textContent=strengthNameEn(p.strength)+' '+((p.strength&&p.strength.score)!=null?p.strength.score:'--')+' / 100';if(p&&vs[2])vs[2].textContent=(p.monthBranch||'--')+' - month branch';if(p&&vs[3]){var c=(p.currentDayunIdx>=0&&p.daYun&&p.daYun[p.currentDayunIdx])?p.daYun[p.currentDayunIdx]:null;vs[3].textContent=c?c.pillar+' ('+pillarLabelEn({stem:String(c.pillar).charAt(0),branch:String(c.pillar).charAt(1)})+') - Pillar '+(p.currentDayunIdx+1):'Not started';}}var wk=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],top=document.querySelectorAll('.dash-hero > .dash-meta .k');if(top[1])top[1].textContent=wk[new Date().getDay()];if(top[2])top[2].textContent='Market';var market=document.querySelector('.dash-hero > .dash-meta .v.up');if(market)market.textContent=marketStatusEn();var dateEls=document.querySelectorAll('[data-view=\"daily\"] .today .date');dateEls.forEach(function(el){var d=new Date();el.textContent=d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0')+' - '+wk[d.getDay()];});var pl=document.querySelector('.pillars-line');if(pl){var spans=pl.querySelectorAll('.cn');if(spans.length>=3)pl.innerHTML='Year <span class=\"cn\">'+spans[0].textContent+'</span><span class=\"sep\">-</span> Month <span class=\"cn\">'+spans[1].textContent+'</span><span class=\"sep\">-</span> Day <span class=\"cn\">'+spans[2].textContent+'</span>';}}
-function applyEnglishAfterRender(){if(localeIsEn()){localizeEnglishWholeSite();localizeDynamicContent();localizeEnglishMetaContent();refreshPillarsForLocale();translateLuckCyclesForEnglish(window.__profile||null);translateForecastPillarsForEnglish();}if(typeof setDailyInsight==='function')setDailyInsight();}
+// ---- 繁体中文：简体是唯一源，繁体在显示层运行时转换（懒加载 opencc-js；与英文叠加对称、可还原）----
+var __s2tConv=null,__s2tPromise=null;
+function ensureS2T(){
+  if(__s2tConv)return Promise.resolve(__s2tConv);
+  if(__s2tPromise)return __s2tPromise;
+  __s2tPromise=new Promise(function(resolve){try{var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.js';s.onload=function(){try{__s2tConv=window.OpenCC&&window.OpenCC.Converter({from:'cn',to:'tw'});}catch(e){__s2tConv=null;}resolve(__s2tConv);};s.onerror=function(){resolve(null);};document.head.appendChild(s);}catch(e){resolve(null);}});
+  return __s2tPromise;
+}
+function __hantWalkText(fn){var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:function(n){var p=n.parentNode;if(!p)return NodeFilter.FILTER_REJECT;var tag=p.nodeName;if(tag==='SCRIPT'||tag==='STYLE'||tag==='TEXTAREA'||tag==='NOSCRIPT'||p.isContentEditable)return NodeFilter.FILTER_REJECT;if(!n.nodeValue||!/[一-鿿]/.test(n.nodeValue))return NodeFilter.FILTER_REJECT;return NodeFilter.FILTER_ACCEPT;}});var n;while((n=w.nextNode()))fn(n);}
+function applyHantAfterRender(){
+  if(!localeIsHant())return;
+  var conv=__s2tConv;
+  if(!conv){ensureS2T().then(function(c){if(c&&localeIsHant())applyHantAfterRender();});return;}
+  __hantWalkText(function(n){if(n.__zhOrig==null)n.__zhOrig=n.nodeValue;var t=conv(n.__zhOrig);if(n.nodeValue!==t)n.nodeValue=t;});
+  document.querySelectorAll('[placeholder],[title],[aria-label]').forEach(function(el){['placeholder','title','aria-label'].forEach(function(a){var v=el.getAttribute(a);if(!v||!/[一-鿿]/.test(v))return;var key='__hant_'+a;if(el[key]==null)el[key]=v;el.setAttribute(a,conv(el[key]));});});
+}
+function restoreHant(){
+  __hantWalkText(function(n){if(n.__zhOrig!=null&&n.nodeValue!==n.__zhOrig)n.nodeValue=n.__zhOrig;});
+  document.querySelectorAll('[placeholder],[title],[aria-label]').forEach(function(el){['placeholder','title','aria-label'].forEach(function(a){var key='__hant_'+a;if(el[key]!=null)el.setAttribute(a,el[key]);});});
+}
+function applyEnglishAfterRender(){if(localeIsEn()){localizeEnglishWholeSite();localizeDynamicContent();localizeEnglishMetaContent();refreshPillarsForLocale();translateLuckCyclesForEnglish(window.__profile||null);translateForecastPillarsForEnglish();}else if(localeIsHant()){applyHantAfterRender();}if(typeof setDailyInsight==='function')setDailyInsight();}
 function rerenderLocaleSurfaces(){if(window.__madeshedLocaleRerendering)return;window.__madeshedLocaleRerendering=true;try{if(window.madeshed&&typeof window.madeshed.refresh==='function')window.madeshed.refresh();else if(typeof refresh==='function')refresh();if(typeof renderStoredCheckin==='function')renderStoredCheckin();if(typeof renderDailyStats==='function')renderDailyStats();if(typeof renderReport==='function')renderReport();if(typeof renderFortuneCenter==='function')renderFortuneCenter();if(typeof renderAccount==='function')renderAccount();if(!localeIsEn()&&typeof restoreChineseDailyWidgets==='function')restoreChineseDailyWidgets();if(typeof applyEnglishAfterRender==='function')applyEnglishAfterRender();}finally{window.__madeshedLocaleRerendering=false;}}
-function applyLocale(locale,confirmed){const l=normalizeLocale(locale);document.documentElement.lang=l==='en'?'en':'zh-CN';document.body.dataset.locale=l;setLocaleButtons(l);localizeStaticContent();if(typeof refreshPillarsForLocale==='function')refreshPillarsForLocale();if(typeof translateLuckCyclesForEnglish==='function')translateLuckCyclesForEnglish(window.__profile||null);if(typeof translateForecastPillarsForEnglish==='function')translateForecastPillarsForEnglish();if(typeof updateAuthNav==='function')updateAuthNav();if(confirmed)document.body.classList.remove('language-pending');}
+function applyLocale(locale,confirmed){const prev=document.body.dataset.locale;const l=normalizeLocale(locale);if(normalizeLocale(prev)==='zh-Hant'&&l!=='zh-Hant'&&typeof restoreHant==='function')restoreHant();document.documentElement.lang=l==='en'?'en':(l==='zh-Hant'?'zh-Hant':'zh-CN');document.body.dataset.locale=l;setLocaleButtons(l);localizeStaticContent();if(typeof refreshPillarsForLocale==='function')refreshPillarsForLocale();if(typeof translateLuckCyclesForEnglish==='function')translateLuckCyclesForEnglish(window.__profile||null);if(typeof translateForecastPillarsForEnglish==='function')translateForecastPillarsForEnglish();if(typeof updateAuthNav==='function')updateAuthNav();if(l==='zh-Hant'&&typeof applyHantAfterRender==='function')applyHantAfterRender();if(confirmed)document.body.classList.remove('language-pending');}
 // 登录/登出入口：按"是否登录"驱动，而不是按页面。未登录→显示"登录"（所有页）；已登录→显示头像+下拉菜单（账号中心/退出登录）。
 function updateAuthNav(){
   var en=typeof localeIsEn==='function'&&localeIsEn();
@@ -1857,7 +1879,7 @@ function updateAuthNav(){
   var ms=document.getElementById('mobile-signin');if(ms){ms.textContent=signedIn?(en?'Sign out':'退出登录'):(en?'Log in':'登录');ms.setAttribute('data-signed-in',signedIn?'1':'0');}
   if(!signedIn){var menu=document.getElementById('user-menu');if(menu)menu.classList.remove('open');if(avatar)avatar.setAttribute('aria-expanded','false');}
 }
-function chooseLocale(locale){const l=normalizeLocale(locale);writeStoredLocale(l);syncLocaleUrl(l);applyLocale(l,true);rerenderLocaleSurfaces();window.dispatchEvent(new CustomEvent('madeshed:locale-change',{detail:{locale:l}}));return l;}
+function chooseLocale(locale){const l=normalizeLocale(locale);if(l==='zh-Hant'&&typeof ensureS2T==='function')ensureS2T();writeStoredLocale(l);syncLocaleUrl(l);applyLocale(l,true);rerenderLocaleSurfaces();window.dispatchEvent(new CustomEvent('madeshed:locale-change',{detail:{locale:l}}));return l;}
 window.MadeshedLocale={key:LOCALE_KEY,normalize:normalizeLocale,get:function(){return readStoredLocale()||defaultLocale();},hasStored:function(){try{return !!localStorage.getItem(LOCALE_KEY);}catch(e){return false;}},set:chooseLocale,applyAccountLocale:function(locale){const l=normalizeLocale(locale);writeStoredLocale(l);applyLocale(l,true);return l;}};
 const initialUrlLocale=localeFromUrl();if(initialUrlLocale)writeStoredLocale(initialUrlLocale);
 const storedLocale=initialUrlLocale||readStoredLocale();
