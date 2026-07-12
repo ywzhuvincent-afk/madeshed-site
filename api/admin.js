@@ -543,6 +543,86 @@ async function clearSale(req, res) {
     return send(res, 500, { error: 'sale_clear_failed', message: String(error && error.message).slice(0, 200) });
   }
 }
+
+// 改名：中文名同时写 product.name(Stripe 后台/发票) 与 metadata.name_zh(前端展示)；英文名写 metadata.name_en。
+// 传空串=清除该名（前端/结账回退各自硬编码名）。product.name 不能为空，故仅中文非空时才改 product.name。
+async function renameProduct(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { error: 'method_not_allowed' }); }
+  const { stripeFormRequest } = await import('./_stripe.js');
+  const body = req.body || {};
+  const item = PRODUCT_NAME_MAP.find((x) => x.key === String(body.key || ''));
+  if (!item) return send(res, 400, { error: 'invalid_key', message: '商品 key 无效。' });
+  const hasZh = Object.prototype.hasOwnProperty.call(body, 'nameZh');
+  const hasEn = Object.prototype.hasOwnProperty.call(body, 'nameEn');
+  if (!hasZh && !hasEn) return send(res, 400, { error: 'no_name', message: '请至少提供中文或英文名。' });
+  const nameZh = String(body.nameZh || '').trim().slice(0, 80);
+  const nameEn = String(body.nameEn || '').trim().slice(0, 80);
+  try {
+    const current = await resolveCatalogItem(item);
+    if (current.status !== 'ok') return send(res, 400, { error: 'catalog_unresolved', message: '无法定位该商品：' + current.status, item: current });
+    const params = new URLSearchParams();
+    if (hasZh) { params.set('metadata[name_zh]', nameZh); if (nameZh) params.set('name', nameZh); }
+    if (hasEn) params.set('metadata[name_en]', nameEn);
+    await stripeFormRequest(`products/${encodeURIComponent(current.productId)}`, params);
+    return send(res, 200, { ok: true, key: item.key, nameZh: hasZh ? (nameZh || null) : undefined, nameEn: hasEn ? (nameEn || null) : undefined });
+  } catch (error) {
+    return send(res, 500, { error: 'rename_product_failed', message: String(error && error.message).slice(0, 200) });
+  }
+}
+
+// 软下架：写 metadata.madeshed_hidden。公开价格接口(health)过滤、前端不渲染该卡片。历史订单/老用户权益不受影响（不物理删除）。
+async function toggleProduct(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { error: 'method_not_allowed' }); }
+  const { stripeFormRequest } = await import('./_stripe.js');
+  const body = req.body || {};
+  const item = PRODUCT_NAME_MAP.find((x) => x.key === String(body.key || ''));
+  if (!item) return send(res, 400, { error: 'invalid_key', message: '商品 key 无效。' });
+  const hidden = body.hidden === true || String(body.hidden) === '1';
+  try {
+    const current = await resolveCatalogItem(item);
+    if (current.status !== 'ok') return send(res, 400, { error: 'catalog_unresolved', message: '无法定位该商品：' + current.status, item: current });
+    const params = new URLSearchParams();
+    params.set('metadata[madeshed_hidden]', hidden ? '1' : '');
+    await stripeFormRequest(`products/${encodeURIComponent(current.productId)}`, params);
+    return send(res, 200, { ok: true, key: item.key, hidden });
+  } catch (error) {
+    return send(res, 500, { error: 'toggle_product_failed', message: String(error && error.message).slice(0, 200) });
+  }
+}
+
+// 一键翻译：用现有 LLM 把中文名翻成简洁英文营销名。只回填默认值，前端可改、绝不静默覆盖已填英文名。
+async function translateName(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { error: 'method_not_allowed' }); }
+  const zh = String((req.body || {}).nameZh || '').trim().slice(0, 80);
+  if (!zh) return send(res, 400, { error: 'missing_name', message: '请先填中文名再翻译。' });
+  const baseUrl = process.env.LLM_BASE_URL, apiKey = process.env.LLM_API_KEY, model = process.env.LLM_MODEL || 'gpt-4.1-mini';
+  if (!baseUrl || !apiKey) return send(res, 503, { error: 'llm_not_configured', message: '未配置 LLM，无法自动翻译。请手动填写英文名。' });
+  try {
+    const response = await fetch(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model, temperature: 0.3,
+        messages: [
+          { role: 'system', content: 'You translate Chinese product names for a BaZi (Chinese astrology) × trading SaaS into a concise, natural English marketing name. Reply with ONLY the English name — no quotes, no explanation, under 60 characters.' },
+          { role: 'user', content: zh }
+        ]
+      })
+    });
+    if (!response.ok) throw new Error('LLM ' + response.status);
+    const data = await response.json();
+    const en = String((data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '').trim().replace(/^["']|["']$/g, '').slice(0, 80);
+    return send(res, 200, { ok: true, nameEn: en });
+  } catch (error) {
+    return send(res, 500, { error: 'translate_failed', message: String(error && error.message).slice(0, 150) });
+  }
+}
 async function fixProductNames(req, res) {
   const admin = await requireAdmin(req, res);
   if (!admin) return;
@@ -613,10 +693,13 @@ export default async function handler(req, res) {
   if (action === 'update-price') return updatePrice(req, res);
   if (action === 'set-sale') return setSale(req, res);
   if (action === 'clear-sale') return clearSale(req, res);
+  if (action === 'rename-product') return renameProduct(req, res);
+  if (action === 'toggle-product') return toggleProduct(req, res);
+  if (action === 'translate-name') return translateName(req, res);
   if (action === 'add-webhook-events') return addWebhookEvents(req, res);
   return send(res, 400, {
     error: 'invalid_admin_action',
     message: '后台接口 action 无效。',
-    actions: ['whoami', 'overview', 'users', 'user', 'grant-credits', 'set-membership', 'cancel-subscription', 'verify-email', 'fix-product-names', 'list-prices', 'update-price', 'set-sale', 'clear-sale']
+    actions: ['whoami', 'overview', 'users', 'user', 'grant-credits', 'set-membership', 'cancel-subscription', 'verify-email', 'fix-product-names', 'list-prices', 'update-price', 'set-sale', 'clear-sale', 'rename-product', 'toggle-product', 'translate-name']
   });
 }

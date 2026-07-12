@@ -86,9 +86,12 @@ async function setLocalizedLineItem(params, priceId, nameZh, nameEn, locale) {
       if (Number.isFinite(saleUnit) && saleUnit > 0 && saleUnit < unitAmount) unitAmount = saleUnit;
     }
   } catch (e) { /* 按原价 */ }
+  // 展示名优先用后台设置的可编辑名（商品 metadata），未设则用各自硬编码名。
+  const md = (product && product.metadata) || {};
+  const displayName = locale === 'en' ? (md.name_en || nameEn) : (md.name_zh || nameZh);
   params.set('line_items[0][price_data][currency]', currency);
   params.set('line_items[0][price_data][unit_amount]', String(unitAmount));
-  params.set('line_items[0][price_data][product_data][name]', locale === 'en' ? nameEn : nameZh);
+  params.set('line_items[0][price_data][product_data][name]', displayName);
   if (price.recurring && price.recurring.interval) {
     params.set('line_items[0][price_data][recurring][interval]', price.recurring.interval);
     if (price.recurring.interval_count && price.recurring.interval_count !== 1) {

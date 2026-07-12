@@ -1582,6 +1582,13 @@ includesAll(adminHtml, ['this.showPicker()', 'data-sale-preset', 'dtLocalStr'], 
 // 批1 P0 后台堵漏
 includesAll(adminApi, ['reference_id: referenceId || null', 'would_go_negative', "action === 'cancel-subscription'", 'async function cancelSubscription', 'sale_not_lower_usd', 'unsupported_currency', 'if (periodEnd) record.current_period_end'], 'admin API：发点幂等/拒负余额/取消订阅/美元特价校验/币种白名单/改会员不清到期日');
 includesAll(adminHtml, ['referenceId:ref', 'mm-cancel-sub', 'cancel-subscription', '不会停止扣费'], 'admin.html：三写操作确认+防双击、取消订阅按钮、改状态不停扣费红字警告');
+// 批2 商品改名 / 英文名 / 一键翻译 / 软下架
+includesAll(catalogApi, ['name_zh', 'name_en', 'madeshed_hidden', 'nameZh:', 'nameEn:', 'hidden:'], '_catalog：可编辑中英名 + 软下架标记');
+assert.ok(/nameZh: r\.nameZh/.test(healthApi) && /!r\.hidden/.test(healthApi), 'health：下发可编辑名 + 排除软下架商品');
+assert.ok(/md\.name_en \|\| nameEn/.test(checkoutApi), 'checkout：结账行项目名用后台可编辑名');
+includesAll(index, ['obj.nameZhLive=x.nameZh', 'p.nameEnLive||c.label'], 'index：商品卡用后台改的中英名（未改保留默认）');
+includesAll(adminApi, ["action === 'rename-product'", "action === 'toggle-product'", "action === 'translate-name'", 'async function renameProduct', 'async function toggleProduct', 'async function translateName'], 'admin API：改名/软下架/一键翻译');
+includesAll(adminHtml, ['id="name-key"', 'rename-product', 'toggle-product', 'translate-name'], 'admin.html：商品名称与上下架面板');
 includesAll(index, ['function saleFor', 'function priceDisplayHTML', 'class="price-old"', 'class="sale-window"'], 'index：划线原价 + 特价 + 小字活动时间段，活动期外自动恢复');
 
 console.log('Static site checks passed');

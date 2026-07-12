@@ -172,6 +172,19 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
       </div>
       <p class="muted mono" id="sale-msg" style="font-size:12px;margin-top:8px"></p>
       <div id="sale-list" style="font-size:12px;margin-top:6px"></div>
+
+      <div class="section-h" style="margin-top:24px">商品名称与上下架</div>
+      <p class="muted" style="font-size:12px;line-height:1.7">改<b>中文名</b>会同步到 Stripe（后台/发票）和客户端页面；<b>英文名</b>可点「翻译」自动生成再手改。名字<b>留空保存 = 恢复默认名</b>。<b>软下架</b>=前端不再显示该商品（<b>不删除、不影响历史订单和老用户权益</b>）。改完约 1 分钟内前端可见。</p>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">商品<select id="name-key" class="search" style="min-width:170px"></select></label>
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">中文名<input id="name-zh" class="search" maxlength="80" style="width:200px"></label>
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:12px">英文名<input id="name-en" class="search" maxlength="80" style="width:220px"></label>
+        <button class="btn sm" id="name-translate">↻ 翻译英文</button>
+        <button class="btn" id="name-save">保存名称</button>
+        <label style="display:flex;flex-direction:row;align-items:center;gap:6px;font-size:12px"><input type="checkbox" id="name-hidden"> 从前端隐藏（软下架）</label>
+        <button class="btn sm" id="name-hide-save">应用显示状态</button>
+      </div>
+      <p class="muted mono" id="name-msg" style="font-size:12px;margin-top:8px"></p>
     </div>
   </div>
 </div>
@@ -258,7 +271,7 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
       var rows=(j.items||[]).map(function(x){
         if(x.status!=='ok')return '<tr><td>'+esc(x.name)+'</td><td colspan="7" class="muted">不可用：'+esc(x.status)+(x.error?(' · '+esc(x.error)):'')+'</td></tr>';
         return '<tr data-key="'+esc(x.key)+'">'
-          +'<td>'+esc(x.name)+'</td>'
+          +'<td>'+esc(x.name)+(x.hidden?' <span style="color:#ff8080;font-size:11px">（已隐藏）</span>':'')+'</td>'
           +'<td class="mono">'+fmtMoney(x)+'</td>'
           +'<td class="mono">'+fmtUsd(x)+'</td>'
           +'<td>'+priceTypeLabel(x)+'</td>'
@@ -286,6 +299,13 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
     var sel=$('sale-key'),list=$('sale-list'),items=state.priceItems||[];
     if(sel){var cur=sel.value;sel.innerHTML=items.map(function(x){return '<option value="'+esc(x.key)+'">'+esc(x.name)+'</option>';}).join('');if(cur)sel.value=cur;fillSaleInputs();}
     if(list){list.innerHTML='<b>当前特价：</b><br>'+items.map(function(x){return esc(x.name)+'：'+saleSummary(x);}).join('<br>');}
+    var nsel=$('name-key');if(nsel){var nc=nsel.value;nsel.innerHTML=items.map(function(x){return '<option value="'+esc(x.key)+'">'+esc(x.name||x.key)+(x.hidden?'（已隐藏）':'')+'</option>';}).join('');if(nc)nsel.value=nc;fillNameInputs();}
+  }
+  function fillNameInputs(){
+    var sel=$('name-key');if(!sel)return;var x=(state.priceItems||[]).find(function(i){return i.key===sel.value;});
+    $('name-zh').value=x&&x.nameZh?x.nameZh:'';$('name-zh').placeholder=x?('默认：'+(x.name||'')):'';
+    $('name-en').value=x&&x.nameEn?x.nameEn:'';
+    $('name-hidden').checked=!!(x&&x.hidden);
   }
   function fillSaleInputs(){
     var sel=$('sale-key');if(!sel)return;var x=(state.priceItems||[]).find(function(i){return i.key===sel.value;});var s=x&&x.sale;
@@ -326,6 +346,38 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
     var days=Number(v)||0;
     $('sale-start').value=dtLocalStr(new Date());
     $('sale-end').value=days>0?dtLocalStr(new Date(Date.now()+days*86400000)):'';
+  });
+  // ---------- 商品改名 / 软下架 ----------
+  document.addEventListener('change',function(e){if(e.target&&e.target.id==='name-key')fillNameInputs();});
+  document.addEventListener('click',async function(e){
+    var tr=e.target.closest('#name-translate'),sv=e.target.closest('#name-save'),hs=e.target.closest('#name-hide-save');
+    if(!tr&&!sv&&!hs)return;e.preventDefault();
+    var key=$('name-key').value,msg=$('name-msg');
+    if(!key){msg.textContent='请先选择商品。';return;}
+    if(tr){
+      var zh=($('name-zh').value||'').trim()||(function(){var x=(state.priceItems||[]).find(function(i){return i.key===key;});return (x&&x.name)||'';})();
+      if(!zh){msg.textContent='请先填中文名再翻译。';return;}
+      tr.disabled=true;msg.textContent='翻译中…';
+      try{var jt=await api('translate-name',{},{method:'POST',body:{nameZh:zh}});$('name-en').value=jt.nameEn||'';msg.textContent='已翻译，可再手改后点「保存名称」。';}
+      catch(err){msg.textContent='翻译失败：'+err.message;}
+      tr.disabled=false;return;
+    }
+    if(hs){
+      var hidden=$('name-hidden').checked;
+      if(hidden&&!confirm('确认从前端隐藏该商品？页面将不再显示该卡片（不删除、历史订单和老用户权益不受影响）。'))return;
+      hs.disabled=true;msg.textContent='应用中…';
+      try{await api('toggle-product',{},{method:'POST',body:{key:key,hidden:hidden}});msg.textContent=hidden?'✓ 已软下架，前端不再显示。':'✓ 已恢复显示。';var ih=(state.priceItems||[]).find(function(i){return i.key===key;});if(ih)ih.hidden=hidden;renderSaleUI();state.pricesLoaded=false;loadPrices();}
+      catch(err){msg.textContent='失败：'+err.message;}
+      hs.disabled=false;return;
+    }
+    var nz=($('name-zh').value||'').trim(),ne=($('name-en').value||'').trim();
+    if(!confirm('确认保存名称？中文「'+(nz||'恢复默认')+'」/ 英文「'+(ne||'恢复默认')+'」。留空=恢复默认名。'))return;
+    sv.disabled=true;var ot=sv.textContent;sv.textContent='保存中…';msg.textContent='';
+    try{await api('rename-product',{},{method:'POST',body:{key:key,nameZh:nz,nameEn:ne}});msg.textContent='✓ 名称已保存，约 1 分钟内前端可见。';
+      var it=(state.priceItems||[]).find(function(i){return i.key===key;});if(it){it.nameZh=nz||null;it.nameEn=ne||null;if(nz)it.name=nz;}renderSaleUI();
+      state.pricesLoaded=false;loadPrices();
+    }catch(err){msg.textContent='保存失败：'+err.message;}
+    sv.disabled=false;sv.textContent=ot;
   });
   document.addEventListener('click',async function(e){
     var save=e.target.closest('#sale-save'),clear=e.target.closest('#sale-clear');

@@ -14,8 +14,11 @@ async function publicPrices(res) {
   for (const item of PRODUCT_CATALOG) {
     try {
       const r = await resolveCatalogItem(item);
-      if (r.status === 'ok') items.push({
+      // 软下架商品不进公开价格列表（前端不渲染卡片）；后台 list-prices 仍会显示（带隐藏标记）。
+      if (r.status === 'ok' && !r.hidden) items.push({
         key: r.key, amount: r.amount, currency: r.currency, usd: r.usd ? r.usd.amount : null, interval: r.interval,
+        // 可编辑展示名（未设为 null，前端保留各自硬编码名）
+        nameZh: r.nameZh, nameEn: r.nameEn,
         // 特价：把窗口与两币种金额原样下发，是否生效由前端按 start/end 实时判定（不受下方 CDN 缓存影响）。
         sale: r.sale ? { cny: r.sale.amountCny, usd: r.sale.amountUsd, startAt: r.sale.startAt, endAt: r.sale.endAt, label: r.sale.label } : null
       });

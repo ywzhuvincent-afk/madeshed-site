@@ -112,6 +112,10 @@ export async function resolveCatalogItem(item) {
     amount: fromUnitAmount(effective.unit_amount, effective.currency),
     interval: (effective.recurring && effective.recurring.interval) || null,
     usd,
-    sale: parseSale(product)
+    sale: parseSale(product),
+    // 可编辑展示名（存商品 metadata，未设则前端/结账用各自硬编码兜底，避免既有商品名被动改变）
+    nameZh: (product && product.metadata && product.metadata.name_zh) || null,
+    nameEn: (product && product.metadata && product.metadata.name_en) || null,
+    hidden: !!(product && product.metadata && product.metadata.madeshed_hidden === '1')
   };
 }
