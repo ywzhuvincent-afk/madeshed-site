@@ -1579,6 +1579,9 @@ assert.ok(/sale: r\.sale \?/.test(healthApi) && /s-maxage=60/.test(healthApi), '
 includesAll(adminApi, ["action === 'set-sale'", "action === 'clear-sale'", 'async function setSale', 'async function clearSale', 'sale_not_lower'], 'admin：set-sale/clear-sale 写商品 metadata（特价须低于原价 + 时间窗校验）');
 includesAll(adminHtml, ['id="sale-key"', 'set-sale', 'clear-sale', 'toLocalInput'], 'admin.html：特价活动面板（选商品/金额/起止/清除，本地时间→ISO）');
 includesAll(adminHtml, ['this.showPicker()', 'data-sale-preset', 'dtLocalStr'], 'admin.html：特价时间点击弹日历 + 快捷时段预设（不再手输 mm/dd/yyyy）');
+// 批1 P0 后台堵漏
+includesAll(adminApi, ['reference_id: referenceId || null', 'would_go_negative', "action === 'cancel-subscription'", 'async function cancelSubscription', 'sale_not_lower_usd', 'unsupported_currency', 'if (periodEnd) record.current_period_end'], 'admin API：发点幂等/拒负余额/取消订阅/美元特价校验/币种白名单/改会员不清到期日');
+includesAll(adminHtml, ['referenceId:ref', 'mm-cancel-sub', 'cancel-subscription', '不会停止扣费'], 'admin.html：三写操作确认+防双击、取消订阅按钮、改状态不停扣费红字警告');
 includesAll(index, ['function saleFor', 'function priceDisplayHTML', 'class="price-old"', 'class="sale-window"'], 'index：划线原价 + 特价 + 小字活动时间段，活动期外自动恢复');
 
 console.log('Static site checks passed');

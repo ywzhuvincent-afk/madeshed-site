@@ -463,10 +463,11 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
           +'</div>'
           +'<div class="row" style="margin-top:8px"><input id="mm-note" type="text" style="flex:1;min-width:0" placeholder="备注（如：手动开通/客服补偿/退款降级）"></div>'
           +'<div class="msg" id="mm-msg"></div>'
-          +'<div style="font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.6">'
+          +'<div style="font-size:11px;margin-top:8px;line-height:1.6">'
             +(m.stripe_customer_id
-              ?('Stripe 客户：<a href="https://dashboard.stripe.com/customers/'+esc(m.stripe_customer_id)+'" target="_blank" rel="noopener">'+esc(m.stripe_customer_id)+'</a> — <b>退款请在 Stripe 后台操作</b>，webhook 会自动同步会员状态；这里的手动修改仅覆盖数据库权益。')
-              :'该用户还没有 Stripe 客户记录（未付费过）。手动开通会员只改数据库权益，不产生扣费。')
+              ?('<div style="color:#ff8080;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.32);border-radius:7px;padding:8px 10px;margin-bottom:8px">⚠️ 该用户有 Stripe 付费记录。<b>把状态改成 canceled 不会停止扣费</b>——下期照样扣，还可能被 webhook 翻回 active。要真正停扣费，请点下面按钮或去 Stripe 后台。退款也在 Stripe 后台操作，webhook 会自动同步。</div>'
+                +'<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><button class="btn sm" id="mm-cancel-sub">取消 Stripe 订阅（期末）</button><span class="muted">Stripe 客户：<a href="https://dashboard.stripe.com/customers/'+esc(m.stripe_customer_id)+'" target="_blank" rel="noopener">打开 →</a></span></div><div class="msg" id="mm-cancel-msg"></div>')
+              :'<span class="muted">该用户还没有 Stripe 客户记录（未付费过）。手动开通会员只改数据库权益，不产生扣费。</span>')
           +'</div>'
         +'</div></div>'
         +(!u.verified?'<div class="dsec"><h3>邮箱验证</h3><div class="grant"><div class="row"><span class="muted" style="flex:1;font-size:12px">该账号邮箱未验证（收不到确认邮件时可手动放行）</span><button class="btn sm" id="verify-email-btn">手动验证邮箱</button></div><div class="msg" id="verify-msg"></div></div></div>':'')
@@ -476,30 +477,47 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
       d.innerHTML=html;
       $('drawer-close').addEventListener('click',closeDrawer);
       $('grant-btn').addEventListener('click',async function(){
-        var amt=parseInt($('grant-amount').value,10),note=$('grant-note').value||'';
+        var btn=this,amt=parseInt($('grant-amount').value,10),note=$('grant-note').value||'';
         var msg=$('grant-msg');
         if(!amt){msg.textContent='请输入非零整数。';msg.className='msg err';return;}
-        msg.textContent='提交中…';msg.className='msg';
-        try{var g=await api('grant-credits',{},{method:'POST',body:{userId:id,amount:amt,note:note}});msg.textContent='已调整，新余额 '+num(g.balanceAfter);msg.className='msg ok';loadUsers();}
+        if(!confirm('确认给该用户'+(amt>0?('发放 '+amt):('扣减 '+(-amt)))+' 点？'))return;
+        // 幂等键：每次点击生成一次，网络重试重发同一 body 不会重复扣/发点（配合唯一索引）
+        var ref='g_'+String(id).slice(0,8)+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+        btn.disabled=true;var ot=btn.textContent;btn.textContent='提交中…';msg.textContent='';msg.className='msg';
+        try{var g=await api('grant-credits',{},{method:'POST',body:{userId:id,amount:amt,note:note,referenceId:ref}});msg.textContent=g.duplicate?'该操作已执行过，未重复调整。':('已调整，新余额 '+num(g.balanceAfter));msg.className='msg ok';loadUsers();}
         catch(e){msg.textContent=e.message||'调整失败';msg.className='msg err';}
+        btn.disabled=false;btn.textContent=ot;
       });
       var vbtn=$('verify-email-btn');
       if(vbtn)vbtn.addEventListener('click',async function(){
-        var msg=$('verify-msg');
-        msg.textContent='提交中…';msg.className='msg';
+        var btn=this,msg=$('verify-msg');
+        if(!confirm('确认手动把该账号邮箱标记为已验证？'))return;
+        btn.disabled=true;var ot=btn.textContent;btn.textContent='提交中…';msg.textContent='';msg.className='msg';
         try{await api('verify-email',{},{method:'POST',body:{userId:id}});msg.textContent='已手动验证，该账号现在可以登录并购买。';msg.className='msg ok';loadUsers();}
         catch(e){msg.textContent=e.message||'验证失败';msg.className='msg err';}
+        btn.disabled=false;btn.textContent=ot;
       });
       $('mm-save').addEventListener('click',async function(){
-        var tier=$('mm-tier').value,status=$('mm-status').value,period=$('mm-period').value,note=$('mm-note').value||'';
+        var btn=this,tier=$('mm-tier').value,status=$('mm-status').value,period=$('mm-period').value,note=$('mm-note').value||'';
         var msg=$('mm-msg');
-        msg.textContent='保存中…';msg.className='msg';
+        if(!confirm('确认把会员改为 '+tier+' / '+status+(period?(' · 到期 '+period):'（到期日留空=不改动）')+'？\n注意：这只改数据库权益，不会停止 Stripe 扣费。'))return;
+        btn.disabled=true;var ot=btn.textContent;btn.textContent='保存中…';msg.textContent='';msg.className='msg';
         try{
           var r=await api('set-membership',{},{method:'POST',body:{userId:id,tier:tier,status:status,periodEnd:period?(period+'T23:59:59Z'):'',note:note}});
           msg.textContent='已保存：'+tier+' / '+status+(r.membership&&r.membership.current_period_end?(' · 到期 '+fmtDate(r.membership.current_period_end)):'');
           msg.className='msg ok';
           loadUsers();
         }catch(e){msg.textContent=e.message||'保存失败';msg.className='msg err';}
+        btn.disabled=false;btn.textContent=ot;
+      });
+      var csb=$('mm-cancel-sub');
+      if(csb)csb.addEventListener('click',async function(){
+        var btn=this,msg=$('mm-cancel-msg');
+        if(!confirm('确认在 Stripe 取消该用户的订阅？\n默认到期末生效（用户可用到期末，之后不再扣费）。'))return;
+        btn.disabled=true;var ot=btn.textContent;btn.textContent='取消中…';msg.textContent='';msg.className='msg';
+        try{var r=await api('cancel-subscription',{},{method:'POST',body:{userId:id,atPeriodEnd:true}});msg.textContent='已在 Stripe 设为期末取消'+(r.subscription_id?('（'+r.subscription_id+'）'):'')+'，到期后不再扣费。';msg.className='msg ok';loadUsers();}
+        catch(e){msg.textContent=e.message||'取消失败';msg.className='msg err';}
+        btn.disabled=false;btn.textContent=ot;
       });
     }catch(e){d.innerHTML='<div class="drawer-h"><h2>加载失败</h2><button class="btn ghost sm" id="drawer-close">关闭</button></div><div class="empty">'+esc(e.message||'')+'</div>';var c=$('drawer-close');if(c)c.addEventListener('click',closeDrawer);}
   }

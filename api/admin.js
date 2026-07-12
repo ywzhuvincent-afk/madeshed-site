@@ -245,22 +245,36 @@ async function grantCredits(req, res) {
   const userId = String(body.userId || '').trim();
   const amount = Math.trunc(Number(body.amount));
   const note = String(body.note || '').slice(0, 300);
+  // 幂等键：由前端每次操作生成一个稳定 id 传来。配合唯一索引 credit_ledger_unique_ref
+  // (user_id, entry_type, reference_id)，重试/超时重发/并发不会重复扣或发点。
+  const referenceId = String(body.referenceId || body.reference_id || '').trim().slice(0, 80);
   if (!userId) return send(res, 400, { error: 'missing_user_id', message: '缺少 userId。' });
   if (!Number.isFinite(amount) || amount === 0) return send(res, 400, { error: 'invalid_amount', message: '请输入非零整数点数（可为负数扣减）。' });
   try {
+    if (referenceId) {
+      const dup = await supabaseSelect('credit_ledger', `user_id=eq.${encodeURIComponent(userId)}&entry_type=eq.admin&reference_id=eq.${encodeURIComponent(referenceId)}&select=amount,balance_after&limit=1`);
+      if (dup[0]) return send(res, 200, { ok: true, duplicate: true, balanceAfter: dup[0].balance_after, message: '该操作已执行过，未重复调整点数。' });
+    }
     const existing = await supabaseSelect('credit_ledger', `user_id=eq.${encodeURIComponent(userId)}&select=amount`);
     const before = (existing || []).reduce((a, c) => a + (Number(c.amount) || 0), 0);
     const after = before + amount;
+    // 拒绝把账本扣成负数（曾为 medium：界面 Math.max(0) 夹住显示 0、账本却是负数，账实不符）
+    if (after < 0) return send(res, 400, { error: 'would_go_negative', message: `扣减 ${-amount} 点后余额为负（当前 ${before} 点）。已阻止，避免账本出现负数。` });
     const rows = await supabaseInsert('credit_ledger', {
       user_id: userId,
       entry_type: 'admin',
       amount,
       balance_after: after,
       reference_type: 'admin_grant',
+      reference_id: referenceId || null,
       payload: { note: note || null, by: admin.email, at: new Date().toISOString() }
     });
-    return send(res, 200, { ok: true, entry: rows[0] || null, balanceBefore: Math.max(0, before), balanceAfter: Math.max(0, after) });
+    return send(res, 200, { ok: true, entry: rows[0] || null, balanceBefore: before, balanceAfter: after });
   } catch (error) {
+    // 唯一约束冲突（并发/重试撞车）→ 视为已执行，不报错
+    if (referenceId && /duplicate key|23505|conflict|already exists/i.test(String(error.message || ''))) {
+      return send(res, 200, { ok: true, duplicate: true, message: '该操作已执行过（并发去重），未重复调整。' });
+    }
     return send(res, 500, { error: 'grant_failed', message: error.message || '调整点数失败。' });
   }
 }
@@ -297,13 +311,16 @@ async function setMembership(req, res) {
     const prev = existing[0] || null;
     const overrides = ((prev && prev.payload && Array.isArray(prev.payload.admin_overrides)) ? prev.payload.admin_overrides : []).slice(-9);
     overrides.push({ by: admin.email, at: new Date().toISOString(), tier, status, period_end: currentPeriodEnd, note: note || null, prev_tier: prev ? prev.tier : null, prev_status: prev ? prev.status : null });
-    const rows = await supabaseInsert('memberships', {
+    // 到期日留空 = 不改动：省略该列，upsert(merge-duplicates) 只更新提供的列，保留 webhook 写入的续费日期。
+    // （曾为 high：只想改 tier/备注，却把 current_period_end 静默抹成 null。）
+    const record = {
       user_id: userId,
       tier,
       status,
-      current_period_end: currentPeriodEnd,
       payload: { ...((prev && prev.payload) || {}), admin_overrides: overrides }
-    }, { upsert: true, onConflict: 'user_id' });
+    };
+    if (periodEnd) record.current_period_end = currentPeriodEnd;
+    const rows = await supabaseInsert('memberships', record, { upsert: true, onConflict: 'user_id' });
     await supabaseInsert('membership_events', {
       user_id: userId,
       event_type: 'admin_override',
@@ -312,6 +329,40 @@ async function setMembership(req, res) {
     return send(res, 200, { ok: true, membership: rows[0] || null });
   } catch (error) {
     return send(res, 500, { error: 'set_membership_failed', message: error.message || '会员调整失败。' });
+  }
+}
+
+// 真正取消 Stripe 订阅（曾为 high：set-membership 只改库、下期 invoice.paid 会翻回 active 照扣费）。
+// atPeriodEnd=true(默认) 期末取消、用户用到期末；false 立即取消。webhook 会把最终状态同步回库。
+async function cancelSubscription(req, res) {
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { error: 'method_not_allowed' }); }
+  const admin = await requireAdmin(req, res);
+  if (!admin) return null;
+  const { stripeFormRequest } = await import('./_stripe.js');
+  const body = req.body || {};
+  const userId = String(body.userId || '').trim();
+  const atPeriodEnd = body.atPeriodEnd !== false;
+  if (!userId) return send(res, 400, { error: 'missing_user_id', message: '缺少 userId。' });
+  try {
+    const rows = await supabaseSelect('memberships', `user_id=eq.${encodeURIComponent(userId)}&select=stripe_subscription_id,status&limit=1`);
+    const sub = rows[0] && rows[0].stripe_subscription_id;
+    if (!sub) return send(res, 400, { error: 'no_subscription', message: '该用户没有绑定 Stripe 订阅（可能是后台手动会员或已取消），改状态即可，无需在 Stripe 操作。' });
+    let result;
+    if (atPeriodEnd) {
+      const p = new URLSearchParams(); p.set('cancel_at_period_end', 'true');
+      result = await stripeFormRequest(`subscriptions/${encodeURIComponent(sub)}`, p);
+    } else {
+      result = await stripeFormRequest(`subscriptions/${encodeURIComponent(sub)}`, new URLSearchParams(), { method: 'DELETE' });
+      await supabaseInsert('memberships', { user_id: userId, status: 'canceled' }, { upsert: true, onConflict: 'user_id' });
+    }
+    await supabaseInsert('membership_events', {
+      user_id: userId,
+      event_type: 'admin_cancel_subscription',
+      payload: { by: admin.email, subscription_id: sub, at_period_end: atPeriodEnd, at: new Date().toISOString() }
+    }).catch(() => null);
+    return send(res, 200, { ok: true, subscription_id: sub, mode: atPeriodEnd ? 'cancel_at_period_end' : 'canceled_now', status: (result && result.status) || null });
+  } catch (error) {
+    return send(res, 500, { error: 'cancel_subscription_failed', message: error.message || '取消订阅失败。' });
   }
 }
 
@@ -373,6 +424,7 @@ async function updatePrice(req, res) {
   const item = PRODUCT_NAME_MAP.find((x) => x.key === String(body.key || ''));
   const amountMajor = Number(body.amount);
   const reqCurrency = String(body.currency || '').toLowerCase(); // ''=商品当前币种(人民币,设默认价)；'usd'=美元副价
+  if (['', 'cny', 'usd'].indexOf(reqCurrency) < 0) return send(res, 400, { error: 'unsupported_currency', message: '仅支持人民币(默认价)与美元(副价)；其它币种会产生无人消费的孤儿价格。' });
   if (!item) return send(res, 400, { error: 'invalid_key', message: '商品 key 无效。' });
   if (!Number.isFinite(amountMajor) || amountMajor <= 0 || amountMajor > 1000000) {
     return send(res, 400, { error: 'invalid_amount', message: '价格无效：必须是大于 0 的数字。' });
@@ -450,9 +502,13 @@ async function setSale(req, res) {
   try {
     const current = await resolveCatalogItem(item);
     if (current.status !== 'ok') return send(res, 400, { error: 'catalog_unresolved', message: '无法定位该商品：' + current.status, item: current });
-    // 特价不得高于原价（防误配成"涨价"）：与当前人民币价对比。
+    // 特价不得高于原价（防误配成"涨价"）：人民币与美元对称校验。
     if (cny != null && current.amount != null && cny >= current.amount) {
       return send(res, 400, { error: 'sale_not_lower', message: `人民币特价（¥${cny}）必须低于原价 ¥${current.amount}。` });
+    }
+    const usdRegular = current.usd && current.usd.amount != null ? current.usd.amount : null;
+    if (usd != null && usdRegular != null && usd >= usdRegular) {
+      return send(res, 400, { error: 'sale_not_lower_usd', message: `美元特价（$${usd}）必须低于原价 $${usdRegular}。` });
     }
     const label = String(body.label || '').slice(0, 60);
     const params = new URLSearchParams();
@@ -550,6 +606,7 @@ export default async function handler(req, res) {
   if (action === 'user') return userDetail(req, res);
   if (action === 'grant-credits') return grantCredits(req, res);
   if (action === 'set-membership') return setMembership(req, res);
+  if (action === 'cancel-subscription') return cancelSubscription(req, res);
   if (action === 'verify-email') return verifyEmail(req, res);
   if (action === 'fix-product-names') return fixProductNames(req, res);
   if (action === 'list-prices') return listPrices(req, res);
@@ -560,6 +617,6 @@ export default async function handler(req, res) {
   return send(res, 400, {
     error: 'invalid_admin_action',
     message: '后台接口 action 无效。',
-    actions: ['whoami', 'overview', 'users', 'user', 'grant-credits', 'set-membership', 'verify-email', 'fix-product-names', 'list-prices', 'update-price', 'set-sale', 'clear-sale']
+    actions: ['whoami', 'overview', 'users', 'user', 'grant-credits', 'set-membership', 'cancel-subscription', 'verify-email', 'fix-product-names', 'list-prices', 'update-price', 'set-sale', 'clear-sale']
   });
 }
