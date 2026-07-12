@@ -91,22 +91,42 @@ async function overview(req, res) {
   const admin = await requireAdmin(req, res);
   if (!admin) return null;
   try {
-    const [users, accounts, memberships, credits, checkins, reports, questions] = await Promise.all([
+    const [users, accounts, memberships, credits, checkins, reports, fortunes, questions, memEvents] = await Promise.all([
       listAllAuthUsers(),
       supabaseSelect('account_profiles', 'select=user_id,display_name,locale,marketing_opt_in'),
       supabaseSelect('memberships', 'select=user_id,tier,status,current_period_end'),
-      supabaseSelect('credit_ledger', 'select=user_id,amount,entry_type'),
+      supabaseSelect('credit_ledger', 'select=user_id,amount,entry_type,payload,created_at'),
       supabaseSelect('checkins', 'select=user_id'),
-      supabaseSelect('report_entitlements', 'select=user_id,report_type,source,status'),
-      supabaseSelect('master_questions', 'select=user_id,credits_spent')
+      supabaseSelect('report_entitlements', 'select=user_id,report_type,source,status,payload,created_at'),
+      supabaseSelect('fortune_reports', 'select=user_id,access_level,context,updated_at'),
+      supabaseSelect('master_questions', 'select=user_id,credits_spent'),
+      supabaseSelect('membership_events', 'select=event_type,created_at&order=created_at.desc&limit=500').catch(() => [])
     ]);
     const now = Date.now();
     const d7 = now - 7 * 86400000;
     const d30 = now - 30 * 86400000;
     const activeMembers = memberships.filter((m) => m.status === 'active' || m.status === 'trialing');
+    const ultimateMembers = activeMembers.filter((m) => m.tier === 'ultimate').length;
     const creditsOutstanding = credits.reduce((a, c) => a + (Number(c.amount) || 0), 0);
     const reportPurchases = reports.filter((r) => r.source === 'purchase').length;
     const creditPurchases = credits.filter((c) => c.entry_type === 'purchase').length;
+    // 一次性收入（分→元）：点数包 + 交易报告 + 命理报告的 amount_total。会员订阅收入用 MRR 估算另算。
+    const amt = (v) => Number(v) || 0;
+    const centsCredit = credits.filter((c) => c.entry_type === 'purchase');
+    const centsReport = reports.filter((r) => r.source === 'purchase');
+    const centsFortune = fortunes.filter((f) => f.access_level === 'paid');
+    const revenueFrom = (arr, getCents, getAt, since) => arr.reduce((a, x) => (!since || ts(getAt(x)) >= since ? a + amt(getCents(x)) : a), 0);
+    const cAt = (x) => x.created_at, cCents = (x) => x.payload && x.payload.amount_total;
+    const fAt = (x) => x.updated_at, fCents = (x) => x.context && x.context.amount_total;
+    const oneTimeTotal = revenueFrom(centsCredit, cCents, cAt) + revenueFrom(centsReport, cCents, cAt) + revenueFrom(centsFortune, fCents, fAt);
+    const oneTime30d = revenueFrom(centsCredit, cCents, cAt, d30) + revenueFrom(centsReport, cCents, cAt, d30) + revenueFrom(centsFortune, fCents, fAt, d30);
+    // MRR ≈ 活跃最高级会员数 × 当前会员月价（会员各自锁定价可能不同，此为估算）。取价失败则不报 MRR。
+    let mrrCents = null;
+    try {
+      const uPrice = await resolveCatalogItem(PRODUCT_NAME_MAP.find((x) => x.key === 'ultimate'));
+      if (uPrice && uPrice.status === 'ok' && uPrice.interval) mrrCents = Math.round(ultimateMembers * (uPrice.unitAmount || 0));
+    } catch (e) { mrrCents = null; }
+    const canceled30d = (memEvents || []).filter((e) => /cancel|refund/i.test(e.event_type || '') && ts(e.created_at) >= d30).length;
     return send(res, 200, {
       overview: {
         totalUsers: users.length,
@@ -114,7 +134,8 @@ async function overview(req, res) {
         signups7d: users.filter((u) => ts(u.created_at) >= d7).length,
         signups30d: users.filter((u) => ts(u.created_at) >= d30).length,
         activeMembers: activeMembers.length,
-        ultimateMembers: activeMembers.filter((m) => m.tier === 'ultimate').length,
+        ultimateMembers,
+        pastDueMembers: memberships.filter((m) => m.status === 'past_due').length,
         withChart: accounts.length,
         creditsOutstanding: Math.max(0, creditsOutstanding),
         checkins: checkins.length,
@@ -122,6 +143,11 @@ async function overview(req, res) {
         creditPurchases,
         masterQuestions: questions.length,
         marketingOptIn: accounts.filter((a) => a.marketing_opt_in).length,
+        // 经营指标（金额单位：分）
+        mrrCents,
+        oneTimeRevenueTotalCents: oneTimeTotal,
+        oneTimeRevenue30dCents: oneTime30d,
+        canceledOrRefunded30d: canceled30d,
         generatedAt: new Date().toISOString()
       }
     });
@@ -184,6 +210,8 @@ async function usersList(req, res) {
       };
     });
     if (q) rows = rows.filter((r) => (r.email + ' ' + r.displayName + ' ' + r.id).toLowerCase().indexOf(q) >= 0);
+    const statusFilter = String(req.query?.status || url.searchParams.get('status') || '').trim().toLowerCase();
+    if (statusFilter) rows = rows.filter((r) => String(r.status).toLowerCase() === statusFilter);
     rows.sort((a, b) => ts(b.createdAt) - ts(a.createdAt));
     return send(res, 200, { users: rows, total: rows.length });
   } catch (error) {
@@ -623,6 +651,225 @@ async function translateName(req, res) {
     return send(res, 500, { error: 'translate_failed', message: String(error && error.message).slice(0, 150) });
   }
 }
+
+// ===== 批3 经营可见性 =====
+// 全站订单/交易台账（可搜索）：聚合点数账本 + 交易报告 + 命理报告 + 会员，按邮箱/商品/session/金额搜索。
+async function transactions(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  const url = new URL(req.url || '/', 'http://localhost');
+  const q = String(req.query?.q || url.searchParams.get('q') || '').trim().toLowerCase();
+  const kind = String(req.query?.kind || url.searchParams.get('kind') || '').trim().toLowerCase();
+  try {
+    const [users, credits, reports, fortunes, memberships] = await Promise.all([
+      listAllAuthUsers(),
+      supabaseSelect('credit_ledger', 'select=user_id,entry_type,amount,payload,stripe_session_id,reference_id,created_at&order=created_at.desc&limit=400'),
+      supabaseSelect('report_entitlements', 'select=user_id,report_type,source,status,payload,stripe_session_id,created_at&order=created_at.desc&limit=300'),
+      supabaseSelect('fortune_reports', 'select=user_id,report_type,access_level,context,updated_at&order=updated_at.desc&limit=300'),
+      supabaseSelect('memberships', 'select=user_id,tier,status,stripe_customer_id,created_at&order=created_at.desc&limit=300')
+    ]);
+    const email = new Map(); (users || []).forEach((u) => email.set(u.id, u.email || ''));
+    const money = (cents) => (Number(cents) ? '¥' + (Number(cents) / 100).toFixed(2) : '');
+    const rows = [];
+    (credits || []).forEach((c) => {
+      const p = c.payload || {};
+      rows.push({ kind: 'credit', at: c.created_at, email: email.get(c.user_id) || '', userId: c.user_id, title: (c.entry_type === 'purchase' ? '购买点数包' : c.entry_type === 'refund' ? '点数退款' : c.entry_type === 'admin' ? '人工调整' : c.entry_type), detail: (Number(c.amount) >= 0 ? '+' : '') + c.amount + ' 点', money: money(p.amount_total), session: c.stripe_session_id || '', ref: c.reference_id || '', status: c.entry_type });
+    });
+    (reports || []).filter((r) => r.source === 'purchase').forEach((r) => {
+      const p = r.payload || {};
+      rows.push({ kind: 'report', at: r.created_at, email: email.get(r.user_id) || '', userId: r.user_id, title: '交易报告 ' + r.report_type, detail: r.status, money: money(p.amount_total), session: r.stripe_session_id || '', ref: '', status: r.status });
+    });
+    (fortunes || []).filter((f) => f.access_level === 'paid').forEach((f) => {
+      const c = f.context || {};
+      rows.push({ kind: 'fortune', at: f.updated_at, email: email.get(f.user_id) || '', userId: f.user_id, title: '命理报告 ' + f.report_type, detail: 'paid', money: money(c.amount_total), session: c.stripe_session_id || '', ref: '', status: 'paid' });
+    });
+    (memberships || []).forEach((m) => {
+      rows.push({ kind: 'membership', at: m.created_at, email: email.get(m.user_id) || '', userId: m.user_id, title: '会员 ' + (m.tier || ''), detail: m.status, money: '', session: '', ref: m.stripe_customer_id || '', status: m.status });
+    });
+    let out = rows.filter((r) => r.at);
+    if (kind) out = out.filter((r) => r.kind === kind);
+    if (q) out = out.filter((r) => (r.email + ' ' + r.title + ' ' + r.session + ' ' + r.ref + ' ' + r.money + ' ' + r.userId).toLowerCase().indexOf(q) >= 0);
+    out.sort((a, b) => ts(b.at) - ts(a.at));
+    return send(res, 200, { transactions: out.slice(0, 300), total: out.length });
+  } catch (error) {
+    return send(res, 500, { error: 'transactions_failed', message: error.message || '读取交易台账失败。' });
+  }
+}
+
+// 后台一键退款：按 payment_intent 或 session 发起 Stripe 退款；权益回收交给现有 webhook 幂等处理。
+async function refund(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { error: 'method_not_allowed' }); }
+  const { stripeFormRequest, stripeGet } = await import('./_stripe.js');
+  const body = req.body || {};
+  let paymentIntent = String(body.paymentIntent || '').trim();
+  const sessionId = String(body.sessionId || '').trim();
+  try {
+    if (!paymentIntent && sessionId) {
+      const s = await stripeGet(`checkout/sessions/${encodeURIComponent(sessionId)}`);
+      paymentIntent = (s && (typeof s.payment_intent === 'string' ? s.payment_intent : (s.payment_intent && s.payment_intent.id))) || '';
+    }
+    if (!paymentIntent) return send(res, 400, { error: 'missing_payment_intent', message: '需要 payment_intent，或能解析出它的 checkout session id。' });
+    const params = new URLSearchParams();
+    params.set('payment_intent', paymentIntent);
+    if (body.amount != null && Number(body.amount) > 0) params.set('amount', String(Math.round(Number(body.amount) * 100)));
+    params.set('metadata[by]', admin.email || '');
+    const r = await stripeFormRequest('refunds', params);
+    return send(res, 200, { ok: true, refund_id: r && r.id, status: r && r.status, amount: r && r.amount, note: '退款已发起；报告/会员权益回收由 webhook 自动处理（全额撤权、部分保留）。' });
+  } catch (error) {
+    return send(res, 500, { error: 'refund_failed', message: String((error && (error.detail?.error?.message || error.message)) || '退款失败').slice(0, 200) });
+  }
+}
+
+// 手动发放报告权益（补履约）：webhook 抖动导致"付了钱没解锁"时兜底。带 30 天有效期（与购买一致）。
+async function grantEntitlement(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { error: 'method_not_allowed' }); }
+  const body = req.body || {};
+  const userId = String(body.userId || '').trim();
+  const reportType = String(body.reportType || '').trim();
+  const kind = String(body.kind || 'trade').trim();
+  const days = Number(body.days) > 0 ? Math.min(3650, Math.round(Number(body.days))) : 30;
+  if (!userId || !reportType) return send(res, 400, { error: 'missing_params', message: '需要 userId + reportType。' });
+  const expiresAt = new Date(Date.now() + days * 86400000).toISOString();
+  try {
+    if (kind === 'fortune') {
+      await supabaseInsert('fortune_reports', { user_id: userId, report_key: `${reportType}-entitlement`, report_type: reportType, target_period: null, title: '已解锁命理报告（人工发放）', context: { source: 'admin_grant', by: admin.email, expires_at: expiresAt, validity_days: days }, report_html: '<div class="report-paywall">报告权益已解锁，请回到页面生成完整报告。</div>', access_level: 'paid' }, { upsert: true, onConflict: 'user_id,report_key' });
+    } else {
+      await supabaseInsert('report_entitlements', { user_id: userId, report_type: reportType, source: 'admin', status: 'active', payload: { by: admin.email, expires_at: expiresAt, validity_days: days } }, { upsert: true, onConflict: 'user_id,report_type' });
+    }
+    await supabaseInsert('membership_events', { user_id: userId, event_type: 'admin_grant_entitlement', payload: { by: admin.email, kind, reportType, days } }).catch(() => null);
+    return send(res, 200, { ok: true, kind, reportType, expiresAt });
+  } catch (error) {
+    return send(res, 500, { error: 'grant_entitlement_failed', message: error.message });
+  }
+}
+
+async function revokeEntitlement(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { error: 'method_not_allowed' }); }
+  const { supabaseUpdate } = await import('./_supabase.js');
+  const body = req.body || {};
+  const userId = String(body.userId || '').trim();
+  const reportType = String(body.reportType || '').trim();
+  const kind = String(body.kind || 'trade').trim();
+  if (!userId || !reportType) return send(res, 400, { error: 'missing_params', message: '需要 userId + reportType。' });
+  try {
+    if (kind === 'fortune') {
+      await supabaseUpdate('fortune_reports', `user_id=eq.${encodeURIComponent(userId)}&report_type=eq.${encodeURIComponent(reportType)}`, { access_level: 'preview', context: { revoked: true, by: admin.email, at: new Date().toISOString() } });
+    } else {
+      await supabaseUpdate('report_entitlements', `user_id=eq.${encodeURIComponent(userId)}&report_type=eq.${encodeURIComponent(reportType)}`, { status: 'refunded', payload: { revoked: true, by: admin.email, at: new Date().toISOString() } });
+    }
+    await supabaseInsert('membership_events', { user_id: userId, event_type: 'admin_revoke_entitlement', payload: { by: admin.email, kind, reportType } }).catch(() => null);
+    return send(res, 200, { ok: true, kind, reportType, revoked: true });
+  } catch (error) {
+    return send(res, 500, { error: 'revoke_entitlement_failed', message: error.message });
+  }
+}
+
+// ===== 批4 合规 + 审计 =====
+// 删除申请队列（PIPEDA/GDPR 有法定删除时限，原来请求永远停在 requested）。
+async function deleteRequests(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  try {
+    const [reqs, users] = await Promise.all([
+      supabaseSelect('account_delete_requests', 'select=user_id,status,reason,created_at&order=created_at.desc&limit=200'),
+      listAllAuthUsers()
+    ]);
+    const email = new Map(); (users || []).forEach((u) => email.set(u.id, u.email || ''));
+    const rows = (reqs || []).map((r) => ({ ...r, email: email.get(r.user_id) || '' }));
+    return send(res, 200, { requests: rows, pending: rows.filter((r) => r.status === 'requested').length });
+  } catch (error) {
+    return send(res, 500, { error: 'delete_requests_failed', message: error.message });
+  }
+}
+
+// 履行删除：默认只标记"已处理"；hardDelete=true 时才真正删除 auth 用户（强破坏、需 UI 双重确认）。
+async function fulfillDelete(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { error: 'method_not_allowed' }); }
+  const { supabaseUpdate } = await import('./_supabase.js');
+  const body = req.body || {};
+  const userId = String(body.userId || '').trim();
+  const hardDelete = body.hardDelete === true;
+  if (!userId) return send(res, 400, { error: 'missing_user_id' });
+  try {
+    let authDeleted = false;
+    if (hardDelete) {
+      await authAdminFetch('users/' + encodeURIComponent(userId), { method: 'DELETE' });
+      authDeleted = true;
+    }
+    await supabaseUpdate('account_delete_requests', `user_id=eq.${encodeURIComponent(userId)}`, { status: hardDelete ? 'fulfilled' : 'reviewed', payload: { by: admin.email, at: new Date().toISOString(), hard_delete: hardDelete } });
+    await supabaseInsert('account_events', { user_id: userId, event_type: hardDelete ? 'account_deleted' : 'delete_reviewed', payload: { by: admin.email } }).catch(() => null);
+    return send(res, 200, { ok: true, userId, authDeleted });
+  } catch (error) {
+    return send(res, 500, { error: 'fulfill_delete_failed', message: error.message });
+  }
+}
+
+// 管理员操作审计日志（只读）：从既有 membership_events / account_events 汇总带 by 或含 admin/cancel/grant/revoke/refund 的事件。
+async function auditLog(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  try {
+    const [memEvents, acctEvents, users] = await Promise.all([
+      supabaseSelect('membership_events', 'select=user_id,event_type,payload,created_at&order=created_at.desc&limit=250'),
+      supabaseSelect('account_events', 'select=user_id,event_type,payload,created_at&order=created_at.desc&limit=250'),
+      listAllAuthUsers()
+    ]);
+    const email = new Map(); (users || []).forEach((u) => email.set(u.id, u.email || ''));
+    const adminish = (ev) => /admin|override|cancel|grant|revoke|refund|confirmed/i.test(ev.event_type || '') || (ev.payload && (ev.payload.by || ev.payload.by_admin));
+    const rows = [];
+    [...(memEvents || []), ...(acctEvents || [])].forEach((ev) => {
+      if (!adminish(ev)) return;
+      const by = (ev.payload && (ev.payload.by || ev.payload.by_admin)) || '';
+      rows.push({ at: ev.created_at, email: email.get(ev.user_id) || '', userId: ev.user_id, event: ev.event_type, by, detail: ev.payload ? JSON.stringify(ev.payload).slice(0, 240) : '' });
+    });
+    rows.sort((a, b) => ts(b.at) - ts(a.at));
+    return send(res, 200, { audit: rows.slice(0, 200), total: rows.length });
+  } catch (error) {
+    return send(res, 500, { error: 'audit_log_failed', message: error.message });
+  }
+}
+
+// 补发收据：重设该扣款的 receipt_email 触发 Stripe 重新发送（需 Stripe 已开启邮件收据）。
+async function resendReceipt(req, res) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { error: 'method_not_allowed' }); }
+  const { stripeFormRequest, stripeGet } = await import('./_stripe.js');
+  const body = req.body || {};
+  let paymentIntent = String(body.paymentIntent || '').trim();
+  const sessionId = String(body.sessionId || '').trim();
+  const toEmail = String(body.email || '').trim();
+  try {
+    if (!paymentIntent && sessionId) {
+      const s = await stripeGet(`checkout/sessions/${encodeURIComponent(sessionId)}`);
+      paymentIntent = (s && (typeof s.payment_intent === 'string' ? s.payment_intent : (s.payment_intent && s.payment_intent.id))) || '';
+    }
+    if (!paymentIntent) return send(res, 400, { error: 'missing_payment_intent', message: '需要 payment_intent 或 session id。' });
+    const pi = await stripeGet(`payment_intents/${encodeURIComponent(paymentIntent)}`);
+    const chargeId = pi && (pi.latest_charge || (pi.charges && pi.charges.data && pi.charges.data[0] && pi.charges.data[0].id));
+    if (!chargeId) return send(res, 400, { error: 'no_charge', message: '未找到对应扣款。' });
+    const params = new URLSearchParams();
+    if (toEmail) params.set('receipt_email', toEmail);
+    else {
+      const ch = await stripeGet(`charges/${encodeURIComponent(chargeId)}`);
+      const to = ch && (ch.receipt_email || (ch.billing_details && ch.billing_details.email));
+      if (!to) return send(res, 400, { error: 'no_email', message: '该扣款没有收据邮箱，请在参数里指定 email。' });
+      params.set('receipt_email', to);
+    }
+    const r = await stripeFormRequest(`charges/${encodeURIComponent(chargeId)}`, params);
+    return send(res, 200, { ok: true, charge_id: chargeId, receipt_email: r && r.receipt_email, note: 'Stripe 将向该邮箱重新发送收据（需 Stripe Dashboard 已开启邮件收据）。' });
+  } catch (error) {
+    return send(res, 500, { error: 'resend_receipt_failed', message: String((error && (error.detail?.error?.message || error.message)) || '重发收据失败').slice(0, 200) });
+  }
+}
 async function fixProductNames(req, res) {
   const admin = await requireAdmin(req, res);
   if (!admin) return;
@@ -696,10 +943,18 @@ export default async function handler(req, res) {
   if (action === 'rename-product') return renameProduct(req, res);
   if (action === 'toggle-product') return toggleProduct(req, res);
   if (action === 'translate-name') return translateName(req, res);
+  if (action === 'transactions') return transactions(req, res);
+  if (action === 'refund') return refund(req, res);
+  if (action === 'grant-entitlement') return grantEntitlement(req, res);
+  if (action === 'revoke-entitlement') return revokeEntitlement(req, res);
+  if (action === 'delete-requests') return deleteRequests(req, res);
+  if (action === 'fulfill-delete') return fulfillDelete(req, res);
+  if (action === 'audit-log') return auditLog(req, res);
+  if (action === 'resend-receipt') return resendReceipt(req, res);
   if (action === 'add-webhook-events') return addWebhookEvents(req, res);
   return send(res, 400, {
     error: 'invalid_admin_action',
     message: '后台接口 action 无效。',
-    actions: ['whoami', 'overview', 'users', 'user', 'grant-credits', 'set-membership', 'cancel-subscription', 'verify-email', 'fix-product-names', 'list-prices', 'update-price', 'set-sale', 'clear-sale', 'rename-product', 'toggle-product', 'translate-name']
+    actions: ['whoami', 'overview', 'users', 'user', 'grant-credits', 'set-membership', 'cancel-subscription', 'verify-email', 'fix-product-names', 'list-prices', 'update-price', 'set-sale', 'clear-sale', 'rename-product', 'toggle-product', 'translate-name', 'transactions', 'refund', 'grant-entitlement', 'revoke-entitlement', 'delete-requests', 'fulfill-delete', 'audit-log', 'resend-receipt']
   });
 }

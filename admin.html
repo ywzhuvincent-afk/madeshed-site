@@ -115,7 +115,9 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
     <div class="tabs">
       <button class="tab active" data-tab="overview">概览</button>
       <button class="tab" data-tab="users">用户</button>
+      <button class="tab" data-tab="orders">订单</button>
       <button class="tab" data-tab="prices">价格</button>
+      <button class="tab" data-tab="compliance">合规 / 审计</button>
     </div>
 
     <div id="tab-overview">
@@ -136,6 +138,24 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
           <tbody id="user-rows"><tr><td colspan="8" class="empty">加载中…</td></tr></tbody>
         </table>
       </div>
+    </div>
+
+    <div id="tab-orders" class="hide">
+      <div class="section-h">订单 / 交易台账</div>
+      <p class="muted" style="font-size:12px;line-height:1.7">聚合点数包、交易报告、命理报告、会员的全部记录，可按邮箱 / 商品 / session / 金额搜索。退款与补发收据直接在行内操作（退款后报告/会员权益回收由 webhook 自动处理）。</p>
+      <div class="toolbar">
+        <input class="search" id="tx-search" placeholder="搜索 邮箱 / 商品 / session / 金额">
+        <select id="tx-kind" class="search" style="max-width:130px"><option value="">全部类型</option><option value="credit">点数</option><option value="report">交易报告</option><option value="fortune">命理报告</option><option value="membership">会员</option></select>
+        <button class="btn ghost sm" id="tx-refresh">刷新</button>
+        <span class="muted mono" id="tx-count"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>时间</th><th>邮箱</th><th>类型</th><th>明细</th><th>金额</th><th>Session</th><th>操作</th></tr></thead>
+          <tbody id="tx-rows"><tr><td colspan="7" class="empty">点「刷新」加载订单台账</td></tr></tbody>
+        </table>
+      </div>
+      <p class="muted mono" id="tx-msg" style="font-size:12px;margin-top:8px"></p>
     </div>
 
     <div id="tab-prices" class="hide">
@@ -185,6 +205,22 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
         <button class="btn sm" id="name-hide-save">应用显示状态</button>
       </div>
       <p class="muted mono" id="name-msg" style="font-size:12px;margin-top:8px"></p>
+    </div>
+
+    <div id="tab-compliance" class="hide">
+      <div class="section-h">账号删除申请（合规）</div>
+      <p class="muted" style="font-size:12px;line-height:1.7">PIPEDA/GDPR 有法定删除时限。「标记已处理」只记录你已审阅；「彻底删除」会真正删除该账号（<b>不可恢复</b>，需二次确认）。</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>时间</th><th>邮箱</th><th>状态</th><th>原因</th><th>操作</th></tr></thead>
+        <tbody id="del-rows"><tr><td colspan="5" class="empty">点下方「刷新」加载</td></tr></tbody>
+      </table></div>
+      <div class="section-h" style="margin-top:24px">管理员操作审计日志</div>
+      <p class="muted" style="font-size:12px;line-height:1.7">改会员、发/收点数、退款、发/收报告权益、取消订阅等操作留痕（只读，取自事件表）。</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>时间</th><th>操作</th><th>对象邮箱</th><th>操作人</th><th>详情</th></tr></thead>
+        <tbody id="audit-rows"><tr><td colspan="5" class="empty">点下方「刷新」加载</td></tr></tbody>
+      </table></div>
+      <div class="toolbar" style="margin-top:10px"><button class="btn ghost sm" id="compliance-refresh">刷新合规 / 审计</button><span class="muted mono" id="compliance-msg"></span></div>
     </div>
   </div>
 </div>
@@ -254,9 +290,81 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
     var tab=t.dataset.tab;
     $('tab-overview').classList.toggle('hide',tab!=='overview');
     $('tab-users').classList.toggle('hide',tab!=='users');
+    $('tab-orders').classList.toggle('hide',tab!=='orders');
     $('tab-prices').classList.toggle('hide',tab!=='prices');
+    $('tab-compliance').classList.toggle('hide',tab!=='compliance');
     if(tab==='prices'&&!state.pricesLoaded)loadPrices();
+    if(tab==='orders'&&!state.txLoaded)loadTransactions();
+    if(tab==='compliance'&&!state.complianceLoaded)loadCompliance();
   });});
+
+  // ---------- 订单 / 交易台账 ----------
+  var txRaw=[];
+  function txRowHtml(t){
+    var canRefund=t.kind!=='membership'&&(t.session||'').indexOf('cs_')===0&&(t.status==='purchase'||t.status==='active'||t.status==='paid');
+    var ops='';
+    if(t.session){ops+='<button class="btn ghost sm" data-tx-refund="'+esc(t.session)+'" data-tx-email="'+esc(t.email)+'" data-tx-title="'+esc(t.title)+'"'+(canRefund?'':' disabled title="仅未退款的付费订单可退")')+'>退款</button> <button class="btn ghost sm" data-tx-receipt="'+esc(t.session)+'">补发收据</button>';}
+    return '<tr><td class="mono muted">'+fmtDateTime(t.at)+'</td><td>'+esc(t.email||'—')+'</td><td>'+esc(t.title)+'</td><td class="muted">'+esc(t.detail||'')+'</td><td class="mono">'+esc(t.money||'')+'</td><td class="mono muted" style="max-width:130px;overflow:hidden;text-overflow:ellipsis">'+esc(t.session||'')+'</td><td>'+ops+'</td></tr>';
+  }
+  function renderTx(){
+    var q=($('tx-search').value||'').trim().toLowerCase(),k=$('tx-kind').value;
+    var rows=txRaw.filter(function(t){return (!k||t.kind===k)&&(!q||((t.email+' '+t.title+' '+t.session+' '+t.money+' '+t.userId).toLowerCase().indexOf(q)>=0));});
+    $('tx-count').textContent=rows.length+' / '+txRaw.length;
+    $('tx-rows').innerHTML=rows.length?rows.map(txRowHtml).join(''):'<tr><td colspan="7" class="empty">无匹配记录</td></tr>';
+  }
+  async function loadTransactions(){
+    $('tx-rows').innerHTML='<tr><td colspan="7" class="empty">加载中…</td></tr>';
+    try{var j=await api('transactions');txRaw=j.transactions||[];state.txLoaded=true;renderTx();}
+    catch(e){$('tx-rows').innerHTML='<tr><td colspan="7" class="empty">'+esc(e.message||'加载失败')+'</td></tr>';}
+  }
+  document.addEventListener('input',function(e){if(e.target&&(e.target.id==='tx-search'))renderTx();});
+  document.addEventListener('change',function(e){if(e.target&&e.target.id==='tx-kind')renderTx();});
+  document.addEventListener('click',async function(e){
+    var rf=e.target.closest('[data-tx-refund]'),rc=e.target.closest('[data-tx-receipt]'),tr=e.target.closest('#tx-refresh');
+    if(tr){e.preventDefault();state.txLoaded=false;loadTransactions();return;}
+    if(rf){e.preventDefault();var sid=rf.getAttribute('data-tx-refund');
+      if(!confirm('确认对该订单发起全额退款？\n'+rf.getAttribute('data-tx-title')+' · '+rf.getAttribute('data-tx-email')+'\n退款后报告/会员权益会被 webhook 自动回收。'))return;
+      rf.disabled=true;$('tx-msg').textContent='退款中…';
+      try{var jr=await api('refund',{},{method:'POST',body:{sessionId:sid}});$('tx-msg').textContent='✓ 已退款（'+(jr.refund_id||'')+'，状态 '+(jr.status||'')+'）。权益回收由 webhook 处理。';}
+      catch(err){$('tx-msg').textContent='退款失败：'+err.message;rf.disabled=false;}
+      return;}
+    if(rc){e.preventDefault();var sid2=rc.getAttribute('data-tx-receipt');rc.disabled=true;$('tx-msg').textContent='补发收据中…';
+      try{var jc=await api('resend-receipt',{},{method:'POST',body:{sessionId:sid2}});$('tx-msg').textContent='✓ 已请求 Stripe 向 '+(jc.receipt_email||'原邮箱')+' 重发收据（需 Stripe 已开启邮件收据）。';}
+      catch(err){$('tx-msg').textContent='补发失败：'+err.message;}
+      rc.disabled=false;return;}
+  });
+
+  // ---------- 合规 / 审计 ----------
+  async function loadCompliance(){
+    $('del-rows').innerHTML='<tr><td colspan="5" class="empty">加载中…</td></tr>';$('audit-rows').innerHTML='<tr><td colspan="5" class="empty">加载中…</td></tr>';
+    try{
+      var jd=await api('delete-requests');var reqs=jd.requests||[];
+      $('del-rows').innerHTML=reqs.length?reqs.map(function(r){
+        var done=r.status!=='requested';
+        return '<tr><td class="mono muted">'+fmtDateTime(r.created_at)+'</td><td>'+esc(r.email||r.user_id)+'</td><td>'+esc(r.status)+'</td><td class="muted">'+esc(r.reason||'')+'</td><td>'+(done?'<span class="muted">已处理</span>':('<button class="btn ghost sm" data-del-review="'+esc(r.user_id)+'">标记已处理</button> <button class="btn ghost sm" style="color:#ff8080" data-del-hard="'+esc(r.user_id)+'" data-del-email="'+esc(r.email||'')+'">彻底删除</button>'))+'</td></tr>';
+      }).join(''):'<tr><td colspan="5" class="empty">暂无删除申请</td></tr>';
+    }catch(e){$('del-rows').innerHTML='<tr><td colspan="5" class="empty">'+esc(e.message||'加载失败')+'</td></tr>';}
+    try{
+      var ja=await api('audit-log');var au=ja.audit||[];
+      $('audit-rows').innerHTML=au.length?au.map(function(a){return '<tr><td class="mono muted">'+fmtDateTime(a.at)+'</td><td>'+esc(a.event)+'</td><td>'+esc(a.email||a.userId||'')+'</td><td class="muted">'+esc(a.by||'')+'</td><td class="mono muted" style="max-width:280px;overflow:hidden;text-overflow:ellipsis">'+esc(a.detail||'')+'</td></tr>';}).join(''):'<tr><td colspan="5" class="empty">暂无审计记录</td></tr>';
+    }catch(e2){$('audit-rows').innerHTML='<tr><td colspan="5" class="empty">'+esc(e2.message||'加载失败')+'</td></tr>';}
+    state.complianceLoaded=true;
+  }
+  document.addEventListener('click',async function(e){
+    var cr=e.target.closest('#compliance-refresh'),dr=e.target.closest('[data-del-review]'),dh=e.target.closest('[data-del-hard]');
+    if(cr){e.preventDefault();state.complianceLoaded=false;loadCompliance();return;}
+    if(dr){e.preventDefault();var uid=dr.getAttribute('data-del-review');dr.disabled=true;$('compliance-msg').textContent='标记中…';
+      try{await api('fulfill-delete',{},{method:'POST',body:{userId:uid,hardDelete:false}});$('compliance-msg').textContent='✓ 已标记为已处理。';state.complianceLoaded=false;loadCompliance();}
+      catch(err){$('compliance-msg').textContent='失败：'+err.message;dr.disabled=false;}
+      return;}
+    if(dh){e.preventDefault();var uid2=dh.getAttribute('data-del-hard'),em=dh.getAttribute('data-del-email');
+      if(!confirm('⚠️ 彻底删除账号（不可恢复）：'+(em||uid2)+'\n\n这会真正删除该 auth 用户。确定继续？'))return;
+      if(!confirm('再次确认：真的要永久删除 '+(em||uid2)+' 吗？此操作无法撤销。'))return;
+      dh.disabled=true;$('compliance-msg').textContent='删除中…';
+      try{var jh=await api('fulfill-delete',{},{method:'POST',body:{userId:uid2,hardDelete:true}});$('compliance-msg').textContent='✓ 已删除账号'+(jh.authDeleted?'（auth 用户已移除）':'')+'。';state.complianceLoaded=false;loadCompliance();}
+      catch(err){$('compliance-msg').textContent='删除失败：'+err.message;dh.disabled=false;}
+      return;}
+  });
 
   // ---------- prices ----------
   function priceTypeLabel(x){return x.interval?('订阅 / '+(x.interval==='month'?'每月':x.interval)):'一次性';}
@@ -427,6 +535,11 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
         ['报告购买',num(o.reportPurchases),'单次付费报告',''],
         ['点数购买',num(o.creditPurchases),'点数包购买次数',''],
         ['问大师次数',num(o.masterQuestions),'累计咨询',''],
+        ['MRR 月度经常收入',o.mrrCents!=null?('¥'+num(Math.round(o.mrrCents/100))):'—',(num(o.ultimateMembers))+' 会员 × 当前月价（估算）','green'],
+        ['一次性收入·30天','¥'+num(Math.round((o.oneTimeRevenue30dCents||0)/100)),'报告+点数+命理','accent'],
+        ['一次性收入·累计','¥'+num(Math.round((o.oneTimeRevenueTotalCents||0)/100)),'历史累计',''],
+        ['付款异常会员',num(o.pastDueMembers),'past_due · 待挽留','yellow'],
+        ['30天流失/退款',num(o.canceledOrRefunded30d),'取消或退款事件','red'],
       ];
       box.innerHTML=cards.map(function(c){return '<div class="card"><div class="k">'+c[0]+'</div><div class="v '+(c[3]||'')+'">'+c[1]+'</div><div class="d">'+c[2]+'</div></div>';}).join('');
     }catch(e){box.innerHTML='<div class="empty">'+esc(e.message||'加载失败')+'</div>';}
@@ -524,6 +637,7 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
         +'</div></div>'
         +(!u.verified?'<div class="dsec"><h3>邮箱验证</h3><div class="grant"><div class="row"><span class="muted" style="flex:1;font-size:12px">该账号邮箱未验证（收不到确认邮件时可手动放行）</span><button class="btn sm" id="verify-email-btn">手动验证邮箱</button></div><div class="msg" id="verify-msg"></div></div></div>':'')
         +'<div class="dsec"><h3>手动调整点数</h3><div class="grant"><div class="row"><input id="grant-amount" type="number" placeholder="+10 / -5"><input id="grant-note" type="text" placeholder="备注（可选），如补偿/赠送"><button class="btn sm" id="grant-btn">调整</button></div><div class="msg" id="grant-msg"></div></div></div>'
+        +'<div class="dsec"><h3>报告权益（补履约 / 回收）</h3><div class="grant"><div style="font-size:11px;color:var(--text-3);margin-bottom:6px">webhook 抖动导致"付了钱没解锁"时手动补发；发放 30 天有效，与购买一致。</div><div class="row" style="flex-wrap:wrap;gap:8px"><select id="ent-kind" style="background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:9px 10px;font-size:13px;font-family:inherit"><option value="trade">交易报告</option><option value="fortune">命理报告</option></select><input id="ent-type" type="text" placeholder="类型：7/30/365/all 或 full/dayun/month" style="flex:1;min-width:0"><button class="btn sm" id="ent-grant">发放</button><button class="btn sm" id="ent-revoke">回收</button></div><div class="msg" id="ent-msg"></div></div></div>'
         +'<div class="dsec"><h3>最近打卡</h3>'+((j.checkins||[]).length?j.checkins.slice(0,12).map(function(c){var oz={big_win:'大赚',win:'赚',flat:'平',loss:'亏',big_loss:'大亏',notrade:'未交易'}[c.outcome]||c.outcome;return '<div class="list-row"><span class="mono muted">'+esc(c.checkin_date)+'</span><span>'+esc(oz)+(c.score!=null?' · '+c.score:'')+'</span></div>';}).join(''):'<div class="muted" style="font-size:12px">还没有打卡</div>')+'</div>'
         +'<div class="dsec"><h3>最近活动</h3>'+((j.events||[]).length?j.events.slice(0,12).map(function(ev){return '<div class="list-row"><span class="muted">'+esc(ev.event_type)+'</span><span class="mono muted">'+fmtDateTime(ev.created_at)+'</span></div>';}).join(''):'<div class="muted" style="font-size:12px">无记录</div>')+'</div>';
       d.innerHTML=html;
@@ -570,6 +684,26 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
         try{var r=await api('cancel-subscription',{},{method:'POST',body:{userId:id,atPeriodEnd:true}});msg.textContent='已在 Stripe 设为期末取消'+(r.subscription_id?('（'+r.subscription_id+'）'):'')+'，到期后不再扣费。';msg.className='msg ok';loadUsers();}
         catch(e){msg.textContent=e.message||'取消失败';msg.className='msg err';}
         btn.disabled=false;btn.textContent=ot;
+      });
+      var egb=$('ent-grant');
+      if(egb)egb.addEventListener('click',async function(){
+        var btn=this,kind=$('ent-kind').value,type=($('ent-type').value||'').trim(),msg=$('ent-msg');
+        if(!type){msg.textContent='请填报告类型。';msg.className='msg err';return;}
+        if(!confirm('确认给该用户发放「'+(kind==='fortune'?'命理':'交易')+'报告 '+type+'」权益（30 天有效）？'))return;
+        btn.disabled=true;msg.textContent='发放中…';msg.className='msg';
+        try{var jg=await api('grant-entitlement',{},{method:'POST',body:{userId:id,kind:kind,reportType:type}});msg.textContent='✓ 已发放，有效期至 '+fmtDate(jg.expiresAt)+'。';msg.className='msg ok';}
+        catch(e){msg.textContent=e.message||'发放失败';msg.className='msg err';}
+        btn.disabled=false;
+      });
+      var erb=$('ent-revoke');
+      if(erb)erb.addEventListener('click',async function(){
+        var btn=this,kind=$('ent-kind').value,type=($('ent-type').value||'').trim(),msg=$('ent-msg');
+        if(!type){msg.textContent='请填报告类型。';msg.className='msg err';return;}
+        if(!confirm('确认回收该用户「'+(kind==='fortune'?'命理':'交易')+'报告 '+type+'」权益？'))return;
+        btn.disabled=true;msg.textContent='回收中…';msg.className='msg';
+        try{await api('revoke-entitlement',{},{method:'POST',body:{userId:id,kind:kind,reportType:type}});msg.textContent='✓ 已回收该报告权益。';msg.className='msg ok';}
+        catch(e){msg.textContent=e.message||'回收失败';msg.className='msg err';}
+        btn.disabled=false;
       });
     }catch(e){d.innerHTML='<div class="drawer-h"><h2>加载失败</h2><button class="btn ghost sm" id="drawer-close">关闭</button></div><div class="empty">'+esc(e.message||'')+'</div>';var c=$('drawer-close');if(c)c.addEventListener('click',closeDrawer);}
   }
