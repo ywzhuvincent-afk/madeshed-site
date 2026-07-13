@@ -895,14 +895,16 @@ assert.ok(
 includesAll(index, [
   "data.push(trendActionScore(profile,dt))",
   "title:y+'年'+m+'月 每日行动指数 · DAILY ACTION TREND'",
-  "mark:now.getDate()+'号 行动指数'",
-], 'daily trend uses action score');
+  "?'Today':(now.getDate()+'号 行动指数')",
+], 'daily trend uses action score（英文态 mark 为 Today）');
+// 趋势提示英文态：Today/Now/This month + When·Score，不再有别扭的 "13 Action" / "Slot"
+includesAll(index, ['function trendHourEn', "?'Now':(trendPad2(now.getHours())", "?'This month':", "localeIsEn())?' · ':' '"], '趋势图提示英文态口语化（Today/Now/This month · 分数），去掉 13号/Slot');
 includesAll(index, [
   'data.push(monthActionScore(profile,dt))',
   'MONTHLY ACTION TREND',
   'data=smoothTrendData(data)',
   'details.forEach(function(d,i){d.score=data[i]',
-  "mark:(now.getMonth()+1)+'",
+  "?'This month':((now.getMonth()+1)+'",
 ], 'monthly trend uses steady calibrated monthly action score');
 // v3 统一分数源：行动指数/流月核心公式的唯一实现已移入 bazi-engine.js，前端只做委托
 includesAll(index, [

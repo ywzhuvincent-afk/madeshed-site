@@ -8,3 +8,4 @@ audit/
 # 依赖与部署缓存
 node_modules/
 .vercel/
+supabase/.temp/
