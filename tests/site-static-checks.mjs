@@ -355,7 +355,7 @@ includesAll(index, [
   'Risk Waiver',
   'Not investment advice',
   'Use scores as timing and behavior signals, not trade calls.',
-  'Action Index = timing strength + behavior risk',
+  'Scores are calibrated to express timing rhythm, not expected return.',
   'Base Timing',
   'Flow Trigger',
   'Wealth Signal',
