@@ -1571,6 +1571,13 @@ assert.ok(/return'zh-Hant'/.test(index) && /function localeIsHant/.test(index) &
 assert.ok(index.includes('data-language-choice="zh-Hant"'), 'index：欢迎页 3 语言（简/繁/EN）');
 const chartFull = readFileSync('chart-full.html', utf8);
 assert.ok(/function chartLocaleIsHant/.test(chartFull) && /function applyChartHant/.test(chartFull) && chartFull.includes("closest('.lang')") && /t==='繁'\?'zh-Hant'/.test(chartFull), 'chart-full：繁体运行时转换 + 3 语言按钮 + 选择器不转换');
+// 英文态一致性批B：账户/报告/命理/chart-full（多代理审计 CONFIRMED）
+assert.ok(index.includes('synced to Supabase cloud') && index.includes("window.__cloudUser?'This browser + Supabase cloud'"), 'EN 账户 Cloud Sync 行按登录态派生（不再硬编码 Not signed in）');
+assert.ok(index.includes('chart cast at noon 12:00') && index.includes('no hour correction') && index.includes('hour pillar estimated at noon'), 'EN 账户无时辰行英文化');
+assert.ok(index.includes("Eligible (buy directly; billing email verified by Stripe)"), 'EN 账户会员购买条件英文化');
+assert.ok(index.includes('Full auto-report locked.') && index.includes('This auto-report was generated and saved for the period.'), 'EN 交易报告预览英文化');
+assert.ok(index.includes("'Generating '+pname") && index.includes('BaZi report service is temporarily unavailable'), 'EN 命理报告 chrome 英文化');
+assert.ok(chartFull.includes('branchInfoEn(L.getTimeZhi()).pinyin') && chartFull.includes('[子丑寅卯辰巳午未申酉戌亥]/g'), 'chart-full EN：真实农历 + Interactions 地支转拼音');
 // 9) 后台改价后落地页价格跟随 live 价：applyLivePriceNodes 覆盖所有会员月费节点 + 定价卡 + 更新 localeOriginalText 缓存；localize 末尾兜底调用
 includesAll(index, ['function applyLivePriceNodes', "'localeOriginalText' in el.dataset", ".pricing-amount .price", 'if(typeof applyLivePriceNodes'], '改价后落地页价格跟随 live 价（覆盖 hero/CTA/定价卡 + 防 localize 还原）');
 // 10) 按语言分币种：英文站按美元收（美元副价，不设默认；未配则退回人民币）

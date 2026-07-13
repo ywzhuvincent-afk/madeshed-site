@@ -563,7 +563,7 @@
     var rows=[
       ['Gender', ctx.meta&&ctx.meta.gender?genderEn(ctx.meta.gender):(state.gender?'Male':'Female')],
       ['Solar Birth Time', ctx.clockYmd+' '+ctx.clockTime],
-      ['Lunar Calendar', '<small>Lunar date retained for calculation</small>'],
+      ['Lunar Calendar', '<small>'+(function(){try{var L=ctx.lunar,mo=L.getMonth();return L.getYear()+' · month '+(mo<0?('leap '+(-mo)):mo)+' · day '+L.getDay()+' · '+branchInfoEn(L.getTimeZhi()).pinyin+' hour';}catch(e){return 'Lunar date retained for calculation';}})()+'</small>'],
       ['True Solar Time', '<small>'+((ctx.meta.trueSolarYmd||ctx.clockYmd)+' '+(ctx.meta.trueSolarTime||ctx.clockTime))+'</small>'],
       ['Zi Hour Rule', '<small>'+ziRuleEn(ctx.ziText)+'</small>'],
       ['Chinese Zodiac', zodiacEn(ctx.lunar.getYearShengXiao())],
@@ -834,6 +834,7 @@
     s=s.replace(/三会(.)方/g,function(_,e){return (LD_ELM[e]||e)+' directional group';});
     s=s.replace(/半合(.)/g,function(_,e){return (LD_ELM[e]||e)+' half-combine';});
     [['四柱互动：',''],['流支引动','flow-branch triggers '],['流支','flow-branch '],['落空亡，吉凶之力皆减',' in void (good & bad effects weakened)'],['（喜）',' (favorable)'],['（忌）',' (unfavorable)'],['年支','Year-br '],['月支','Month-br '],['日支','Day-br '],['时支','Hour-br '],['命支','natal-br '],['大运','Luck '],['流年','annual '],['流月','month '],['岁运','cycle '],['与',' vs '],['冲',' clash'],['刑',' punishment'],['害',' harm'],['合',' combine'],['伏吟',' repeat'],['、',', '],['；','; '],['。','. ']].forEach(function(p){s=s.split(p[0]).join(p[1]);});
+    s=s.replace(/[子丑寅卯辰巳午未申酉戌亥]/g,function(b){return branchInfoEn(b).pinyin;}).replace(/[甲乙丙丁戊己庚辛壬癸]/g,function(g){return stemInfoEn(g).pinyin;});
     return s.replace(/\s+/g,' ').trim();}
   function renderDayDetail(ymd){
     var box=document.getElementById('ld-detail'), B=window.MadeshedBazi, P=state.shared;
