@@ -220,7 +220,7 @@
     </div>
   </div>
   <div class="nav-right">
-    <div class="lang" aria-label="语言"><button class="active" type="button" aria-pressed="true">中</button><button type="button" aria-pressed="false">EN</button></div>
+    <div class="lang" aria-label="语言"><button class="active" type="button" aria-pressed="true">简</button><button type="button" aria-pressed="false">繁</button><button type="button" aria-pressed="false">EN</button></div>
     <a class="btn-signin" href="/#/login">登录</a>
     <span class="pro hide">PRO</span>
     <div class="avatar hide">V</div>
@@ -234,7 +234,7 @@
     <a href="/#/fortune">命理咨询 Ask Master</a>
     <a href="/#/account">设置 Account</a>
     <div class="mobile-actions">
-      <div class="lang" aria-label="语言"><button class="active" type="button" aria-pressed="true">中</button><button type="button" aria-pressed="false">EN</button></div>
+      <div class="lang" aria-label="语言"><button class="active" type="button" aria-pressed="true">简</button><button type="button" aria-pressed="false">繁</button><button type="button" aria-pressed="false">EN</button></div>
       <a class="btn-signin" href="/#/login">登录</a>
     </div>
   </div>
@@ -304,12 +304,19 @@
 (function(){
   "use strict";
   var CHART_LOCALE_KEY='madeshed_locale_v1';
-  function chartNormalizeLocale(locale){var raw=String(locale||'').toLowerCase();return raw.indexOf('en')===0?'en':'zh-CN';}
-  function chartLocaleFromUrl(){try{var params=new URLSearchParams(location.search),raw=params.get('lang')||params.get('locale')||params.get('language');if(!raw)return null;var value=String(raw).toLowerCase();if(value==='zh'||value==='cn'||value.indexOf('zh')===0)return'zh-CN';if(value==='en'||value.indexOf('en')===0)return'en';return null;}catch(e){return null;}}
+  function chartNormalizeLocale(locale){var raw=String(locale||'').toLowerCase();if(raw.indexOf('en')===0)return'en';if(raw==='zh-hant'||raw==='zh-tw'||raw==='zh-hk'||raw==='zh-mo'||raw.indexOf('hant')>=0||raw.indexOf('-tw')>=0||raw.indexOf('-hk')>=0||raw.indexOf('-mo')>=0)return'zh-Hant';return'zh-CN';}
+  function chartLocaleFromUrl(){try{var params=new URLSearchParams(location.search),raw=params.get('lang')||params.get('locale')||params.get('language');if(!raw)return null;var value=String(raw).toLowerCase();if(value==='en'||value.indexOf('en')===0)return'en';if(value==='zh-hant'||value==='zh-tw'||value==='zh-hk'||value.indexOf('hant')>=0||value.indexOf('-tw')>=0||value.indexOf('-hk')>=0)return'zh-Hant';if(value==='zh'||value==='cn'||value.indexOf('zh')===0)return'zh-CN';return null;}catch(e){return null;}}
   function chartDefaultLocale(){return'en';}
-  function chartSyncLocaleUrl(locale){try{var url=new URL(location.href),had=url.searchParams.has('lang')||url.searchParams.has('locale')||url.searchParams.has('language');if(!had)return;var l=chartNormalizeLocale(locale);url.searchParams.delete('locale');url.searchParams.delete('language');url.searchParams.set('lang',l==='en'?'en':'zh');history.replaceState(null,'',url.pathname+url.search+url.hash);}catch(e){}}
+  function chartSyncLocaleUrl(locale){try{var url=new URL(location.href),had=url.searchParams.has('lang')||url.searchParams.has('locale')||url.searchParams.has('language');if(!had)return;var l=chartNormalizeLocale(locale);url.searchParams.delete('locale');url.searchParams.delete('language');url.searchParams.set('lang',l==='en'?'en':(l==='zh-Hant'?'zh-hant':'zh'));history.replaceState(null,'',url.pathname+url.search+url.hash);}catch(e){}}
   function chartStoredLocale(){try{var raw=localStorage.getItem(CHART_LOCALE_KEY);return raw?chartNormalizeLocale(raw):null;}catch(e){return null;}}
   function chartLocaleIsEn(){return chartNormalizeLocale(document.body&&document.body.dataset.locale)==='en';}
+  function chartLocaleIsHant(){return chartNormalizeLocale(document.body&&document.body.dataset.locale)==='zh-Hant';}
+  // 繁体：简体唯一源，显示层运行时转换（懒加载 opencc-js；与主站同一套思路、可还原）
+  var __chS2T=null,__chS2TP=null;
+  function chartEnsureS2T(){if(__chS2T)return Promise.resolve(__chS2T);if(__chS2TP)return __chS2TP;__chS2TP=new Promise(function(res){try{var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.js';s.onload=function(){try{__chS2T=window.OpenCC&&window.OpenCC.Converter({from:'cn',to:'tw'});}catch(e){__chS2T=null;}res(__chS2T);};s.onerror=function(){res(null);};document.head.appendChild(s);}catch(e){res(null);}});return __chS2TP;}
+  function __chHantWalk(fn){var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:function(n){var p=n.parentNode;if(!p)return NodeFilter.FILTER_REJECT;var t=p.nodeName;if(t==='SCRIPT'||t==='STYLE'||t==='TEXTAREA'||t==='NOSCRIPT'||p.isContentEditable)return NodeFilter.FILTER_REJECT;if(p.closest&&p.closest('.lang'))return NodeFilter.FILTER_REJECT;if(!n.nodeValue||!/[一-鿿]/.test(n.nodeValue))return NodeFilter.FILTER_REJECT;return NodeFilter.FILTER_ACCEPT;}});var n;while((n=w.nextNode()))fn(n);}
+  function applyChartHant(){if(!chartLocaleIsHant())return;var conv=__chS2T;if(!conv){chartEnsureS2T().then(function(c){if(c&&chartLocaleIsHant())applyChartHant();});return;}__chHantWalk(function(n){if(n.__zhOrig==null)n.__zhOrig=n.nodeValue;var t=conv(n.__zhOrig);if(n.nodeValue!==t)n.nodeValue=t;});document.querySelectorAll('[placeholder],[title],[aria-label]').forEach(function(el){['placeholder','title','aria-label'].forEach(function(a){var v=el.getAttribute(a);if(!v||!/[一-鿿]/.test(v))return;var k='__cht_'+a;if(el[k]==null)el[k]=v;el.setAttribute(a,conv(el[k]));});});}
+  function restoreChartHant(){__chHantWalk(function(n){if(n.__zhOrig!=null&&n.nodeValue!==n.__zhOrig)n.nodeValue=n.__zhOrig;});document.querySelectorAll('[placeholder],[title],[aria-label]').forEach(function(el){['placeholder','title','aria-label'].forEach(function(a){var k='__cht_'+a;if(el[k]!=null)el.setAttribute(a,el[k]);});});}
   function chartWriteLocale(locale){try{localStorage.setItem(CHART_LOCALE_KEY,chartNormalizeLocale(locale));}catch(e){}}
   function chartEscape(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function chartSetText(selector,value){document.querySelectorAll(selector).forEach(function(el){if(!el.dataset.originalText)el.dataset.originalText=el.textContent;el.textContent=chartLocaleIsEn()?value:el.dataset.originalText;});}
@@ -336,7 +343,7 @@
     document.querySelectorAll('meta[name="description"]').forEach(function(m){m.setAttribute('content',en?'Full BaZi chart with Four Pillars, Ten Gods, hidden stems, Na Yin, void branches, symbolic stars, and luck-cycle timeline.':'Madeshed 完整排盘页，展示四柱、十神、藏干、神煞、大运、流年、流月与流日全景时间轴。');});
     document.querySelectorAll('meta[property="og:title"],meta[name="twitter:title"]').forEach(function(m){m.setAttribute('content',document.title);});
     document.querySelectorAll('meta[property="og:description"],meta[name="twitter:description"]').forEach(function(m){m.setAttribute('content',en?'Four Pillars, Ten Gods, hidden stems, Na Yin, void branches, symbolic stars, and luck-cycle timeline.':'四柱、十神、藏干、神煞、大运、流年、流月与流日全景时间轴。');});
-    setChartLocaleButtons(en?'en':'zh-CN');
+    setChartLocaleButtons(chartNormalizeLocale(document.body.dataset.locale));
     chartSetAttr('nav','aria-label','Main navigation');
     chartSetAttr('[data-home-link]','aria-label','Back to homepage');
     chartSetAttr('#mobile-menu-toggle','aria-label','Open navigation menu');
@@ -364,8 +371,8 @@
     ens.forEach(function(el,i){if(!el.dataset.originalText)el.dataset.originalText=el.textContent;if(en)el.textContent=sub[i]||el.textContent;else el.textContent=el.dataset.originalText;});
     chartSetHtml('footer','<b>About the calculation:</b> Four Pillars, Ten Gods, hidden stems, Na Yin, void branches, luck cycles, annual cycles, and monthly cycles are calculated by the chart engine. Start dates can vary slightly across schools.<br><b>Symbolic stars:</b> this page shows a focused set with clear rules, not every traditional star.<br><b>Favorable elements:</b> the automatic reading is a structured approximation for self-review and timing context. Complex charts may require human review.<div class="risk-note"><b>Not investment advice:</b> Madeshed charts, scores, and timelines are decision-support and self-review tools. You are responsible for every trade and outcome.</div>');
   }
-  function setChartLocaleButtons(locale){document.querySelectorAll('.lang button').forEach(function(btn){var isEn=btn.textContent.trim().toUpperCase()==='EN',active=(locale==='en')===isEn;btn.classList.toggle('active',active);btn.setAttribute('aria-pressed',active?'true':'false');});}
-  function chooseChartLocale(locale){var l=chartNormalizeLocale(locale);document.body.dataset.locale=l;chartWriteLocale(l);chartSyncLocaleUrl(l);applyChartEnglishLocale();compute();}
+  function setChartLocaleButtons(locale){var cur=chartNormalizeLocale(locale);document.querySelectorAll('.lang button').forEach(function(btn){var t=btn.textContent.trim().toUpperCase();var bl=t==='EN'?'en':(t==='繁'?'zh-Hant':'zh-CN');var active=cur===bl;btn.classList.toggle('active',active);btn.setAttribute('aria-pressed',active?'true':'false');});}
+  function chooseChartLocale(locale){var prev=document.body.dataset.locale;var l=chartNormalizeLocale(locale);if(chartNormalizeLocale(prev)==='zh-Hant'&&l!=='zh-Hant')restoreChartHant();if(l==='zh-Hant')chartEnsureS2T();document.body.dataset.locale=l;chartWriteLocale(l);chartSyncLocaleUrl(l);if(typeof setChartLocaleButtons==='function')setChartLocaleButtons(l);applyChartEnglishLocale();compute();}
   var mobileToggle=document.getElementById('mobile-menu-toggle');
   var mobileMenu=document.getElementById('mobile-menu');
   if(mobileToggle&&mobileMenu){
@@ -381,7 +388,7 @@
   if(homeLogo)homeLogo.addEventListener('click',function(){location.href='/#/';});
   document.querySelectorAll('.lang button').forEach(function(btn){
     btn.addEventListener('click',function(){
-      chooseChartLocale(btn.textContent.trim().toUpperCase()==='EN'?'en':'zh-CN');
+      var t=btn.textContent.trim().toUpperCase();chooseChartLocale(t==='EN'?'en':(t==='繁'?'zh-Hant':'zh-CN'));
     });
   });
   if (typeof Solar === "undefined") {
@@ -944,9 +951,13 @@
     if(!head)return;
     e.preventDefault();head.click();
   });
+  // 繁体：包一层 compute，使每次渲染后（若繁体）自动转换；初始为繁体时预加载转换库
+  var __chartComputeBase=compute;compute=function(){var r=__chartComputeBase.apply(this,arguments);try{if(chartLocaleIsHant())applyChartHant();}catch(e){}return r;};
   var initialChartLocale=chartLocaleFromUrl()||chartStoredLocale()||chartDefaultLocale();
   if(chartLocaleFromUrl())chartWriteLocale(initialChartLocale);
+  if(chartNormalizeLocale(initialChartLocale)==='zh-Hant')chartEnsureS2T();
   document.body.dataset.locale=initialChartLocale;
+  if(typeof setChartLocaleButtons==='function')setChartLocaleButtons(initialChartLocale);
   setupCollapsibleSections();
   applyChartEnglishLocale();
   applySavedProfile();

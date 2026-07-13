@@ -287,7 +287,7 @@ includesAll(chart, [
   'function chartLocaleFromUrl',
   'function chartDefaultLocale',
   'function chartSyncLocaleUrl',
-  "url.searchParams.set('lang',l==='en'?'en':'zh')",
+  "url.searchParams.set('lang',l==='en'?'en':(l==='zh-Hant'?'zh-hant':'zh'))",
   'var initialChartLocale=chartLocaleFromUrl()||chartStoredLocale()||chartDefaultLocale()',
 ], 'chart full default English and URL locale entry');
 
@@ -1566,6 +1566,11 @@ includesAll(index, ['a.expires&&a.expires[String(type)]', 'expires:exp', 'r.expi
 assert.ok(/enm=\{active:'Active'/.test(index) && /Payment issue/.test(index), '前端：membershipStatusText 中英分离，EN 不泄漏中文会员状态');
 // 8.8 购买记录非 active 状态本地化，不暴露 raw token
 assert.ok(/refunded:en\?'refunded':'已退款'/.test(index), '前端：购买记录已退款/已取消/已到期本地化显示');
+// 繁体中文（运行时简→繁；主站 + chart-full；语言选择器不被转换）
+assert.ok(/return'zh-Hant'/.test(index) && /function localeIsHant/.test(index) && /function applyHantAfterRender/.test(index) && index.includes("closest('.lang,[data-language-choice]')"), 'index：繁体 zh-Hant + 运行时转换 + 语言选择器不转换');
+assert.ok(index.includes('data-language-choice="zh-Hant"'), 'index：欢迎页 3 语言（简/繁/EN）');
+const chartFull = readFileSync('chart-full.html', utf8);
+assert.ok(/function chartLocaleIsHant/.test(chartFull) && /function applyChartHant/.test(chartFull) && chartFull.includes("closest('.lang')") && /t==='繁'\?'zh-Hant'/.test(chartFull), 'chart-full：繁体运行时转换 + 3 语言按钮 + 选择器不转换');
 // 9) 后台改价后落地页价格跟随 live 价：applyLivePriceNodes 覆盖所有会员月费节点 + 定价卡 + 更新 localeOriginalText 缓存；localize 末尾兜底调用
 includesAll(index, ['function applyLivePriceNodes', "'localeOriginalText' in el.dataset", ".pricing-amount .price", 'if(typeof applyLivePriceNodes'], '改价后落地页价格跟随 live 价（覆盖 hero/CTA/定价卡 + 防 localize 还原）');
 // 10) 按语言分币种：英文站按美元收（美元副价，不设默认；未配则退回人民币）
