@@ -316,6 +316,9 @@ input[type=date],input[type=time]{color-scheme:dark;font-family:var(--font-mono)
 .persona-col.watch li::before{background:var(--orange)}
 .persona-line{font-size:13px;line-height:1.6;color:var(--text-2);margin-top:12px}
 .persona-line b{color:var(--text)}
+.persona-lines{display:grid;grid-template-columns:1fr 1fr;gap:8px 26px;margin-top:12px;align-items:start}
+.persona-lines .persona-line{margin-top:0}
+@media(max-width:600px){.persona-lines{grid-template-columns:1fr;gap:10px}}
 .persona-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 .persona-btn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-family:inherit;padding:8px 14px;cursor:pointer}
 .persona-btn:hover{border-color:var(--accent)}
@@ -1800,12 +1803,13 @@ function personaCardHtml(p){
   return '<div class="persona-card"><div class="persona-top"><div class="persona-emoji">'+p.emoji+'</div><div><div class="persona-kicker">'+(en?'Your Trading Persona · Free':'你的交易人格 · 免费')+'</div><div class="persona-title">'+escapeHtml(p.title)+'</div><div class="persona-tag">'+escapeHtml(p.tag)+'</div></div></div>'+
     '<div class="persona-meta">'+escapeHtml(p.meta)+'</div>'+
     '<div class="persona-cols"><div class="persona-col good"><div class="persona-col-h">'+(en?'Strengths':'优势')+'</div><ul>'+s+'</ul></div><div class="persona-col watch"><div class="persona-col-h">'+(en?'Watch out for':'要当心')+'</div><ul>'+w+'</ul></div></div>'+
+    '<div class="persona-lines">'+
     '<div class="persona-line">'+(en?'⏱ <b>Risk posture:</b> ':'⏱ <b>风险姿态：</b>')+escapeHtml(p.posture)+'</div>'+
     '<div class="persona-line">'+(en?'📅 <b>Best conditions:</b> ':'📅 <b>顺手时机：</b>')+escapeHtml(p.best)+'</div>'+
-    (p.favMonths?'<div class="persona-line">'+(en?'🗓 <b>Favorable months:</b> ':'🗓 <b>顺手月份：</b>')+escapeHtml(p.favMonths)+(en?' — your favorable elements peak then.':'——你的喜用五行在这些月份最旺。')+'</div>':'')+
+    (p.favMonths?'<div class="persona-line">'+(en?'📆 <b>Favorable months:</b> ':'📆 <b>顺手月份：</b>')+escapeHtml(p.favMonths)+(en?' — your favorable elements peak then.':'——你的喜用五行在这些月份最旺。')+'</div>':'')+
     (p.favHours?'<div class="persona-line">'+(en?'🕐 <b>Favorable hours:</b> ':'🕐 <b>顺手时段：</b>')+escapeHtml(p.favHours)+'</div>':'')+
     (p.riskMonths?'<div class="persona-line">'+(en?'⚠️ <b>Watch these months:</b> ':'⚠️ <b>提防月份：</b>')+escapeHtml(p.riskMonths)+(en?' — unfavorable elements dominate; keep size light.':'——忌神偏旺，宜轻仓、控制风险。')+'</div>':'')+
-    '<div class="persona-line">'+(en?'💰 <b>Money relationship:</b> ':'💰 <b>与钱的关系：</b>')+escapeHtml(p.money)+'</div>'+
+    '<div class="persona-line">'+(en?'💰 <b>Money relationship:</b> ':'💰 <b>与钱的关系：</b>')+escapeHtml(p.money)+'</div>'+'</div>'+
     '<div class="persona-actions"><button type="button" class="persona-btn primary" data-persona-action="copy">'+(en?'Copy summary':'复制摘要')+'</button><button type="button" class="persona-btn" data-persona-action="save">'+(en?'Save image':'保存图片')+'</button></div>'+
     '<div class="persona-note">'+(en?'Generated instantly from your chart — no trading data needed. The more days you log, the sharper your personal win-rate becomes.':'基于命盘即时生成，无需交易数据。记录越多，你的个人胜率统计越准。')+'</div></div>';
 }
