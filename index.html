@@ -1773,6 +1773,11 @@ var PERSONA_POSTURE={
   balanced:{zh:'身强弱中和、可攻可守——但没有固定系统时容易随波逐流，建议锁定纪律。',en:'Balanced day master — flexible on offense and defense, but you can drift without a firm system, so lock in your rules.'}
 };
 function personaStrengthBucket(cat){var c=String(cat||'');if(/强/.test(c))return'strong';if(/弱/.test(c))return'weak';return'balanced';}
+// 五行 → 阳历月份(近似按节气月) + 时辰。喜用五行旺的月份/时段通常更顺手；忌神旺的月份需提防。
+var PERSONA_ELEM_MONTHS={wood:['2-3 月（春·木旺）','Feb-Mar (spring, Wood)'],fire:['5-7 月（夏·火旺）','May-Jul (summer, Fire)'],earth:['4/7/10/1 月（四季末·土旺）','Apr/Jul/Oct/Jan (Earth months)'],metal:['8-9 月（秋·金旺）','Aug-Sep (autumn, Metal)'],water:['11-12 月（冬·水旺）','Nov-Dec (winter, Water)']};
+var PERSONA_ELEM_HOURS={wood:['寅卯时 3-7 点','3-7 am (Yin/Mao)'],fire:['巳午时 9-13 点（午时最旺）','9 am-1 pm (Si/Wu, noon strongest)'],earth:['辰未戌丑时（约 1/7/13/19 点）','Earth hours (~1 / 7 / 13 / 19 h)'],metal:['申酉时 15-19 点','3-7 pm (Shen/You)'],water:['亥子时 21-1 点','9 pm-1 am (Hai/Zi)']};
+function personaElemKey(e){var n=(typeof elementNameEn==='function')?elementNameEn(e):'';return n?String(n).toLowerCase():'';}
+function personaTiming(elems,map,en){var seen={},out=[];(elems||[]).forEach(function(e){var k=personaElemKey(e);if(k&&map[k]&&!seen[k]){seen[k]=1;out.push(map[k][en?1:0]);}});return out.join(en?'; ':'；');}
 function buildTradingPersona(profile){
   if(!profile||!profile.dayElement)return null;
   var base=PERSONA_ELEMENTS[profile.dayElement]||PERSONA_ELEMENTS['土'];
@@ -1786,7 +1791,8 @@ function buildTradingPersona(profile){
   var elEn=elementNameEn(profile.dayElement),strEn=strengthNameEn(profile.strength),cat=(profile.strength&&profile.strength.category)||'',score=(profile.strength&&profile.strength.score)!=null?profile.strength.score:'';
   var best=en?('Favorable elements '+(xiWords.join(', ')||'—')+': days carrying these tend to suit your style.'):('喜用五行 '+(xiWords.join('、')||'—')+'：带这些五行的日子通常更顺手。');
   var summary=en?('My trading persona: '+base.enTitle+' ('+elEn+' day master · '+strEn+'). '+base.enTag+'.'):('我的交易人格：'+base.zhTitle+'（'+profile.dayElement+'日主 · '+cat+'）。'+base.zhTag+'。');
-  return {key:base.key,emoji:base.emoji,title:en?base.enTitle:base.zhTitle,tag:en?base.enTag:base.zhTag,meta:en?((profile.dayStem||'')+' '+elEn+' day master · '+strEn+' '+score):((profile.dayStem||'')+' '+profile.dayElement+'日主 · '+cat+' '+score),strengths:en?base.enStr:base.zhStr,watchouts:en?base.enWatch:base.zhWatch,posture:en?posture.en:posture.zh,best:best,money:money,summary:summary};
+  var __pji=(profile.yongShen&&profile.yongShen.ji)||[];
+  return {key:base.key,emoji:base.emoji,favMonths:personaTiming(xi,PERSONA_ELEM_MONTHS,en),favHours:personaTiming(xi,PERSONA_ELEM_HOURS,en),riskMonths:personaTiming(__pji,PERSONA_ELEM_MONTHS,en),title:en?base.enTitle:base.zhTitle,tag:en?base.enTag:base.zhTag,meta:en?((profile.dayStem||'')+' '+elEn+' day master · '+strEn+' '+score):((profile.dayStem||'')+' '+profile.dayElement+'日主 · '+cat+' '+score),strengths:en?base.enStr:base.zhStr,watchouts:en?base.enWatch:base.zhWatch,posture:en?posture.en:posture.zh,best:best,money:money,summary:summary};
 }
 function personaCardHtml(p){
   var en=localeIsEn();
@@ -1796,6 +1802,9 @@ function personaCardHtml(p){
     '<div class="persona-cols"><div class="persona-col good"><div class="persona-col-h">'+(en?'Strengths':'优势')+'</div><ul>'+s+'</ul></div><div class="persona-col watch"><div class="persona-col-h">'+(en?'Watch out for':'要当心')+'</div><ul>'+w+'</ul></div></div>'+
     '<div class="persona-line">'+(en?'⏱ <b>Risk posture:</b> ':'⏱ <b>风险姿态：</b>')+escapeHtml(p.posture)+'</div>'+
     '<div class="persona-line">'+(en?'📅 <b>Best conditions:</b> ':'📅 <b>顺手时机：</b>')+escapeHtml(p.best)+'</div>'+
+    (p.favMonths?'<div class="persona-line">'+(en?'🗓 <b>Favorable months:</b> ':'🗓 <b>顺手月份：</b>')+escapeHtml(p.favMonths)+(en?' — your favorable elements peak then.':'——你的喜用五行在这些月份最旺。')+'</div>':'')+
+    (p.favHours?'<div class="persona-line">'+(en?'🕐 <b>Favorable hours:</b> ':'🕐 <b>顺手时段：</b>')+escapeHtml(p.favHours)+'</div>':'')+
+    (p.riskMonths?'<div class="persona-line">'+(en?'⚠️ <b>Watch these months:</b> ':'⚠️ <b>提防月份：</b>')+escapeHtml(p.riskMonths)+(en?' — unfavorable elements dominate; keep size light.':'——忌神偏旺，宜轻仓、控制风险。')+'</div>':'')+
     '<div class="persona-line">'+(en?'💰 <b>Money relationship:</b> ':'💰 <b>与钱的关系：</b>')+escapeHtml(p.money)+'</div>'+
     '<div class="persona-actions"><button type="button" class="persona-btn primary" data-persona-action="copy">'+(en?'Copy summary':'复制摘要')+'</button><button type="button" class="persona-btn" data-persona-action="save">'+(en?'Save image':'保存图片')+'</button></div>'+
     '<div class="persona-note">'+(en?'Generated instantly from your chart — no trading data needed. The more days you log, the sharper your personal win-rate becomes.':'基于命盘即时生成，无需交易数据。记录越多，你的个人胜率统计越准。')+'</div></div>';

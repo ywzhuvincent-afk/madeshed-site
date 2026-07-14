@@ -1579,6 +1579,9 @@ assert.ok(index.includes('Full auto-report locked.') && index.includes('This aut
 assert.ok(index.includes("'Generating '+pname") && index.includes('BaZi report service is temporarily unavailable'), 'EN 命理报告 chrome 英文化');
 assert.ok(chartFull.includes('branchInfoEn(L.getTimeZhi()).pinyin') && chartFull.includes('[子丑寅卯辰巳午未申酉戌亥]/g'), 'chart-full EN：真实农历 + Interactions 地支转拼音');
 assert.ok(index.includes('Your strongest state:') && index.includes('Your weakest state:') && !index.includes('How Madeshed reads patterns'), 'EN insights 输出真实最强/最弱状态+胜率（不再通用罐头覆盖）');
+// 交易人格卡：由喜/忌五行推导顺手月份+时段+提防月份（中英）
+assert.ok(index.includes('PERSONA_ELEM_MONTHS') && index.includes('PERSONA_ELEM_HOURS') && index.includes('function personaTiming'), '人格卡：五行→月份/时段映射');
+assert.ok(index.includes('顺手月份：') && index.includes('顺手时段：') && index.includes('提防月份：') && index.includes('Favorable months:') && index.includes('Favorable hours:'), '人格卡：顺手月份/时段+提防月份（中英）');
 // 9) 后台改价后落地页价格跟随 live 价：applyLivePriceNodes 覆盖所有会员月费节点 + 定价卡 + 更新 localeOriginalText 缓存；localize 末尾兜底调用
 includesAll(index, ['function applyLivePriceNodes', "'localeOriginalText' in el.dataset", ".pricing-amount .price", 'if(typeof applyLivePriceNodes'], '改价后落地页价格跟随 live 价（覆盖 hero/CTA/定价卡 + 防 localize 还原）');
 // 10) 按语言分币种：英文站按美元收（美元副价，不设默认；未配则退回人民币）
