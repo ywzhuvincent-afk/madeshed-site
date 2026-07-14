@@ -633,6 +633,19 @@ includesAll(index, [
   'href="#/waiver"',
 ], 'production routes');
 
+// 使用指南页 + 首页 3 步上手（三语 + 首次生成引导）
+includesAll(index, [
+  'data-view="guide"',
+  "'/guide':'guide'",
+  'href="#/guide" data-route="/guide"',
+  'how-strip',
+  '使用指南',
+  'How to Use Madeshed',
+  'Get started in 3 steps',
+  'guide-hint-toast',
+  'madeshed_guide_hint_v1',
+], 'usage guide page');
+
 includesAll(index, [
   'id="signup-form"',
   'id="signup-email"',

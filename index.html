@@ -710,6 +710,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
       <a href="/chart-full.html">流年大运 Forecast</a>
       <a href="#/report" data-route="/report">月报 Report</a>
       <a href="#/fortune" data-route="/fortune">命理咨询 Ask Master</a>
+      <a href="#/guide" data-route="/guide">使用指南 Guide</a>
       <a href="#/account" data-route="/account">设置 Account</a>
     </div>
   </div>
@@ -734,6 +735,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <a href="/chart-full.html">流年大运 Forecast</a>
     <a href="#/report" data-route="/report">月报 Report</a>
     <a href="#/fortune" data-route="/fortune">命理咨询 Ask Master</a>
+    <a href="#/guide" data-route="/guide">使用指南 Guide</a>
     <a href="#/account" data-route="/account">设置 Account</a>
     <div class="mobile-actions">
       <div class="lang" aria-label="语言"><button class="active" type="button" data-locale-switch="zh-CN" aria-pressed="true">简</button><button type="button" data-locale-switch="zh-Hant" aria-pressed="false">繁</button><button type="button" data-locale-switch="en" aria-pressed="false">EN</button></div>
@@ -778,6 +780,16 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   <div class="feature"><div class="feature-icon">🛑</div><h3>实时干预</h3><p>红灯日下单时弹窗提醒,亏损追单时强制 30 分钟冷静期,连胜过热时回归现实警告——<span class="highlight">在你犯错的瞬间拦截</span>。</p></div>
 </div></section>
 
+<section class="how-strip">
+<div class="how-head"><h2>三步开始用</h2><p>60 秒上手 · 用对了才有价值</p></div>
+<div class="how-grid">
+  <div class="how-item"><div class="how-n">1</div><h3>生成命盘</h3><p>填出生信息，免费生成你的八字命盘，全站共用这一份。</p></div>
+  <div class="how-item"><div class="how-n">2</div><h3>每天打卡</h3><p>诚实记录每天的交易结果，一点点累积你自己的真实样本。</p></div>
+  <div class="how-item"><div class="how-n">3</div><h3>行动指数 + 复盘</h3><p>每天看该激进还是保守；满 30 天后看你自己的胜率规律。</p></div>
+</div>
+<div class="how-more"><a href="#/guide" data-route="/guide">看完整使用指南 →</a></div>
+</section>
+
 <section class="pricing"><div class="section-title"><h2>简单透明的定价</h2><p>基础功能可先体验 · 付费报告、点数和最高级会员按需解锁</p></div>
 <div class="pricing-cards">
   <div class="pricing-card featured">
@@ -797,7 +809,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 </div></section>
 
 <footer><div class="footer-content"><div>© 2026 Madeshed · <span style="font-family:var(--font-cn);">命盘 × 数据</span></div>
-<div class="footer-links"><a href="#/login" data-route="/login">登录</a><a href="#/signup" data-route="/signup">注册</a><a href="#/about" data-route="/about">关于</a><a href="#/privacy" data-route="/privacy">隐私政策</a><a href="#/terms" data-route="/terms">服务条款</a><a href="#/waiver" data-route="/waiver">风险免责声明</a><a href="#/contact" data-route="/contact">联系我们</a><a href="/guide/trading-persona.zh.html" data-guide-link>交易人格</a></div></div>
+<div class="footer-links"><a href="#/login" data-route="/login">登录</a><a href="#/signup" data-route="/signup">注册</a><a href="#/about" data-route="/about">关于</a><a href="#/guide" data-route="/guide">使用指南</a><a href="#/privacy" data-route="/privacy">隐私政策</a><a href="#/terms" data-route="/terms">服务条款</a><a href="#/waiver" data-route="/waiver">风险免责声明</a><a href="#/contact" data-route="/contact">联系我们</a><a href="/guide/trading-persona.zh.html" data-guide-link>交易人格</a></div></div>
 <div class="footer-disclaim risk-note"><strong>风险提示:</strong> Madeshed 提供的所有评分、回测、警示均为<strong>决策辅助工具</strong>,不构成任何投资建议。任何基于本工具产生的交易决策与盈亏责任,均由用户自行承担。投资有风险,入市需谨慎。</div></footer>
 </main>
 </section>
@@ -1283,6 +1295,68 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 </div>
 </section>
 
+<!-- GUIDE / 使用指南 -->
+<style>
+.guide-steps{display:grid;gap:12px;margin:22px 0}
+.guide-step{display:flex;gap:15px;align-items:flex-start;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:15px 17px}
+.guide-step .gs-n{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accent,#d64550);color:#fff;font-family:var(--font-mono,monospace);font-size:15px}
+.guide-step .gs-b h3{margin:0 0 4px;font-size:16px}
+.guide-step .gs-b p{margin:0;opacity:.78;font-size:14px;line-height:1.65}
+.guide-do,.guide-dont{margin:8px 0 0;padding-left:2px;list-style:none}
+.guide-do li,.guide-dont li{margin:8px 0;line-height:1.65;padding-left:26px;position:relative}
+.guide-do li::before{content:"\2713";position:absolute;left:0;color:#3fb56b;font-weight:700}
+.guide-dont li::before{content:"\2715";position:absolute;left:0;color:#e0555f;font-weight:700}
+.guide-cta-block .auth-actions{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap}
+.btn-signin.ghost{background:transparent;border:1px solid rgba(255,255,255,.18)}
+.guide-disclaim{margin-top:20px;font-size:12.5px;line-height:1.6;opacity:.72}
+.how-strip{max-width:1080px;margin:0 auto;padding:6px 20px 4px}
+.how-head{text-align:center;margin-bottom:18px}
+.how-head h2{margin:0 0 6px}
+.how-head p{margin:0;opacity:.72}
+.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.how-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:16px 18px}
+.how-item .how-n{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accent,#d64550);color:#fff;font-family:var(--font-mono,monospace);margin-bottom:10px}
+.how-item h3{margin:0 0 5px;font-size:15px}
+.how-item p{margin:0;opacity:.78;font-size:13.5px;line-height:1.6}
+.how-more{text-align:center;margin-top:14px}
+.how-more a{color:var(--accent,#d64550);font-weight:600;text-decoration:none}
+@media(max-width:720px){.how-grid{grid-template-columns:1fr}}
+.guide-hint-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9999;display:flex;align-items:center;gap:12px;background:#1b1f2a;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:12px 16px;box-shadow:0 8px 30px rgba(0,0,0,.4);max-width:92vw;font-size:14px}
+.guide-hint-toast a{color:#ffd7b0;font-weight:700;text-decoration:none;white-space:nowrap}
+.guide-hint-toast button{background:none;border:none;color:#9aa;font-size:18px;line-height:1;cursor:pointer;padding:0 2px}
+</style>
+<section class="view" data-view="guide">
+<div class="container page">
+<div class="page-head"><div><div class="page-kicker">Guide</div><h1>使用指南</h1><p>60 秒看懂 Madeshed 怎么用、以及怎么用对——它是决策辅助工具，不预测行情。</p></div><div class="auth-actions"><a class="btn-signin" href="#/onboarding" data-route="/onboarding">免费生成命盘</a></div></div>
+
+<div class="guide-steps">
+  <div class="guide-step"><div class="gs-n">1</div><div class="gs-b"><h3>生成并保存命盘</h3><p>填出生信息生成八字并保存，全站的每日评分、流年大运都用这一份命盘。登录后可跨设备云端同步。</p></div></div>
+  <div class="guide-step"><div class="gs-n">2</div><div class="gs-b"><h3>每天诚实打卡</h3><p>每天记录今天真实的交易结果（赢 / 平 / 亏 + 幅度）。诚实是关键——系统靠你真实的样本，才能算出属于你自己的规律。</p></div></div>
+  <div class="guide-step"><div class="gs-n">3</div><div class="gs-b"><h3>看今日行动指数</h3><p>每天一个 5-100 分的行动指数，告诉你今天该激进还是保守、哪个时段更顺、要提防什么。绿灯是顺势窗口，红灯是高风险日。</p></div></div>
+  <div class="guide-step"><div class="gs-n">4</div><div class="gs-b"><h3>累积 30-90 天后复盘</h3><p>用满一两个月，系统会用你自己的数据告诉你「在什么状态下你的胜率最高」，再配合固定报告和问大师做深度复盘。</p></div></div>
+</div>
+
+<div class="legal-block guide-do-block"><h2>用对的 5 条守则</h2><ul class="guide-do">
+<li>每天都记，哪怕当天没交易也标注一下——连续性决定样本质量。</li>
+<li>如实记录盈亏，不美化、不漏记，数据才有意义。</li>
+<li>把它当「决策辅助 + 风控提醒」，最终决定权始终在你自己手里。</li>
+<li>给它时间：满 30-90 天后，个人胜率统计才有参考价值。</li>
+<li>与你自己的交易系统和风控配合使用，而不是替代它们。</li>
+</ul></div>
+
+<div class="legal-block guide-dont-block"><h2>4 个常见误区</h2><ul class="guide-dont">
+<li>绿灯 ≠ 满仓或加杠杆。绿灯只是顺势窗口，仓位仍要按你的风控。</li>
+<li>它不预测涨跌、不推荐标的，只反映你在不同状态下的胜率倾向。</li>
+<li>样本不足（不到 30 天）时别急着下结论。</li>
+<li>不要用它替代止损和资金管理——它是加分项，不是安全网。</li>
+</ul></div>
+
+<div class="legal-block guide-cta-block"><h2>准备好了？</h2><p>先免费生成命盘，再从今天开始每天打卡。坚持一两个月，你会得到一份别人给不了的、属于你自己的交易节奏地图。</p><div class="auth-actions"><a class="btn-signin" href="#/onboarding" data-route="/onboarding">免费生成命盘</a><a class="btn-signin ghost" href="#/daily" data-route="/daily">已生成？进入今日面板</a></div></div>
+
+<p class="guide-disclaim risk-note"><strong>风险提示：</strong>Madeshed 的所有评分、回测、警示均为决策辅助工具，不构成任何投资建议，任何交易决策与盈亏均由用户自行承担。投资有风险，入市需谨慎。</p>
+</div>
+</section>
+
 <!-- PRIVACY -->
 <section class="view" data-view="privacy">
 <div class="container page">
@@ -1319,8 +1393,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 
 <script>
 // ========== ROUTER ==========
-const VIEWS = ['landing','onboarding','dashboard','daily','report','fortune','signup','login','forgot-password','reset-password','auth-callback','account','account-security','waiver','terms','privacy','about','contact'];
-const HASH_TO_VIEW = {'':'landing','/':'landing','/onboarding':'onboarding','/dashboard':'dashboard','/daily':'daily','/report':'report','/fortune':'fortune','/signup':'signup','/login':'login','/forgot-password':'forgot-password','/reset-password':'reset-password','/auth/callback':'auth-callback','/account':'account','/account/security':'account-security','/waiver':'waiver','/terms':'terms','/privacy':'privacy','/about':'about','/contact':'contact'};
+const VIEWS = ['landing','onboarding','dashboard','daily','report','fortune','signup','login','forgot-password','reset-password','auth-callback','account','account-security','waiver','terms','privacy','about','contact','guide'];
+const HASH_TO_VIEW = {'':'landing','/':'landing','/onboarding':'onboarding','/dashboard':'dashboard','/daily':'daily','/report':'report','/fortune':'fortune','/signup':'signup','/login':'login','/forgot-password':'forgot-password','/reset-password':'reset-password','/auth/callback':'auth-callback','/account':'account','/account/security':'account-security','/waiver':'waiver','/terms':'terms','/privacy':'privacy','/about':'about','/contact':'contact','/guide':'guide'};
 const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
 const mobileMenu = document.getElementById('mobile-menu');
 const LOCALE_KEY='madeshed_locale_v1';
@@ -1435,6 +1509,7 @@ const EN_COPY={
     ['a[data-route="/report"]','Reports'],
     ['a[data-route="/fortune"]','Ask Master'],
     ['a[data-route="/account"]','Account'],
+    ['a[data-route="/guide"]','Guide'],
     ['#btn-signin','Login']
   ],
   attrs:[
@@ -1663,6 +1738,25 @@ function localizeEnglishLegalViews(){
   setLocaleText('[data-view="about"] .page-head p','Madeshed combines BaZi timing, trade journaling, and behavioral review so users can see how their own decisions change across different timing states.');
   setLocaleText('[data-view="about"] .legal-block h2','Product Principle');
   setLocaleText('[data-view="about"] .legal-block p','We do not package scores as certainty. The product emphasizes sample size, confidence ranges, and risk context so traders can calibrate habits with their own data.');
+
+  setLocaleText('[data-view="guide"] .page-kicker','Guide');
+  setLocaleText('[data-view="guide"] .page-head h1','How to Use Madeshed');
+  setLocaleText('[data-view="guide"] .page-head p','A 60-second guide to how Madeshed works, and how to use it well. It is a decision-support tool, not a market predictor.');
+  setLocaleText('[data-view="guide"] .page-head .btn-signin','Generate chart free');
+  setLocaleHtml('[data-view="guide"] .guide-steps','<div class="guide-step"><div class="gs-n">1</div><div class="gs-b"><h3>Generate and save your chart</h3><p>Enter your birth details to build your BaZi chart and save it. Every daily score and luck-pillar view uses this one chart. Sign in to sync across devices.</p></div></div><div class="guide-step"><div class="gs-n">2</div><div class="gs-b"><h3>Log honestly every day</h3><p>Record today’s real trading outcome (win / flat / loss + size). Honesty is the point — the system needs your real samples to find patterns that are truly yours.</p></div></div><div class="guide-step"><div class="gs-n">3</div><div class="gs-b"><h3>Read today’s Action Index</h3><p>A daily 5-100 score tells you whether to push or stay cautious today, which time window flows better, and what to watch for. Green is a favorable window; red is a high-risk day.</p></div></div><div class="guide-step"><div class="gs-n">4</div><div class="gs-b"><h3>Review after 30-90 days</h3><p>After a month or two, the system uses your own data to show the states where your win rate is highest, paired with fixed reports and Ask Master for deeper review.</p></div></div>');
+  setLocaleText('[data-view="guide"] .guide-do-block h2','5 rules to use it right');
+  setLocaleHtml('[data-view="guide"] .guide-do','<li>Log every day, even a no-trade day — consistency decides sample quality.</li><li>Record real P/L, no polishing and no gaps, so the data means something.</li><li>Treat it as decision support + a risk nudge; the final call is always yours.</li><li>Give it time: personal win-rate stats matter only after 30-90 days.</li><li>Use it alongside your own trading system and risk rules, not instead of them.</li>');
+  setLocaleText('[data-view="guide"] .guide-dont-block h2','4 common mistakes');
+  setLocaleHtml('[data-view="guide"] .guide-dont','<li>Green does not mean go all-in or add leverage — it is only a favorable window; size still follows your risk rules.</li><li>It does not predict prices or recommend tickers; it reflects your win-rate tendency across states.</li><li>Do not draw conclusions on thin samples (under 30 days).</li><li>Never let it replace stop-losses and money management — it is a plus, not a safety net.</li>');
+  setLocaleText('[data-view="guide"] .guide-cta-block h2','Ready?');
+  setLocaleText('[data-view="guide"] .guide-cta-block p','Generate your chart free, then start logging today. Stick with it for a month or two and you get a map of your own trading rhythm that no one else can give you.');
+  setLocaleText('[data-view="guide"] .guide-cta-block a[data-route="/onboarding"]','Generate chart free');
+  setLocaleText('[data-view="guide"] .guide-cta-block a[data-route="/daily"]','Already have one? Open Daily');
+  setLocaleHtml('[data-view="guide"] .guide-disclaim','<strong>Risk Notice:</strong> All Madeshed scores, backtests, and alerts are decision-support tools and are not investment advice; trading decisions and results are your own responsibility.');
+  setLocaleText('.how-strip .how-head h2','Get started in 3 steps');
+  setLocaleText('.how-strip .how-head p','60 seconds to start · value comes from using it right');
+  setLocaleHtml('.how-strip .how-grid','<div class="how-item"><div class="how-n">1</div><h3>Generate chart</h3><p>Enter birth details to build your BaZi chart, shared across the whole site.</p></div><div class="how-item"><div class="how-n">2</div><h3>Log daily</h3><p>Honestly record each day’s trading outcome to build your own real sample.</p></div><div class="how-item"><div class="how-n">3</div><h3>Action Index + review</h3><p>See push-or-hold each day; after 30 days, see your own win-rate patterns.</p></div></div>');
+  setLocaleText('.how-strip .how-more a','See the full guide →');
 
   setLocaleText('[data-view="privacy"] .page-head h1','Privacy Policy');
   setLocaleText('[data-view="privacy"] .page-head p','Before login, data stays in this browser. After login, chart and journal data can sync to Supabase cloud.');
@@ -2079,7 +2173,21 @@ timeUnk.addEventListener('change',e=>{if(e.target.checked){timeInp.value='12:00'
     if(m.refresh)m.refresh();
     if(typeof applyEnglishAfterRender==='function')applyEnglishAfterRender();
     window.scrollTo({top:0,behavior:'smooth'});
+    showGuideHint();
   });
+  // 首次生成命盘后弹一次「看使用指南」提示（一次性，dismiss 或 14 秒后自动消失）。
+  function showGuideHint(){
+    try{ if(localStorage.getItem('madeshed_guide_hint_v1'))return; localStorage.setItem('madeshed_guide_hint_v1','1'); }catch(e){ return; }
+    var en=(typeof localeIsEn==='function')&&localeIsEn();
+    var d=document.createElement('div');
+    d.className='guide-hint-toast';
+    d.innerHTML='<span>'+(en?'First time here? A 60-second guide':'第一次用？看 60 秒使用指南')+'</span> <a href="#/guide" data-route="/guide">'+(en?'Open':'打开')+' →</a> <button type="button" aria-label="close">×</button>';
+    document.body.appendChild(d);
+    var close=function(){ if(d.parentNode)d.parentNode.removeChild(d); };
+    d.querySelector('button').addEventListener('click',close);
+    d.querySelector('a').addEventListener('click',close);
+    setTimeout(close,14000);
+  }
 })();
 
 /* 已移除遗留的"无条件弹结果页"演示处理器：它不校验日期/引擎、任何点击 1.5 秒后都会
