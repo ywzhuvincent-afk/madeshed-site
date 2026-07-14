@@ -1,5 +1,5 @@
 import { getUserFromRequest, hasSupabaseService, requireAccountReadyForPaidAction, supabaseSelect } from './_supabase.js';
-import { cleanEnv, priceFromEnv, siteOrigin, stripeFormRequest, stripeGet } from './_stripe.js';
+import { cleanEnv, priceFromEnv, siteOrigin, stripeFormRequest, stripeGet, ensureStripeCustomer } from './_stripe.js';
 import { hasTradeReportEntitlement, hasFortuneReportEntitlement } from './_access.js';
 import { resolveCurrencyPrice, parseSale, activeSaleAmount, toUnitAmount } from './_catalog.js';
 
@@ -8,6 +8,7 @@ const CREDIT_PACK_PRODUCT = {
   credits: 10,
   label: '问大师 10 点包',
   labelEn: 'Ask Master · 10 Credits',
+  labelHant: '問大師 10 點包',
   price: '¥99'
 };
 
@@ -15,6 +16,7 @@ const MEMBERSHIP_PRODUCTS = {
   ultimate: {
     label: '最高级会员',
     labelEn: 'Ultimate Membership',
+    labelHant: '最高級會員',
     price: '¥199/月',
     monthlyCredits: 30,
     priceEnv: ['STRIPE_ULTIMATE_PRICE_ID', 'STRIPE_MEMBERSHIP_PRICE_ID']
@@ -22,21 +24,31 @@ const MEMBERSHIP_PRODUCTS = {
 };
 
 const REPORT_PRODUCTS = {
-  '7': { label: '7 天报告', labelEn: 'Trade Report · 7 Days', priceEnv: ['STRIPE_REPORT_7_PRICE_ID'] },
-  '30': { label: '月度报告', labelEn: 'Trade Report · Monthly', priceEnv: ['STRIPE_REPORT_30_PRICE_ID', 'STRIPE_REPORT_PRICE_ID'] },
-  '365': { label: '年度报告', labelEn: 'Trade Report · Yearly', priceEnv: ['STRIPE_REPORT_365_PRICE_ID'] },
-  all: { label: '全部历史报告', labelEn: 'Trade Report · All History', priceEnv: ['STRIPE_REPORT_ALL_PRICE_ID'] }
+  '7': { label: '7 天报告', labelEn: 'Trade Report · 7 Days', labelHant: '7 天報告', priceEnv: ['STRIPE_REPORT_7_PRICE_ID'] },
+  '30': { label: '月度报告', labelEn: 'Trade Report · Monthly', labelHant: '月度報告', priceEnv: ['STRIPE_REPORT_30_PRICE_ID', 'STRIPE_REPORT_PRICE_ID'] },
+  '365': { label: '年度报告', labelEn: 'Trade Report · Yearly', labelHant: '年度報告', priceEnv: ['STRIPE_REPORT_365_PRICE_ID'] },
+  all: { label: '全部历史报告', labelEn: 'Trade Report · All History', labelHant: '全部歷史報告', priceEnv: ['STRIPE_REPORT_ALL_PRICE_ID'] }
 };
 
 const FORTUNE_PRODUCTS = {
-  full: { label: '全盘解读', labelEn: 'Full Chart Reading', priceEnv: ['STRIPE_FORTUNE_FULL_PRICE_ID'] },
-  dayun: { label: '流年大运解读', labelEn: 'Luck Pillar Reading', priceEnv: ['STRIPE_FORTUNE_DAYUN_PRICE_ID'] },
-  month: { label: '每月运程', labelEn: 'Monthly Timing Reading', priceEnv: ['STRIPE_FORTUNE_MONTH_PRICE_ID'] }
+  full: { label: '全盘解读', labelEn: 'Full Chart Reading', labelHant: '全盤解讀', priceEnv: ['STRIPE_FORTUNE_FULL_PRICE_ID'] },
+  dayun: { label: '流年大运解读', labelEn: 'Luck Pillar Reading', labelHant: '流年大運解讀', priceEnv: ['STRIPE_FORTUNE_DAYUN_PRICE_ID'] },
+  month: { label: '每月运程', labelEn: 'Monthly Timing Reading', labelHant: '每月運程', priceEnv: ['STRIPE_FORTUNE_MONTH_PRICE_ID'] }
 };
 
-// 结账语言：前端把当前站点语言(localeIsEn)放进 body.locale
+// 结账语言：前端把当前站点语言放进 body.locale（en / zh-Hant / zh）。
+// 内部三语用于：结账页语言、商品展示名、customer.preferred_locales（收据邮件语言）、metadata。
 function checkoutLocale(req) {
-  return String((req.body && req.body.locale) || '').toLowerCase() === 'en' ? 'en' : 'zh';
+  const raw = String((req.body && req.body.locale) || '').toLowerCase();
+  if (raw.indexOf('en') === 0) return 'en';
+  if (raw.indexOf('hant') >= 0 || raw.indexOf('tw') >= 0 || raw.indexOf('hk') >= 0) return 'zh-Hant';
+  return 'zh';
+}
+// Stripe Checkout 页面 locale 参数只认 en / zh / zh-TW / zh-HK（不认 'zh-Hant'）——繁体映射到 zh-TW。
+function stripePageLocale(locale) {
+  if (locale === 'en') return 'en';
+  if (locale === 'zh-Hant') return 'zh-TW';
+  return 'zh';
 }
 // 价格解析：env 里的 price ID 只是"锚"，实际结账金额跟随该商品的当前 default_price——
 // 后台"价格管理"改价（新建价格并设为默认）后立即生效，无需改环境变量或重新部署。
@@ -57,7 +69,7 @@ async function resolveEffectivePrice(priceId) {
 }
 // 用 price_data 内联本地化商品名——金额/币种/订阅周期取自解析后的有效价格（后台可改），
 // 只把展示名换成对应语言。取价失败则安全退回用 price ID（宁可名字是中文，也不让结账失败）。
-async function setLocalizedLineItem(params, priceId, nameZh, nameEn, locale) {
+async function setLocalizedLineItem(params, priceId, nameZh, nameEn, nameHant, locale) {
   let price = null, product = null;
   try { const r = await resolveEffectivePrice(priceId); price = r.price; product = r.product; } catch (e) { price = null; }
   params.set('line_items[0][quantity]', '1');
@@ -87,8 +99,12 @@ async function setLocalizedLineItem(params, priceId, nameZh, nameEn, locale) {
     }
   } catch (e) { /* 按原价 */ }
   // 展示名优先用后台设置的可编辑名（商品 metadata），未设则用各自硬编码名。
+  // 繁体优先 name_hant / labelHant，缺失时安全退回简体，绝不留空。
   const md = (product && product.metadata) || {};
-  const displayName = locale === 'en' ? (md.name_en || nameEn) : (md.name_zh || nameZh);
+  let displayName;
+  if (locale === 'en') displayName = md.name_en || nameEn;
+  else if (locale === 'zh-Hant') displayName = md.name_hant || nameHant || md.name_zh || nameZh;
+  else displayName = md.name_zh || nameZh;
   params.set('line_items[0][price_data][currency]', currency);
   params.set('line_items[0][price_data][unit_amount]', String(unitAmount));
   params.set('line_items[0][price_data][product_data][name]', displayName);
@@ -149,18 +165,23 @@ async function createCreditCheckout(req, res) {
   const locale = checkoutLocale(req);
   const params = new URLSearchParams();
   params.set('mode', 'payment');
-  params.set('locale', locale);
-  await setLocalizedLineItem(params, priceId, CREDIT_PACK_PRODUCT.label, CREDIT_PACK_PRODUCT.labelEn, locale);
+  params.set('locale', stripePageLocale(locale));
+  await setLocalizedLineItem(params, priceId, CREDIT_PACK_PRODUCT.label, CREDIT_PACK_PRODUCT.labelEn, CREDIT_PACK_PRODUCT.labelHant, locale);
   params.set('success_url', `${origin}/#/fortune?credits=success&session_id={CHECKOUT_SESSION_ID}`);
   params.set('cancel_url', `${origin}/#/fortune?credits=cancel`);
-  // 收据/对账三件套：账号邮箱预填+收据直达、client_reference_id 便于人工对账（此前唯独点数包漏了）
-  if (user.email) { params.set('customer_email', user.email); params.set('payment_intent_data[receipt_email]', user.email); }
+  // 收据/对账 + 邮件语言：优先绑定带 preferred_locales 的 Stripe 客户（Stripe 收据/发票按用户语言渲染），
+  // 解析失败安全退回 customer_email；收据邮箱始终单独设，保证一次性购买收据必达。
+  const creditCustomer = await ensureStripeCustomer({ email: user.email, locale });
+  if (creditCustomer) params.set('customer', creditCustomer);
+  else if (user.email) params.set('customer_email', user.email);
+  if (user.email) params.set('payment_intent_data[receipt_email]', user.email);
   params.set('client_reference_id', user.id);
   params.set('allow_promotion_codes', 'true');
   params.set('invoice_creation[enabled]', 'true');
   params.set('metadata[product]', 'credit_pack');
   params.set('metadata[credits]', String(CREDIT_PACK_PRODUCT.credits));
   params.set('metadata[user_id]', user.id);
+  params.set('metadata[locale]', locale);
 
   try {
     const session = await stripeFormRequest('checkout/sessions', params);
@@ -209,23 +230,28 @@ async function createMembershipCheckout(req, res) {
   const origin = siteOrigin(req);
   const params = new URLSearchParams();
   params.set('mode', 'subscription');
-  params.set('locale', locale);
-  await setLocalizedLineItem(params, price.value, product.label, product.labelEn, locale);
+  params.set('locale', stripePageLocale(locale));
+  await setLocalizedLineItem(params, price.value, product.label, product.labelEn, product.labelHant, locale);
   params.set('success_url', `${origin}/#/account?membership=success&session_id={CHECKOUT_SESSION_ID}`);
   params.set('cancel_url', `${origin}/#/account?membership=cancel`);
   params.set('client_reference_id', user.id);
-  // 复用既有 Stripe customer（避免同一用户散落多个 customer，门户/发票历史才完整）
-  if (existingMembership && existingMembership.stripe_customer_id) params.set('customer', existingMembership.stripe_customer_id);
+  // 复用既有 Stripe customer 并写入 preferred_locales（会员每月发票/续费/催款邮件按用户语言渲染）；
+  // 解析失败安全退回既有客户 id 或 customer_email，绝不因此让订阅结账失败。
+  const memberCustomer = await ensureStripeCustomer({ email: user.email, locale, existingId: existingMembership && existingMembership.stripe_customer_id });
+  if (memberCustomer) params.set('customer', memberCustomer);
+  else if (existingMembership && existingMembership.stripe_customer_id) params.set('customer', existingMembership.stripe_customer_id);
   else if (user.email) params.set('customer_email', user.email);
   params.set('allow_promotion_codes', 'true');
   params.set('metadata[product]', 'membership');
   params.set('metadata[user_id]', user.id);
   params.set('metadata[tier]', tier);
   params.set('metadata[monthly_credits]', String(product.monthlyCredits));
+  params.set('metadata[locale]', locale);
   params.set('subscription_data[metadata][product]', 'membership');
   params.set('subscription_data[metadata][user_id]', user.id);
   params.set('subscription_data[metadata][tier]', tier);
   params.set('subscription_data[metadata][monthly_credits]', String(product.monthlyCredits));
+  params.set('subscription_data[metadata][locale]', locale);
 
   try {
     const session = await stripeFormRequest('checkout/sessions', params);
@@ -307,16 +333,20 @@ async function createReportCheckout(req, res) {
   const origin = siteOrigin(req);
   const params = new URLSearchParams();
   params.set('mode', 'payment');
-  params.set('locale', locale);
-  await setLocalizedLineItem(params, price.value, item.config.label, item.config.labelEn, locale);
+  params.set('locale', stripePageLocale(locale));
+  await setLocalizedLineItem(params, price.value, item.config.label, item.config.labelEn, item.config.labelHant, locale);
   params.set('success_url', `${origin}/#/${item.kind === 'fortune_report' ? 'fortune' : 'report'}?purchase=success&session_id={CHECKOUT_SESSION_ID}`);
   params.set('cancel_url', `${origin}/#/${item.kind === 'fortune_report' ? 'fortune' : 'report'}?purchase=cancel`);
   params.set('client_reference_id', user.id);
-  if (user.email) { params.set('customer_email', user.email); params.set('payment_intent_data[receipt_email]', user.email); }
+  const reportCustomer = await ensureStripeCustomer({ email: user.email, locale });
+  if (reportCustomer) params.set('customer', reportCustomer);
+  else if (user.email) params.set('customer_email', user.email);
+  if (user.email) params.set('payment_intent_data[receipt_email]', user.email);
   params.set('allow_promotion_codes', 'true');
   params.set('invoice_creation[enabled]', 'true');
   params.set('metadata[product]', item.kind);
   params.set('metadata[user_id]', user.id);
+  params.set('metadata[locale]', locale);
   if (item.kind === 'fortune_report') {
     params.set('metadata[fortune_report_type]', item.type);
   } else {

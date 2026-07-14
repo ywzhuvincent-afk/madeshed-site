@@ -65,3 +65,37 @@ export async function stripeGet(path, options = {}) {
   if (!response.ok) return null;
   return response.json().catch(() => null);
 }
+
+// 站点三语 -> Stripe preferred_locales（决定 Stripe 收据/发票/催款邮件的语言，
+// 与 Checkout 页面 locale 参数是两套系统）。繁体用 zh-TW。
+export function stripeLocaleList(locale) {
+  const s = String(locale || '').toLowerCase();
+  if (s.indexOf('en') === 0) return ['en'];
+  if (s.indexOf('hant') >= 0 || s.indexOf('tw') >= 0 || s.indexOf('hk') >= 0) return ['zh-TW'];
+  return ['zh'];
+}
+
+// 找到或新建 Stripe 客户，并写入 preferred_locales，使 Stripe 自动邮件按用户语言渲染。
+// existingId 优先（会员复用既有客户）；否则按邮箱查重复用；再否则新建。任何失败都返回 null，
+// 由调用方安全退回 customer_email——绝不因此让结账失败。
+export async function ensureStripeCustomer({ email, locale, existingId } = {}) {
+  const preferred = stripeLocaleList(locale);
+  const setLocales = (p) => { preferred.forEach((l, i) => p.set(`preferred_locales[${i}]`, l)); return p; };
+  try {
+    if (existingId) {
+      await stripeFormRequest(`customers/${encodeURIComponent(existingId)}`, setLocales(new URLSearchParams()));
+      return existingId;
+    }
+    if (!email) return null;
+    const found = await stripeGet(`customers?email=${encodeURIComponent(email)}&limit=1`);
+    const hit = found && Array.isArray(found.data) ? found.data[0] : null;
+    if (hit && hit.id) {
+      await stripeFormRequest(`customers/${encodeURIComponent(hit.id)}`, setLocales(new URLSearchParams()));
+      return hit.id;
+    }
+    const created = await stripeFormRequest('customers', setLocales(new URLSearchParams([['email', email]])));
+    return (created && created.id) || null;
+  } catch (error) {
+    return null;
+  }
+}

@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { hasSupabaseService, supabaseInsert, supabaseSelect, supabaseUpdate } from './_supabase.js';
 import { cleanEnv, stripeGet, stripeFormRequest } from './_stripe.js';
+import { sendEmail, notifyOwner, getUserEmail, getUserLocale, normalizeEmailLocale, productLabel, siteLink, reportReadyEmail, creditsAddedEmail, membershipWelcomeEmail, paymentFailedEmail, refundEmail } from './_email.js';
 
 function send(res, status, body) {
   res.status(status).json(body);
@@ -33,6 +34,79 @@ function stripeTime(value) {
 function currentGrantMonth() {
   const d = new Date();
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+// ===== 交易邮件（尽力而为，绝不阻断/影响履约）=====
+// 每个发信函数都自吞异常；_email.js 无 RESEND_API_KEY 时整体安全空转，不改变现有行为。
+async function recipientFor(userId, session) {
+  const email = (session && ((session.customer_details && session.customer_details.email) || session.customer_email)) || await getUserEmail(userId);
+  const localeRaw = (session && session.metadata && session.metadata.locale) || await getUserLocale(userId);
+  return { email, locale: normalizeEmailLocale(localeRaw) };
+}
+function moneyText(amount, currency) {
+  const amt = Number(amount);
+  if (!Number.isFinite(amt) || !amt || !currency) return '';
+  const cur = String(currency).toUpperCase();
+  const zero = ['JPY', 'KRW', 'VND', 'CLP'].indexOf(cur) >= 0;
+  return `${zero ? amt : amt / 100} ${cur}`;
+}
+async function emailReportReady(session, metadata, product) {
+  try {
+    const { email, locale } = await recipientFor(metadata.user_id, session);
+    if (!email) return;
+    const name = productLabel(locale, { product, reportType: metadata.report_type, fortuneType: metadata.fortune_report_type });
+    const href = siteLink(product === 'fortune_report' ? '#/fortune' : '#/report');
+    const { subject, html } = reportReadyEmail(locale, { productName: name, href });
+    await sendEmail({ to: email, subject, html });
+  } catch (error) { /* 发信失败不影响履约 */ }
+}
+async function emailCreditsAdded(session, metadata, r) {
+  try {
+    const { email, locale } = await recipientFor(metadata.user_id, session);
+    if (!email) return;
+    const { subject, html } = creditsAddedEmail(locale, { credits: r.credits, balance: r.balanceAfter, href: siteLink('#/fortune') });
+    await sendEmail({ to: email, subject, html });
+  } catch (error) { /* 同上 */ }
+}
+async function emailMembershipWelcome(session, metadata) {
+  try {
+    const { email, locale } = await recipientFor(metadata.user_id, session);
+    if (!email) return;
+    const { subject, html } = membershipWelcomeEmail(locale, { href: siteLink('#/dashboard') });
+    await sendEmail({ to: email, subject, html });
+  } catch (error) { /* 同上 */ }
+}
+async function ownerNotifyPurchase(session, metadata, product) {
+  try {
+    const name = productLabel('zh', { product, reportType: metadata.report_type, fortuneType: metadata.fortune_report_type });
+    const email = (session && ((session.customer_details && session.customer_details.email) || session.customer_email)) || await getUserEmail(metadata.user_id) || '(未知)';
+    await notifyOwner({
+      subject: product === 'membership' ? '新会员开通' : '新的购买',
+      lines: [
+        { label: '商品', value: name },
+        { label: '客户', value: email },
+        { label: '金额', value: moneyText(session.amount_total, session.currency) || '(见 Stripe)' }
+      ]
+    });
+  } catch (error) { /* 通知失败不影响履约 */ }
+}
+// 欢迎邮件"恰好一次"：以 membership_events.stripe_event_id 唯一键作幂等钥匙（按订阅 id），
+// 与 checkout.session.completed 的到达/处理顺序无关——既防事件乱序（subscription.created/invoice.paid 先落库）
+// 导致真新会员漏发，也防 webhook 重投重复发。返回 true 表示本次抢到发送权。
+async function claimWelcomeOnce(session) {
+  if (!hasSupabaseService()) return false;
+  const key = session.subscription ? `welcome:${session.subscription}` : `welcome-sess:${session.id || ''}`;
+  try {
+    await supabaseInsert('membership_events', {
+      user_id: (session.metadata && session.metadata.user_id) || null,
+      stripe_event_id: key,
+      event_type: 'welcome_email',
+      payload: {}
+    });
+    return true;
+  } catch (error) {
+    return false; // 唯一键冲突 = 已发过欢迎，跳过
+  }
 }
 
 function activeMembershipStatus(status) {
@@ -207,10 +281,10 @@ async function upsertMembershipFromCheckout(session, metadata) {
 }
 
 async function handleCreditPack(session, metadata) {
-  if (!hasSupabaseService() || !metadata.user_id) return;
+  if (!hasSupabaseService() || !metadata.user_id) return { fulfilled: false };
   const credits = Number(metadata.credits) || 10;
   const existing = await supabaseSelect('credit_ledger', `stripe_session_id=eq.${encodeURIComponent(session.id || '')}&select=id&limit=1`);
-  if (existing.length) return;
+  if (existing.length) return { fulfilled: false };
   const balance = await creditBalance(metadata.user_id);
   await supabaseInsert('credit_ledger', {
     user_id: metadata.user_id,
@@ -222,6 +296,7 @@ async function handleCreditPack(session, metadata) {
     stripe_session_id: session.id || '',
     payload: { product: 'credit_pack', credits, amount_total: session.amount_total, currency: session.currency }
   });
+  return { fulfilled: true, credits, balanceAfter: balance + credits };
 }
 
 // 单次购买报告有效期：30 天（会员生成的不受此限）。到期后 _access 判为 expired、可再次购买。
@@ -231,7 +306,7 @@ function reportExpiryFromNow() {
 }
 
 async function handleTradeReport(session, metadata) {
-  if (!hasSupabaseService() || !metadata.user_id || !metadata.report_type) return;
+  if (!hasSupabaseService() || !metadata.user_id || !metadata.report_type) return { fulfilled: false };
   const sid = session.id || '';
   // 幂等 + 防退款复权：同一 checkout session 已处理过（active 或 refunded）→ 不重复履约、不把已退款翻回 active、
   // 不因事件重投滑动 30 天有效期。过期后复购会带新的 session id，正常授予新窗口。
@@ -239,7 +314,7 @@ async function handleTradeReport(session, metadata) {
     'report_entitlements',
     `user_id=eq.${encodeURIComponent(metadata.user_id)}&report_type=eq.${encodeURIComponent(metadata.report_type)}&select=stripe_session_id&limit=1`
   );
-  if (existing[0] && existing[0].stripe_session_id === sid) return;
+  if (existing[0] && existing[0].stripe_session_id === sid) return { fulfilled: false };
   await supabaseInsert('report_entitlements', {
     user_id: metadata.user_id,
     report_type: metadata.report_type,
@@ -248,10 +323,11 @@ async function handleTradeReport(session, metadata) {
     stripe_session_id: sid,
     payload: { amount_total: session.amount_total, currency: session.currency, payment_intent: session.payment_intent || null, expires_at: reportExpiryFromNow(), validity_days: REPORT_VALIDITY_DAYS }
   }, { upsert: true, onConflict: 'user_id,report_type' });
+  return { fulfilled: true, reportType: metadata.report_type };
 }
 
 async function handleFortuneReport(session, metadata) {
-  if (!hasSupabaseService() || !metadata.user_id || !metadata.fortune_report_type) return;
+  if (!hasSupabaseService() || !metadata.user_id || !metadata.fortune_report_type) return { fulfilled: false };
   const type = metadata.fortune_report_type;
   const sid = session.id || '';
   // 幂等 + 防退款复权：读权益行 context.stripe_session_id，同一 session 重投（含退款后重投）直接跳过。
@@ -260,7 +336,7 @@ async function handleFortuneReport(session, metadata) {
     'fortune_reports',
     `user_id=eq.${encodeURIComponent(metadata.user_id)}&report_key=eq.${encodeURIComponent(type + '-entitlement')}&select=context&limit=1`
   );
-  if (existing[0] && existing[0].context && existing[0].context.stripe_session_id === sid) return;
+  if (existing[0] && existing[0].context && existing[0].context.stripe_session_id === sid) return { fulfilled: false };
   await supabaseInsert('fortune_reports', {
     user_id: metadata.user_id,
     report_key: `${type}-entitlement`,
@@ -271,6 +347,7 @@ async function handleFortuneReport(session, metadata) {
     report_html: '<div class="report-paywall">报告权益已解锁，请回到页面生成完整报告。</div>',
     access_level: 'paid'
   }, { upsert: true, onConflict: 'user_id,report_key' });
+  return { fulfilled: true, fortuneType: type };
 }
 
 async function checkoutSessionForPaymentIntent(paymentIntent) {
@@ -404,6 +481,9 @@ async function markTradeReportRefunded(ctx) {
   const query = ctx.session_id
     ? `stripe_session_id=eq.${encodeURIComponent(ctx.session_id)}`
     : `user_id=eq.${encodeURIComponent(ctx.userId)}&report_type=eq.${encodeURIComponent(ctx.report_type || '30')}`;
+  // 去重：已是 refunded 说明本笔退款已处理过（refund.created / charge.refunded / 重投），不重复撤权、不重复发信。
+  const cur = await supabaseSelect('report_entitlements', `${query}&select=status&limit=1`);
+  if (cur[0] && cur[0].status === 'refunded') return { updated: false, duplicate: true };
   await supabaseUpdate('report_entitlements', query, {
     status: 'refunded',
     payload: {
@@ -419,9 +499,13 @@ async function markTradeReportRefunded(ctx) {
 
 async function markFortuneReportRefunded(ctx) {
   if (!hasSupabaseService() || !ctx.userId || !ctx.fortune_report_type) return { updated: false };
+  const fq = `user_id=eq.${encodeURIComponent(ctx.userId)}&report_type=eq.${encodeURIComponent(ctx.fortune_report_type)}`;
+  // 去重：已 preview 且 context.refunded 说明本笔退款已处理过，不重复撤权、不重复发信。
+  const cur = await supabaseSelect('fortune_reports', `${fq}&select=access_level,context&limit=1`);
+  if (cur[0] && cur[0].access_level === 'preview' && cur[0].context && cur[0].context.refunded) return { updated: false, duplicate: true };
   await supabaseUpdate(
     'fortune_reports',
-    `user_id=eq.${encodeURIComponent(ctx.userId)}&report_type=eq.${encodeURIComponent(ctx.fortune_report_type)}`,
+    fq,
     {
       access_level: 'preview',
       context: {
@@ -440,6 +524,8 @@ async function markFortuneReportRefunded(ctx) {
 
 async function markMembershipRefunded(ctx) {
   if (!hasSupabaseService() || !ctx.userId) return { updated: false };
+  // 去重：本笔退款已入账（跨事件按 refund_id/session 查重）说明已处理过，不重复取消订阅、不重复发信。
+  if (await refundAlreadyRecorded(ctx)) return { updated: false, duplicate: true };
   await supabaseUpdate('memberships', `user_id=eq.${encodeURIComponent(ctx.userId)}`, {
     status: 'canceled',
     payload: {
@@ -488,14 +574,53 @@ async function handleCheckoutCompleted(session) {
   if (session.payment_status && session.payment_status !== 'paid' && session.payment_status !== 'no_payment_required') {
     return { userId: metadata.user_id || null, product, deferred: 'awaiting_payment(' + session.payment_status + ')' };
   }
-  if (product === 'credit_pack') await handleCreditPack(session, metadata);
-  if (product === 'membership') return upsertMembershipFromCheckout(session, metadata);
-  if (product === 'report') await handleTradeReport(session, metadata);
-  if (product === 'fortune_report') await handleFortuneReport(session, metadata);
+  if (product === 'credit_pack') {
+    const r = await handleCreditPack(session, metadata);
+    if (r && r.fulfilled) { await emailCreditsAdded(session, metadata, r); await ownerNotifyPurchase(session, metadata, 'credit_pack'); }
+  }
+  if (product === 'membership') {
+    const r = await upsertMembershipFromCheckout(session, metadata);
+    // 欢迎邮件+店主通知按订阅 id 幂等发送，与事件顺序无关（claimWelcomeOnce 保证恰好一次）。
+    if (await claimWelcomeOnce(session)) { await emailMembershipWelcome(session, metadata); await ownerNotifyPurchase(session, metadata, 'membership'); }
+    return r;
+  }
+  if (product === 'report') {
+    const r = await handleTradeReport(session, metadata);
+    if (r && r.fulfilled) { await emailReportReady(session, metadata, 'report'); await ownerNotifyPurchase(session, metadata, 'report'); }
+  }
+  if (product === 'fortune_report') {
+    const r = await handleFortuneReport(session, metadata);
+    if (r && r.fulfilled) { await emailReportReady(session, metadata, 'fortune_report'); await ownerNotifyPurchase(session, metadata, 'fortune_report'); }
+  }
   return { userId: metadata.user_id || null, product };
 }
 
-async function handleRefund(event) {
+// 客户退款确认 + 店主退款通知（尽力而为）。
+async function emailRefundConfirmation(ctx) {
+  try {
+    const email = await getUserEmail(ctx.userId);
+    const locale = normalizeEmailLocale(await getUserLocale(ctx.userId));
+    const name = productLabel(locale, { product: ctx.product, reportType: ctx.report_type, fortuneType: ctx.fortune_report_type });
+    const currency = (ctx.session && ctx.session.currency) || (ctx.charge && ctx.charge.currency) || '';
+    const amt = moneyText(ctx.amount_refunded, currency);
+    if (email) {
+      const { subject, html } = refundEmail(locale, { productName: name, amountText: amt });
+      await sendEmail({ to: email, subject, html });
+    }
+    await notifyOwner({
+      subject: '发生退款',
+      lines: [
+        { label: '商品', value: name },
+        { label: '客户', value: email || ctx.userId || '(未知)' },
+        { label: '退款金额', value: amt || '(见 Stripe)' }
+      ]
+    });
+  } catch (error) { /* 退款通知失败不影响退款处理 */ }
+}
+
+async function handleRefund(event, opts = {}) {
+  // notifyCustomer=false 用于拒付（钱被卡组织划走，不该给客户发"退款成功"）；店主通知在 handleDispute 单独发。
+  const notifyCustomer = opts.notifyCustomer !== false;
   const ctx = await resolveRefundContext(event);
   let action = { handled: false, reason: 'unmatched_refund' };
   // 部分退款不撤权益（曾为 major：善意退 ¥20 会没收全部已付权益）；点数包按比例回冲维持原逻辑。
@@ -503,6 +628,10 @@ async function handleRefund(event) {
   if (ctx.product === 'report') action = ctx.full_refund ? await markTradeReportRefunded(ctx) : { skipped: 'partial_refund_entitlement_kept' };
   if (ctx.product === 'fortune_report') action = ctx.full_refund ? await markFortuneReportRefunded(ctx) : { skipped: 'partial_refund_entitlement_kept' };
   if (ctx.product === 'membership') action = ctx.full_refund ? await markMembershipRefunded(ctx) : { skipped: 'partial_refund_membership_kept' };
+  // 只在真实退款、全额、且本次确有履约动作（去重后未重复）时通知客户 + 店主，避免重投重复发信。
+  if (notifyCustomer && ctx.full_refund && action && !action.duplicate && (action.reversed || action.updated)) {
+    await emailRefundConfirmation(ctx);
+  }
   return {
     userId: ctx.userId,
     product: ctx.product || 'unknown',
@@ -522,7 +651,20 @@ async function handleDispute(event) {
     type: 'charge.refunded',
     data: { object: { id: dispute.charge, payment_intent: dispute.payment_intent, refunds: { data: [{ id: `dispute-${dispute.id}`, amount: dispute.amount, charge: dispute.charge, payment_intent: dispute.payment_intent }] }, amount: dispute.amount, amount_refunded: dispute.amount, refunded: true, customer: null } }
   };
-  const result = await handleRefund(pseudoEvent);
+  const result = await handleRefund(pseudoEvent, { notifyCustomer: false });
+  // 拒付有举证时限——必须立刻通知店主（客户不发"退款成功"）。
+  try {
+    await notifyOwner({
+      subject: '收到拒付/争议（有举证时限，请尽快处理）',
+      lines: [
+        { label: '争议 ID', value: dispute.id || '(未知)' },
+        { label: '原因', value: dispute.reason || '(未知)' },
+        { label: '金额', value: moneyText(dispute.amount, dispute.currency) || '(见 Stripe)' },
+        { label: '状态', value: dispute.status || '' },
+        { label: '提醒', value: '请在 Stripe 争议页尽快提交证据，否则可能自动判负' }
+      ]
+    });
+  } catch (error) { /* 通知失败不影响冻结处理 */ }
   return { ...result, dispute_id: dispute.id, dispute_reason: dispute.reason || null };
 }
 
@@ -532,7 +674,26 @@ async function handleInvoicePaymentFailed(invoice) {
   if (!subscriptionId) return null;
   const membership = await membershipForSubscription(subscriptionId) || await membershipForCustomer(invoice.customer);
   if (!membership) return null;
+  const wasPastDue = membership.status === 'past_due';
   await supabaseUpdate('memberships', `user_id=eq.${encodeURIComponent(membership.user_id)}`, { status: 'past_due' });
+  // 只在首次由正常转 past_due 时发"更新银行卡"邮件（多次重试不重复轰炸），并通知店主。
+  if (!wasPastDue) {
+    try {
+      const email = invoice.customer_email || await getUserEmail(membership.user_id);
+      const locale = normalizeEmailLocale(await getUserLocale(membership.user_id));
+      if (email) {
+        const { subject, html } = paymentFailedEmail(locale, { href: siteLink('#/account') });
+        await sendEmail({ to: email, subject, html });
+      }
+      await notifyOwner({
+        subject: '会员扣款失败（已进入宽限期）',
+        lines: [
+          { label: '客户', value: email || membership.user_id },
+          { label: '订阅', value: subscriptionId }
+        ]
+      });
+    } catch (error) { /* 通知失败不影响状态更新 */ }
+  }
   return { userId: membership.user_id, status: 'past_due' };
 }
 

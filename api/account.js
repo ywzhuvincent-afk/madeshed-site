@@ -11,6 +11,7 @@ import {
   supabaseInsert,
   supabaseSelect
 } from './_supabase.js';
+import { sendEmail, notifyOwner, normalizeEmailLocale, deletionRequestedEmail, passwordChangedEmail, siteLink } from './_email.js';
 
 const LEGAL_DOCUMENT_TYPES = new Set(LEGALLY_REQUIRED_ACCEPTANCES);
 
@@ -149,6 +150,7 @@ async function requestAccountDelete(req, res) {
   if (!user) return null;
 
   const reason = String(req.body?.reason || '').trim().slice(0, 1000);
+  const locale = normalizeEmailLocale(req.body?.locale);
   try {
     const rows = await supabaseInsert('account_delete_requests', {
       user_id: user.id,
@@ -157,9 +159,40 @@ async function requestAccountDelete(req, res) {
       payload: { email: user.email || '', delete_requested: true }
     });
     await logAccountEvent(req, user.id, 'delete_requested', { reason: reason || null });
+    // 客户「已收到删除申请」确认 + 店主通知（PIPEDA/GDPR 有法定删除时限）——尽力而为，失败不影响申请落库。
+    try {
+      if (user.email) { const { subject, html } = deletionRequestedEmail(locale, {}); await sendEmail({ to: user.email, subject, html }); }
+      await notifyOwner({ subject: '新的账号删除申请（有法定时限）', lines: [{ label: '客户', value: user.email || user.id }, { label: '原因', value: reason || '(未填写)' }] });
+    } catch (mailErr) { /* 通知失败不影响申请 */ }
     return send(res, 200, { request: rows[0], delete_requested: true });
   } catch (error) {
     return send(res, 500, { error: 'delete_request_failed', message: error.message || '提交删除账号申请失败。' });
+  }
+}
+
+// 安全/账号事件通知（前端触发，已登录）：目前用于「改密码」安全提醒（GoTrue 本身不发）。
+async function notifyAccountEvent(req, res) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return send(res, 405, { error: 'method_not_allowed' });
+  }
+  const user = await requireUser(req, res);
+  if (!user) return null;
+  const type = String(req.body?.type || '').trim();
+  const locale = normalizeEmailLocale(req.body?.locale);
+  try {
+    if (type === 'password_changed') {
+      if (user.email) {
+        const { subject, html } = passwordChangedEmail(locale, { href: siteLink('#/account') });
+        await sendEmail({ to: user.email, subject, html });
+      }
+      await logAccountEvent(req, user.id, 'password_changed', {});
+      return send(res, 200, { ok: true });
+    }
+    return send(res, 400, { error: 'invalid_notify_type', message: 'type 无效。' });
+  } catch (error) {
+    // 尽力而为：通知失败绝不把错误抛回前端（密码其实已改成功）。
+    return send(res, 200, { ok: false });
   }
 }
 
@@ -188,10 +221,11 @@ export default async function handler(req, res) {
   if (action === 'status') return accountStatus(req, res);
   if (action === 'legal') return acceptLegal(req, res);
   if (action === 'delete') return requestAccountDelete(req, res);
+  if (action === 'notify') return notifyAccountEvent(req, res);
   if (action === 'purchases') return purchaseHistory(req, res);
   return send(res, 400, {
     error: 'invalid_account_action',
     message: '账号接口 action 无效。',
-    actions: ['bootstrap', 'status', 'legal', 'delete', 'purchases']
+    actions: ['bootstrap', 'status', 'legal', 'delete', 'notify', 'purchases']
   });
 }

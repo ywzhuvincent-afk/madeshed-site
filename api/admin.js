@@ -5,6 +5,7 @@ import {
   supabaseSelect,
   supabaseInsert
 } from './_supabase.js';
+import { sendEmail, getUserLocale, normalizeEmailLocale, accountDeletedEmail } from './_email.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://tkltasrbhjqwurybcyxo.supabase.co';
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -801,8 +802,15 @@ async function fulfillDelete(req, res) {
   try {
     let authDeleted = false;
     if (hardDelete) {
+      // 删除前先抓邮箱+语言并发「账号已删除」确认——删除后 auth 用户消失就无从发信（隐私合规礼节）。
+      let deletedEmail = null, deletedLocale = 'zh';
+      try { const u = await authAdminFetch('users/' + encodeURIComponent(userId)); deletedEmail = (u && u.email) || null; } catch (e) { /* 取不到邮箱就不发确认 */ }
+      try { deletedLocale = normalizeEmailLocale(await getUserLocale(userId)); } catch (e) { /* 默认简体 */ }
       await authAdminFetch('users/' + encodeURIComponent(userId), { method: 'DELETE' });
       authDeleted = true;
+      try {
+        if (deletedEmail) { const { subject, html } = accountDeletedEmail(deletedLocale, {}); await sendEmail({ to: deletedEmail, subject, html }); }
+      } catch (e) { /* 发信失败不影响删除结果 */ }
     }
     await supabaseUpdate('account_delete_requests', `user_id=eq.${encodeURIComponent(userId)}`, { status: hardDelete ? 'fulfilled' : 'reviewed', payload: { by: admin.email, at: new Date().toISOString(), hard_delete: hardDelete } });
     await supabaseInsert('account_events', { user_id: userId, event_type: hardDelete ? 'account_deleted' : 'delete_reviewed', payload: { by: admin.email } }).catch(() => null);
