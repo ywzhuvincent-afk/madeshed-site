@@ -821,6 +821,7 @@ async function fulfillDelete(req, res) {
 }
 
 // 管理员操作审计日志（只读）：从既有 membership_events / account_events 汇总带 by 或含 admin/cancel/grant/revoke/refund 的事件。
+// 刻意不收常规 email_confirmed / login（每次登录都产生、无操作人，纯噪音）；管理员手动验证邮箱那条带 by_admin，仍会保留。
 async function auditLog(req, res) {
   const admin = await requireAdmin(req, res);
   if (!admin) return;
@@ -831,7 +832,7 @@ async function auditLog(req, res) {
       listAllAuthUsers()
     ]);
     const email = new Map(); (users || []).forEach((u) => email.set(u.id, u.email || ''));
-    const adminish = (ev) => /admin|override|cancel|grant|revoke|refund|confirmed/i.test(ev.event_type || '') || (ev.payload && (ev.payload.by || ev.payload.by_admin));
+    const adminish = (ev) => /admin|override|cancel|grant|revoke|refund/i.test(ev.event_type || '') || (ev.payload && (ev.payload.by || ev.payload.by_admin));
     const rows = [];
     [...(memEvents || []), ...(acctEvents || [])].forEach((ev) => {
       if (!adminish(ev)) return;
