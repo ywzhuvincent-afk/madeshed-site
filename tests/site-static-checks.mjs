@@ -1342,7 +1342,14 @@ includesAll(accountApi, [
 
 includesAll(fortuneReportApi, [
   'FORTUNE_REPORT_TYPES',
-  'buildFortuneReport',
+  'llmConfigured',
+  'callLlm',
+  'buildChartText',
+  'ganzhiForYear',
+  'mdToHtml',
+  '财运（务必详细）',
+  '婚姻感情（务必详细）',
+  '健康（务必详细）',
   'authorizeFortuneReportAccess',
   'loadSavedProfile',
   "mode === 'preview'",
@@ -1350,16 +1357,17 @@ includesAll(fortuneReportApi, [
   'dayun',
   'month',
   '不构成投资、医疗或法律建议',
-], 'fortune report API');
+], 'fortune report API (LLM 深度命理)');
 
 includesAll(reportApi, [
   'authorizeTradeReportAccess',
   'loadCloudCheckins',
-  'report_entitlements',
-  'generated_reports',
+  'saveGeneratedTradeReport',
+  'llmConfigured',
+  'TRADE_PROMPT',
   "mode === 'preview'",
   '不构成投资建议',
-], 'server trade report API');
+], 'server trade report API (LLM 深度复盘)');
 
 includesAll(accessApi, [
   'report_entitlements',
