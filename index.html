@@ -703,15 +703,15 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 
 <nav class="nav">
   <div class="nav-left">
-    <button class="logo" data-route="/" aria-label="返回首页">Madeshed<span class="dot">·</span></button>
+    <button class="logo" data-route="/" aria-label="返回首页">Madeshed<span class="dot">·</span><span class="logo-cn">知机</span></button>
     <div class="nav-links" id="nav-links">
-      <a href="#/daily" data-route="/daily">每日 Daily</a>
-      <a href="#/dashboard" data-route="/dashboard">命盘 Chart</a>
-      <a href="/chart-full.html">流年大运 Forecast</a>
-      <a href="#/report" data-route="/report">月报 Report</a>
-      <a href="#/fortune" data-route="/fortune">命理咨询 Ask Master</a>
-      <a href="#/guide" data-route="/guide">使用指南 Guide</a>
-      <a href="#/account" data-route="/account">设置 Account</a>
+      <a href="#/daily" data-route="/daily">每日</a>
+      <a href="#/dashboard" data-route="/dashboard">命盘</a>
+      <a href="/chart-full.html">流年大运</a>
+      <a href="#/report" data-route="/report">月报</a>
+      <a href="#/fortune" data-route="/fortune">命理咨询</a>
+      <a href="#/guide" data-route="/guide">使用指南</a>
+      <a href="#/account" data-route="/account">设置</a>
     </div>
   </div>
   <div class="nav-right">
@@ -730,19 +730,23 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   </div>
   <button class="mobile-menu-toggle" id="mobile-menu-toggle" type="button" aria-label="打开导航菜单" aria-controls="mobile-menu" aria-expanded="false">☰</button>
   <div class="mobile-menu" id="mobile-menu">
-    <a href="#/daily" data-route="/daily">每日 Daily</a>
-    <a href="#/dashboard" data-route="/dashboard">命盘 Chart</a>
-    <a href="/chart-full.html">流年大运 Forecast</a>
-    <a href="#/report" data-route="/report">月报 Report</a>
-    <a href="#/fortune" data-route="/fortune">命理咨询 Ask Master</a>
-    <a href="#/guide" data-route="/guide">使用指南 Guide</a>
-    <a href="#/account" data-route="/account">设置 Account</a>
+    <a href="#/daily" data-route="/daily">每日</a>
+    <a href="#/dashboard" data-route="/dashboard">命盘</a>
+    <a href="/chart-full.html">流年大运</a>
+    <a href="#/report" data-route="/report">月报</a>
+    <a href="#/fortune" data-route="/fortune">命理咨询</a>
+    <a href="#/guide" data-route="/guide">使用指南</a>
+    <a href="#/account" data-route="/account">设置</a>
     <div class="mobile-actions">
       <div class="lang" aria-label="语言"><button class="active" type="button" data-locale-switch="zh-CN" aria-pressed="true">简</button><button type="button" data-locale-switch="zh-Hant" aria-pressed="false">繁</button><button type="button" data-locale-switch="en" aria-pressed="false">EN</button></div>
       <button class="btn-signin" type="button" id="mobile-signin" data-signed-in="0">登录</button>
     </div>
   </div>
 </nav>
+<style>
+.logo-cn{margin-left:3px;font-family:var(--font-cn,inherit)}
+body[data-locale="en"] .logo-cn{display:none}
+</style>
 
 <!-- LANDING -->
 <section class="view active" data-view="landing">

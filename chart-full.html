@@ -207,16 +207,20 @@
 </style>
 </head>
 <body data-locale="en">
+<style>
+.logo-cn{margin-left:3px;font-family:var(--font-cn,inherit)}
+body[data-locale="en"] .logo-cn{display:none}
+</style>
 <nav class="nav" aria-label="主导航">
   <div class="nav-left">
-    <button class="logo" type="button" data-home-link aria-label="返回首页">Madeshed<span class="dot">·</span></button>
+    <button class="logo" type="button" data-home-link aria-label="返回首页">Madeshed<span class="dot">·</span><span class="logo-cn">知机</span></button>
     <div class="nav-links" id="nav-links">
-      <a href="/#/daily">每日 Daily</a>
-      <a href="/#/dashboard">命盘 Chart</a>
-      <a class="active" href="/chart-full.html">流年大运 Forecast</a>
-      <a href="/#/report">月报 Report</a>
-      <a href="/#/fortune">命理咨询 Ask Master</a>
-      <a href="/#/account">设置 Account</a>
+      <a href="/#/daily">每日</a>
+      <a href="/#/dashboard">命盘</a>
+      <a class="active" href="/chart-full.html">流年大运</a>
+      <a href="/#/report">月报</a>
+      <a href="/#/fortune">命理咨询</a>
+      <a href="/#/account">设置</a>
     </div>
   </div>
   <div class="nav-right">
@@ -227,12 +231,12 @@
   </div>
   <button class="mobile-menu-toggle" id="mobile-menu-toggle" type="button" aria-label="打开导航菜单" aria-controls="mobile-menu" aria-expanded="false">☰</button>
   <div class="mobile-menu" id="mobile-menu">
-    <a href="/#/daily">每日 Daily</a>
-    <a href="/#/dashboard">命盘 Chart</a>
-    <a href="/chart-full.html">流年大运 Forecast</a>
-    <a href="/#/report">月报 Report</a>
-    <a href="/#/fortune">命理咨询 Ask Master</a>
-    <a href="/#/account">设置 Account</a>
+    <a href="/#/daily">每日</a>
+    <a href="/#/dashboard">命盘</a>
+    <a href="/chart-full.html">流年大运</a>
+    <a href="/#/report">月报</a>
+    <a href="/#/fortune">命理咨询</a>
+    <a href="/#/account">设置</a>
     <div class="mobile-actions">
       <div class="lang" aria-label="语言"><button class="active" type="button" aria-pressed="true">简</button><button type="button" aria-pressed="false">繁</button><button type="button" aria-pressed="false">EN</button></div>
       <a class="btn-signin" href="/#/login">登录</a>
