@@ -650,7 +650,7 @@ includesAll(index, [
 includesAll(index, [
   'class="site-footer"',
   'footer-company',
-  'New Dragon Investments LTD',
+  'Madeshed · 客服邮箱',
   'data-refund-link',
   '退款与取消',
   '我们是谁',
