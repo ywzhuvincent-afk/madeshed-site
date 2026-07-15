@@ -148,14 +148,15 @@ function buildUserPrompt(type, profile, targetPeriod) {
   return `${base}${FORMAT_SPEC}\n\n以下是这个人的真实命盘，请严格据此解读：\n${buildChartText(profile)}${periodLine}`;
 }
 
-async function callLlm(userPrompt, maxTokens) {
+async function callLlm(userPrompt) {
   const baseUrl = process.env.LLM_BASE_URL;
   const apiKey = process.env.LLM_API_KEY;
   const model = process.env.LLM_MODEL || 'gpt-4.1-mini';
-  if (!baseUrl || !apiKey) return { configured: false, text: '' };
+  if (!baseUrl || !apiKey) return { text: '', error: 'not_configured' };
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 55000);
   try {
+    // 与「问大师」同一套调用（问大师在生产可用）：不传 max_tokens，避免个别模型/代理拒绝该参数导致整单失败。
     const response = await fetch(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
@@ -165,15 +166,19 @@ async function callLlm(userPrompt, maxTokens) {
           { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.6,
-        max_tokens: maxTokens || 3600
+        temperature: 0.6
       }),
       signal: ctrl.signal
     });
-    if (!response.ok) throw new Error(`LLM ${response.status}`);
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      return { text: '', error: `LLM ${response.status}: ${String(detail).slice(0, 180)}` };
+    }
     const data = await response.json();
     const text = data && data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : '';
-    return { configured: true, text: String(text || '').trim() };
+    return { text: String(text || '').trim(), error: '' };
+  } catch (e) {
+    return { text: '', error: String((e && e.message) || e).slice(0, 180) };
   } finally {
     clearTimeout(timer);
   }
@@ -251,8 +256,6 @@ function reportKey(type, targetPeriod) {
   return `${type}:${p}:v2`;
 }
 
-const MAX_TOKENS = { full: 4000, dayun: 3200, month: 2600 };
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -298,13 +301,17 @@ export default async function handler(req, res) {
 
   // 调 AI 命理师生成深度报告。失败/未配置则返回兜底（不入库，允许刷新重试）。
   let aiText = '';
+  let llmError = '';
   if (llmConfigured()) {
     try {
-      const llm = await callLlm(buildUserPrompt(reportType, gate.profile, body.targetPeriod), MAX_TOKENS[reportType]);
+      const llm = await callLlm(buildUserPrompt(reportType, gate.profile, body.targetPeriod));
       aiText = llm.text || '';
+      llmError = llm.error || '';
     } catch (error) {
-      aiText = '';
+      llmError = String((error && error.message) || error).slice(0, 180);
     }
+  } else {
+    llmError = 'llm_not_configured';
   }
 
   if (!aiText || aiText.length < 120) {
@@ -315,6 +322,7 @@ export default async function handler(req, res) {
       accessLevel: gate.accessLevel,
       source: 'fallback',
       degraded: true,
+      llmError,
       disclaimer: '不构成投资、医疗或法律建议'
     });
   }

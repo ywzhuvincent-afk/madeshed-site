@@ -167,6 +167,7 @@ async function callLlm(userPrompt) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 55000);
   try {
+    // 与「问大师」同一套调用：不传 max_tokens，避免个别模型/代理拒绝该参数。
     const response = await fetch(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
@@ -176,14 +177,15 @@ async function callLlm(userPrompt) {
           { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.5,
-        max_tokens: 2800
+        temperature: 0.5
       }),
       signal: ctrl.signal
     });
-    if (!response.ok) throw new Error(`LLM ${response.status}`);
+    if (!response.ok) return '';
     const data = await response.json();
     return String((data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '').trim();
+  } catch (e) {
+    return '';
   } finally {
     clearTimeout(timer);
   }
