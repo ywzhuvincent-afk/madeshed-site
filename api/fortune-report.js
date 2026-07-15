@@ -244,8 +244,11 @@ function buildFortunePreview(type, profile, targetPeriod) {
   ].join('');
 }
 
+// v2：升级为 LLM 深度报告后换 key，让旧的浅版缓存自然失效、下次查看即重新生成；
+// 同时把目标月份纳入 key（此前 month 各月共用一个 key、会互相覆盖）。
 function reportKey(type, targetPeriod) {
-  return `${type}:${cleanText(targetPeriod, 'default').replace(/\s+/g, '-')}`;
+  const p = cleanText(targetPeriod).replace(/\s+/g, '-') || 'default';
+  return `${type}:${p}:v2`;
 }
 
 const MAX_TOKENS = { full: 4000, dayun: 3200, month: 2600 };
