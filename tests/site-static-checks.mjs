@@ -646,6 +646,17 @@ includesAll(index, [
   'madeshed_guide_hint_v1',
 ], 'usage guide page');
 
+// 全站统一页脚（每个页面都有）+ 经营主体 + 退款/取消入口
+includesAll(index, [
+  'class="site-footer"',
+  'footer-company',
+  'New Dragon Investments LTD',
+  'data-refund-link',
+  '退款与取消',
+  '我们是谁',
+  'Refund & Cancellation',
+], 'global footer + business identity');
+
 includesAll(index, [
   'id="signup-form"',
   'id="signup-email"',
