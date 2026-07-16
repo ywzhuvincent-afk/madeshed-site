@@ -2956,7 +2956,10 @@ function renderYongProfile(profile){
     var body=en?'This chart is close to a special BaZi structure. Favorable elements were adjusted to follow the dominant force; automatic readings carry extra uncertainty here.':structure.note;
     structureHtml='<div class="el-note" style="border-left:3px solid var(--yellow);padding-left:10px"><b>'+badge+'</b> '+body+'</div>';
   }
-  var thInfo=y.tiaohou&&y.tiaohou.stems&&y.tiaohou.stems.length?('<div class="el-note"><b>'+((typeof localeIsEn==='function'&&localeIsEn())?'Climate adjustment (seasonal balance): ':'调候用神（穷通宝鉴）：')+y.tiaohou.stems.join('')+'（'+y.tiaohou.els.join('')+'）</b></div>'):'';
+  /* 天干（丁丙庚…）保留汉字——那是命盘本身，与四柱展示一致；但括号里的五行是「注解」，
+     英文态必须译成 (Fire, Metal)，否则英文站会出现「丁丙庚（火金）」这种半中文。 */
+  var _thEn=(typeof localeIsEn==='function'&&localeIsEn());
+  var thInfo=y.tiaohou&&y.tiaohou.stems&&y.tiaohou.stems.length?('<div class="el-note"><b>'+(_thEn?'Climate adjustment (seasonal balance): ':'调候用神（穷通宝鉴）：')+y.tiaohou.stems.join('')+(_thEn?(' ('+y.tiaohou.els.map(enElementLabel).join(', ')+')'):('（'+y.tiaohou.els.join('')+'）'))+'</b></div>'):'';
   box.innerHTML=structureHtml+rows.map(function(r){
     const cn=BAZI.EL_CN[r.el]||r.el;
     return '<div class="el-row"><div class="el-tag '+cls[r.el]+'">'+cn+'</div><div class="el-i"><div class="el-name">'+cn+' · '+r.label+'</div><div class="el-src">'+r.reason+'</div></div><div class="el-w">'+r.weight+'</div></div>';
