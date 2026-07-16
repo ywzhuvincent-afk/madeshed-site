@@ -131,7 +131,7 @@ async function maybeGrantUltimateCredits(userId) {
   });
 }
 
-async function authorizeAndReserve(req, creditsNeeded) {
+async function authorizeAndReserve(req, creditsNeeded, locale) {
   if (!hasSupabaseService()) {
     return { ok: false, status: 503, body: { error: 'supabase_service_not_configured', message: t(locale, 'credits_ledger_not_configured'), creditsSpent: 0 } };
   }
@@ -158,6 +158,8 @@ export default async function handler(req, res) {
   const depth = body.depth === 'deep' ? 'deep' : 'normal';
   const creditsNeeded = MASTER_DEPTH_COST[depth];
   const question = clip(body.question);
+  // 必须在任何 t(locale,...) 之前解析：此前声明在下方，使上面几行落入暂时性死区(TDZ)，接口直接 500。
+  const locale = await resolveUserLocale(req, null);
   if (!MASTER_CATEGORIES.includes(category)) return send(res, 400, { error: 'invalid_category' });
   if (!['short', 'month', 'year', 'dayun', 'lifetime'].includes(horizon)) return send(res, 400, { error: 'invalid_horizon' });
   if (!question) return send(res, 400, { error: 'missing_question' });
@@ -173,9 +175,8 @@ export default async function handler(req, res) {
   }
 
   const context = buildFortuneContext(body.profile, { category, horizon, targetDate: body.targetDate, targetMonth: body.targetMonth });
-  const locale = await resolveUserLocale(req, null);
   const prompt = buildMasterPrompt(context, question, depth, locale);
-  const billing = await authorizeAndReserve(req, creditsNeeded);
+  const billing = await authorizeAndReserve(req, creditsNeeded, locale);
   if (!billing.ok) return send(res, billing.status, billing.body);
   const llm = await callLlm(prompt, locale);
   if (!llm.configured) {

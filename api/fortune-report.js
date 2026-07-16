@@ -358,7 +358,8 @@ export default async function handler(req, res) {
       locale: pvLocale,
       accessLevel: 'preview',
       mode,
-      disclaimer: t(locale, 'report_disclaimer')
+      // 预览分支跑在鉴权之前，此处只有 pvLocale；写成 locale 会 ReferenceError，把整个接口打成 500。
+      disclaimer: t(pvLocale, 'report_disclaimer')
     });
   }
 

@@ -428,6 +428,7 @@ async function createCustomerPortal(req, res) {
   }
   const user = await requireUser(req, res, 'login_before_membership');
   if (!user) return null;
+  const locale = await resolveUserLocale(req, user.id);
   const rows = await supabaseSelect('memberships', `user_id=eq.${encodeURIComponent(user.id)}&select=stripe_customer_id,status,tier&limit=1`);
   const membership = rows[0];
   if (!membership || !membership.stripe_customer_id) {
@@ -460,7 +461,7 @@ export default async function handler(req, res) {
     if (action === 'portal') return await createCustomerPortal(req, res);
     return send(res, 400, {
       error: 'invalid_checkout_action',
-      message: t(locale, 'invalid_checkout_action'),
+      message: t(await resolveUserLocale(req, null), 'invalid_checkout_action'),
       actions: ['credit', 'membership', 'report', 'portal']
     });
   } catch (error) {
