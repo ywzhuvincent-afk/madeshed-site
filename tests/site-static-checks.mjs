@@ -1730,4 +1730,26 @@ includesAll(checkoutApi, [
 // 4) 尊享 SKU 已接入目录（后台可改价 + 价格接口可见）
 includesAll(vipCatalogSrc, ["key: 'fortune_timing'", "key: 'highest'", "key: 'highest_annual'"], '尊享线 SKU 已进商品目录');
 
+// 5) 前端必须与服务端同口径：基础会员不得看到"会员免费"却在服务端吃 402
+includesAll(index, [
+  "const VIP_ONLY_FORTUNE_REPORTS=['timing']",
+  "function isHighestMember()",
+  "function memberFreeFortune(type){return isUltimateMember()&&(VIP_ONLY_FORTUNE_REPORTS.indexOf(String(type))<0||isHighestMember());}",
+  "function fortuneAccessLevel(type){if(memberFreeFortune(type))return'membership'",
+  'setP(FORTUNE_PRODUCTS.timing,by.fortune_timing)',
+  'setP(VIP_MEMBERSHIP_PRODUCT,by.highest)',
+  'data-membership-tier="highest"',
+  'beginMembershipCheckout(ma.dataset.membershipTier,ma.dataset.membershipPlan)',
+], '前端尊享线：VIP 判定/择时全案只对VIP免费/实时价/月年入口');
+assert.equal(
+  /function fortuneAccessLevel\(type\)\{if\(isUltimateMember\(\)\)return'membership'/.test(index),
+  false,
+  '前端不得用 isUltimateMember 直接放行择时全案——基础会员会看到"会员免费"但服务端返回 402',
+);
+assert.equal(
+  /grants\[key\]!=='ultimate-30'/.test(index),
+  false,
+  '本地赠点不得写死 ultimate-30（至尊VIP 会被降成基础额度）',
+);
+
 console.log('Static site checks passed');
