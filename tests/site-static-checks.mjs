@@ -972,10 +972,15 @@ includesAll(index, [
   'HOURLY ACTION TREND',
   'hourRead=dailyRead(profile,{day:hourGz})',
   'hourTrigger=Math.round(hourScore*.55+(hourRead?hourRead.zScore:60)*.45)',
-  'dayAction.score+(hourTrigger-60)*.75+(hourRead&&hourRead.rootAdjust?hourRead.rootAdjust*.1:0)-riskPenalty',
+  'dayAction.score+(hourTrigger-60)*.75+(hourRead&&hourRead.rootAdjust?hourRead.rootAdjust*.1:0)',
   "calibrateActionScore(raw,'hour'",
   'var sc=hourActionScore(profile,now,(i*2)%24)',
 ], 'hourly trend uses intraday action score');
+// 风险扣分已在 dayAction.score（日锚点）里扣过；时段 raw 再扣一次会把时辰差异系统性压到地板 34 变成直线。
+assert.ok(
+  !index.includes('rootAdjust*.1:0)-riskPenalty'),
+  'hour raw must not subtract riskPenalty again — it is already baked into dayAction.score (double-count flattens the intraday curve)',
+);
 assert.ok(
   !/function buildHourTrend\(profile,now\)[\s\S]{0,360}data\.push\(chartScore\(profile,gz\)\)/.test(index),
   'hourly trend should not use hour single score',
