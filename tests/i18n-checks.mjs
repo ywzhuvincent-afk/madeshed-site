@@ -164,4 +164,73 @@ const HANT_SAME_OK = new Set(['period_this_month']);
   ok('交易复盘前端链路有英文分支');
 }
 
+// ── 11. 前端 UI_TEXT：每条必须 zh+en 齐全（繁体由 opencc 转，不单独存）──────
+{
+  const index = read('index.html');
+  const m = index.match(/const UI_TEXT=\{([\s\S]*?)\n\};/);
+  assert.ok(m, '找不到前端 UI_TEXT 文案表');
+  const body = m[1];
+  /* 逐行解析：每条文案独占一行 `key:{zh:'...',en:'...'},`。
+     不能用 [^}]* 抓行内内容——文案里的 {missing}/{name} 占位符会让它提前截断（曾误报）。 */
+  const lines = body.split('\n').filter((l) => /^\s{2}\w+:\s*\{/.test(l));
+  const keys = lines.map((l) => l.match(/^\s{2}(\w+):/)[1]);
+  assert.ok(keys.length >= 20, `UI_TEXT 至少应有 20 条，实际 ${keys.length}`);
+  const bad = [];
+  lines.forEach((line, i) => {
+    const k = keys[i];
+    if (!/\bzh:\s*'/.test(line)) bad.push(`${k} 缺 zh`);
+    if (!/\ben:\s*'/.test(line)) bad.push(`${k} 缺 en`);
+    const en = (line.match(/\ben:\s*'((?:[^'\\]|\\.)*)'/) || [])[1] || '';
+    if (CJK.test(en)) bad.push(`${k}.en 仍含中文: ${en.slice(0, 30)}`);
+  });
+  assert.deepEqual(bad, [], `前端 UI_TEXT 必须 zh+en 齐全且英文不含中文：\n  ${bad.join('\n  ')}`);
+  ok(`前端 UI_TEXT zh+en 齐全（${keys.length} 条）`);
+}
+
+// ── 12. 付费/错误瞬时态不得再写死中文（用户掏钱那一刻才出现，最容易漏）──────
+{
+  /* 必须把 UI_TEXT 表本身排除：中文作为 zh 值住在表里是正确的，
+     要禁的是"表以外的地方还散着中文字面量"。 */
+  const full = read('index.html');
+  const tbl = full.match(/const UI_TEXT=\{[\s\S]*?\n\};/);
+  const index = tbl ? full.replace(tbl[0], '/*UI_TEXT_TABLE*/') : full;
+  /* 这几个函数已 100% 迁移到 T()，因此规则是"函数体内不得出现任何中文字面量"——
+     比精确字符串黑名单强得多（黑名单换个写法就绕过去了，曾漏掉一次变异）。
+     注：openFortuneReport / renderDetailedReport 仍保留 en?'...':'中文' 三元，由第 10 项覆盖，不在此列。 */
+  const STRICT_FNS = [
+    'paidActionMessage', 'ensurePaidActionAllowed', 'beginReportCheckout', 'beginFortuneReportCheckout',
+    'beginMembershipCheckout', 'beginCustomerPortal', 'beginCreditCheckout', 'submitMasterQuestion',
+  ];
+  const found = [];
+  for (const fn of STRICT_FNS) {
+    const i = index.search(new RegExp(`(async\\s+)?function ${fn}\\s*\\(`));
+    if (i < 0) { found.push(`${fn}: 找不到该函数`); continue; }
+    // 取函数体（按大括号配平）
+    let j = index.indexOf('{', i), depth = 0, end = j;
+    for (; end < index.length; end++) {
+      if (index[end] === '{') depth++;
+      else if (index[end] === '}') { depth--; if (depth === 0) break; }
+    }
+    const body = index.slice(j, end + 1);
+    for (const m of body.matchAll(/'((?:[^'\\]|\\.)*)'/g)) {
+      if (CJK.test(m[1])) found.push(`${fn}() 内写死中文: ${m[1].slice(0, 40)}`);
+    }
+  }
+  assert.deepEqual(found, [], `付费/错误瞬时态不得写死中文，请改用 T('key') 并在 UI_TEXT 补 zh+en：\n  ${found.join('\n  ')}`);
+  assert.ok(/function T\(k,vars\)/.test(index), '前端必须提供 T(key) 取文案');
+  assert.ok(/function productDisplayName\(product\)/.test(index), '商品名必须按语言取（productDisplayName），否则英文用户看到中文商品名');
+  ok('付费/错误瞬时态已全部走 T()');
+}
+
+// ── 13. 注册语言必须写进 user_metadata（确认邮件先于 account_profiles 建行）──
+{
+  const index = read('index.html');
+  assert.ok(
+    /data:\{display_name:displayName,locale:checkoutLocaleValue\(\)\}/.test(index),
+    '注册时必须把 locale 写入 user_metadata：确认邮件在 account_profiles 建行之前就发出，' +
+    'Supabase 邮件模板只能靠 {{ .Data.locale }} 判断语言',
+  );
+  ok('注册语言写入 user_metadata（供 Supabase 邮件模板分支）');
+}
+
 console.log(`\ni18n contract: all ${checks} checks passed`);
