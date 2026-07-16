@@ -1,4 +1,5 @@
 import { getUserFromRequest, hasSupabaseService, supabaseInsert, supabaseSelect } from './_supabase.js';
+import { resolveUserLocale, t } from './_locale.js';
 
 // past_due=扣款失败宽限期：Stripe 智能重试期间不立刻断权（前端 isMembershipActive 同口径），
 // 界面另行提示"更新支付方式"；重试全部失败后订阅转 canceled 自然降级。
@@ -90,13 +91,16 @@ export async function hasFortuneReportEntitlement(userId, reportType) {
     : { ok: false, accessLevel: 'expired', expiresAt: expiresAt || null };
 }
 
+// 未登录时拿不到账号语言，只能退回请求里带的 locale（resolveUserLocale 已处理该情况）。
 async function requireCloudUser(req) {
   if (!hasSupabaseService()) {
-    return { ok: false, status: 503, body: { error: 'supabase_service_not_configured', message: '云端账号系统暂未配置。' } };
+    const locale = await resolveUserLocale(req, null);
+    return { ok: false, status: 503, body: { error: 'supabase_service_not_configured', message: t(locale, 'supabase_not_configured'), locale } };
   }
   const auth = await getUserFromRequest(req);
   if (!auth.user) {
-    return { ok: false, status: 401, body: { error: auth.error || 'unauthorized', message: '请先登录。' } };
+    const locale = await resolveUserLocale(req, null);
+    return { ok: false, status: 401, body: { error: auth.error || 'unauthorized', message: t(locale, 'login_required'), locale } };
   }
   return { ok: true, user: auth.user };
 }
@@ -105,6 +109,8 @@ export async function authorizeTradeReportAccess(req, reportType, mode = 'full')
   if (mode === 'preview') return { ok: true, accessLevel: 'preview', preview: true };
   const userResult = await requireCloudUser(req);
   if (!userResult.ok) return userResult;
+  // 已登录 → 用账号上存的注册语言（resolveUserLocale 优先读 account_profiles.locale）
+  const locale = await resolveUserLocale(req, userResult.user.id);
   const entitlement = await hasTradeReportEntitlement(userResult.user.id, reportType);
   if (!entitlement.ok) {
     return {
@@ -112,19 +118,21 @@ export async function authorizeTradeReportAccess(req, reportType, mode = 'full')
       status: 402,
       body: {
         error: 'report_access_required',
-        message: '这份完整报告需要单次购买，或开通最高级会员后生成。',
+        message: t(locale, 'trade_report_paywall'),
+        locale,
         reportType,
         accessLevel: entitlement.accessLevel
       }
     };
   }
-  return { ok: true, user: userResult.user, accessLevel: entitlement.accessLevel };
+  return { ok: true, user: userResult.user, accessLevel: entitlement.accessLevel, locale };
 }
 
 export async function authorizeFortuneReportAccess(req, reportType, mode = 'full') {
   if (mode === 'preview') return { ok: true, accessLevel: 'preview', preview: true, profile: null };
   const userResult = await requireCloudUser(req);
   if (!userResult.ok) return userResult;
+  const locale = await resolveUserLocale(req, userResult.user.id);
   const profile = await loadSavedProfile(userResult.user.id);
   if (!profile) {
     return {
@@ -132,7 +140,8 @@ export async function authorizeFortuneReportAccess(req, reportType, mode = 'full
       status: 409,
       body: {
         error: 'saved_profile_required',
-        message: '请先登录并保存八字命盘；完整报告必须使用账号里的统一命盘生成。'
+        message: t(locale, 'saved_profile_required'),
+        locale
       }
     };
   }
@@ -143,13 +152,15 @@ export async function authorizeFortuneReportAccess(req, reportType, mode = 'full
       status: 402,
       body: {
         error: 'fortune_report_access_required',
-        message: '这份完整命理报告需要单次购买，或开通最高级会员后生成。',
+        message: t(locale, 'fortune_report_paywall'),
+        locale,
         reportType,
         accessLevel: entitlement.accessLevel
       }
     };
   }
-  return { ok: true, user: userResult.user, profile, accessLevel: entitlement.accessLevel };
+  // locale 一路带给报告生成器：AI 提示词、报告标题/免责声明、缓存键都必须按它走。
+  return { ok: true, user: userResult.user, profile, accessLevel: entitlement.accessLevel, locale };
 }
 
 export async function loadCloudCheckins(userId) {

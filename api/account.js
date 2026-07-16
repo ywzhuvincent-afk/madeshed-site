@@ -11,6 +11,7 @@ import {
   supabaseInsert,
   supabaseSelect
 } from './_supabase.js';
+import { resolveUserLocale, t } from './_locale.js';
 import { sendEmail, notifyOwner, normalizeEmailLocale, deletionRequestedEmail, passwordChangedEmail, siteLink } from './_email.js';
 
 const LEGAL_DOCUMENT_TYPES = new Set(LEGALLY_REQUIRED_ACCEPTANCES);
@@ -25,13 +26,14 @@ function requestAction(req) {
 }
 
 async function requireUser(req, res) {
+  const locale = await resolveUserLocale(req, null);
   if (!hasSupabaseService()) {
-    send(res, 503, { error: 'supabase_service_not_configured', message: '账号系统暂未连接云端。' });
+    send(res, 503, { error: 'supabase_service_not_configured', message: t(locale, 'account_cloud_not_configured'), locale });
     return null;
   }
   const auth = await getUserFromRequest(req);
   if (!auth.user) {
-    send(res, 401, { error: auth.error || 'unauthorized', message: '请先登录。' });
+    send(res, 401, { error: auth.error || 'unauthorized', message: t(locale, 'login_required'), locale });
     return null;
   }
   return auth.user;
@@ -113,7 +115,7 @@ async function acceptLegal(req, res) {
     : [req.body?.document_type || req.body?.documentType].filter(Boolean);
   const documents = [...new Set(requested.map((type) => String(type)))].filter((type) => LEGAL_DOCUMENT_TYPES.has(type));
   if (!documents.length) {
-    return send(res, 400, { error: 'invalid_document_type', message: '请选择需要确认的法律文件。' });
+    return send(res, 400, { error: 'invalid_document_type', message: t(await resolveUserLocale(req, user && user.id), 'legal_docs_required') });
   }
 
   const rows = documents.map((documentType) => ({
@@ -189,7 +191,7 @@ async function notifyAccountEvent(req, res) {
       await logAccountEvent(req, user.id, 'password_changed', {});
       return send(res, 200, { ok: true });
     }
-    return send(res, 400, { error: 'invalid_notify_type', message: 'type 无效。' });
+    return send(res, 400, { error: 'invalid_notify_type', message: t(await resolveUserLocale(req, null), 'invalid_type') });
   } catch (error) {
     // 尽力而为：通知失败绝不把错误抛回前端（密码其实已改成功）。
     return send(res, 200, { ok: false });
@@ -199,7 +201,7 @@ async function notifyAccountEvent(req, res) {
 // 购买与点数记录：用户自助查看订单/点数流水/已解锁权益（专业购买流程标配，曾完全缺失）
 async function purchaseHistory(req, res) {
   const auth = await getUserFromRequest(req);
-  if (!auth.user) return send(res, 401, { error: auth.error || 'unauthorized', message: '请先登录。' });
+  if (!auth.user) { const lc = await resolveUserLocale(req, null); return send(res, 401, { error: auth.error || 'unauthorized', message: t(lc, 'login_required'), locale: lc }); }
   if (!hasSupabaseService()) return send(res, 503, { error: 'supabase_service_not_configured' });
   const uid = encodeURIComponent(auth.user.id);
   try {
@@ -225,7 +227,7 @@ export default async function handler(req, res) {
   if (action === 'purchases') return purchaseHistory(req, res);
   return send(res, 400, {
     error: 'invalid_account_action',
-    message: '账号接口 action 无效。',
+    message: t(await resolveUserLocale(req, null), 'invalid_account_action'),
     actions: ['bootstrap', 'status', 'legal', 'delete', 'notify', 'purchases']
   });
 }

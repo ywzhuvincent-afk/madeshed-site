@@ -1,16 +1,18 @@
 import { authorizeFortuneReportAccess, cleanText, escapeHtml, loadSavedProfile } from './_access.js';
 import { getUserFromRequest, hasSupabaseService, supabaseInsert, supabaseSelect } from './_supabase.js';
+import { resolveUserLocale, normalizeLocale, t, LLM_LANGUAGE_RULE } from './_locale.js';
 
 // 命理报告：调 LLM + 完整命盘，逐领域产出师傅级深度解读（不再是死模板）。
 export const config = { maxDuration: 60 };
 
 const FORTUNE_REPORT_TYPES = {
-  full: { label: '全盘解读', price: '¥29' },
-  dayun: { label: '流年大运解读', price: '¥25' },
-  month: { label: '每月运程', price: '¥9.9' },
-  wealth: { label: '偏财运 · 机会财专测', price: '¥19' },
+  // label 三语齐全：报告标题会直接显示给用户，只有中文就会让英文/繁体用户看到中文标题。
+  full: { label: '全盘解读', labelHant: '全盤解讀', labelEn: 'Full Chart Reading', price: '¥29' },
+  dayun: { label: '流年大运解读', labelHant: '流年大運解讀', labelEn: 'Luck Pillar Reading', price: '¥25' },
+  month: { label: '每月运程', labelHant: '每月運程', labelEn: 'Monthly Timing Reading', price: '¥9.9' },
+  wealth: { label: '偏财运 · 机会财专测', labelHant: '偏財運 · 機會財專測', labelEn: 'Windfall Wealth Reading', price: '¥19' },
   // 尊享线旗舰：基础会员不含（_access.js VIP_ONLY_FORTUNE_REPORTS），至尊VIP免费、他人单买。
-  timing: { label: '八字投资择时全案', price: '¥688' }
+  timing: { label: '八字投资择时全案', labelHant: '八字投資擇時全案', labelEn: 'Investment Timing Master Plan', price: '¥688' }
 };
 
 function send(res, status, body) {
@@ -72,7 +74,7 @@ function buildChartText(profile) {
   return lines.join('\n');
 }
 
-const SYSTEM_PROMPT = '你是一位有数十年经验的资深八字命理师，精通子平命理：格局、十神、藏干、旺衰、用神喜忌、调候、大运流年。你根据命主真实八字做深入、全面、逐项到位的解读，像面对面算命一样有条理、可执行。铁律：①每条结论都必须结合这张命盘的具体四柱、日主强弱、十神、五行、用神喜忌、大运来讲，要引用命盘里的实际干支和五行，绝不说放之四海皆准的空话；②要求覆盖的领域一个都不能少，篇幅要充分；③专业但通俗、条理清楚；④合规红线：财运只讲命理层面的财星/求财方式/破财风险/收入机会，绝不预测股市行情、不推荐任何具体投资标的、不承诺必然发生的收益或结果；健康只作命理提示并提醒就医、不替代医疗诊断；法律或极端风险请当事人找持牌专业人士；不承诺必然。输出简体中文。';
+const SYSTEM_PROMPT = '你是一位有数十年经验的资深八字命理师，精通子平命理：格局、十神、藏干、旺衰、用神喜忌、调候、大运流年。你根据命主真实八字做深入、全面、逐项到位的解读，像面对面算命一样有条理、可执行。铁律：①每条结论都必须结合这张命盘的具体四柱、日主强弱、十神、五行、用神喜忌、大运来讲，要引用命盘里的实际干支和五行，绝不说放之四海皆准的空话；②要求覆盖的领域一个都不能少，篇幅要充分；③专业但通俗、条理清楚；④合规红线：财运只讲命理层面的财星/求财方式/破财风险/收入机会，绝不预测股市行情、不推荐任何具体投资标的、不承诺必然发生的收益或结果；健康只作命理提示并提醒就医、不替代医疗诊断；法律或极端风险请当事人找持牌专业人士；不承诺必然。';
 
 const FORMAT_SPEC = '\n\n【输出格式】每一章用「## 章节标题」另起一行作标题；正文分段，段与段之间空一行；要点用「- 」开头。不要输出任何 HTML 标签，不要用 markdown 的 ** 加粗。';
 
@@ -201,14 +203,18 @@ const PROMPTS = {
 全篇只讲命理层面的倾向与时机参考：不预测具体点位或结果、不推荐任何标的、不承诺收益或中奖、不构成投资建议。`
 };
 
-function buildUserPrompt(type, profile, targetPeriod) {
+/* 提示词本身是中文写的（命理术语用中文表达更精准），但输出语言由 locale 决定：
+   把语言指令放在最后，是因为模型对末尾指令的遵循度最高。不带它 → 一律输出简体中文，
+   英文/繁体用户会拿到中文报告（曾真实发生）。 */
+function buildUserPrompt(type, profile, targetPeriod, locale) {
   const base = PROMPTS[type] || PROMPTS.fullA;
   const period = cleanText(targetPeriod);
   const periodLine = type === 'month' && period ? `\n\n【目标月份】${period}` : '';
-  return `${base}${FORMAT_SPEC}\n\n以下是这个人的真实命盘，请严格据此解读：\n${buildChartText(profile)}${periodLine}`;
+  const lang = LLM_LANGUAGE_RULE[normalizeLocale(locale)] || LLM_LANGUAGE_RULE.zh;
+  return `${base}${FORMAT_SPEC}\n\n以下是这个人的真实命盘，请严格据此解读：\n${buildChartText(profile)}${periodLine}\n\n【输出语言 · 最高优先级】${lang}`;
 }
 
-async function callLlm(userPrompt, maxTokens) {
+async function callLlm(userPrompt, maxTokens, locale) {
   const baseUrl = process.env.LLM_BASE_URL;
   const apiKey = process.env.LLM_API_KEY;
   const model = process.env.LLM_MODEL || 'gpt-4.1-mini';
@@ -224,7 +230,8 @@ async function callLlm(userPrompt, maxTokens) {
       body: JSON.stringify({
         model,
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          // 语言指令同时放系统提示与用户提示末尾：双保险，避免长上下文里被稀释。
+          { role: 'system', content: SYSTEM_PROMPT + '\n' + (LLM_LANGUAGE_RULE[normalizeLocale(locale)] || LLM_LANGUAGE_RULE.zh) },
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.6,
@@ -266,56 +273,65 @@ function mdToHtml(text) {
   return html;
 }
 
-function wrapReport(type, period, accessLevel, bodyHtml) {
-  const product = FORTUNE_REPORT_TYPES[type] || FORTUNE_REPORT_TYPES.full;
+// 报告标题按 locale 取三语商品名；缺失时退回中文名（绝不留空）。
+function productLabelFor(type, locale) {
+  const p = FORTUNE_REPORT_TYPES[type] || FORTUNE_REPORT_TYPES.full;
+  const loc = normalizeLocale(locale);
+  return (loc === 'en' ? p.labelEn : loc === 'zh-Hant' ? p.labelHant : p.label) || p.label;
+}
+
+function wrapReport(type, period, accessLevel, bodyHtml, locale) {
   return [
     '<div class="report-generated fortune-generated">',
-    `<h2>${product.label} · 命理详细版</h2>`,
+    `<h2>${escapeHtml(productLabelFor(type, locale))} · ${escapeHtml(t(locale, 'report_detail_suffix'))}</h2>`,
     `<span class="report-badge">${escapeHtml(period)}</span>`,
-    `<span class="report-badge">${accessLevel === 'membership' ? '高级会员' : '已解锁'}</span>`,
-    '<span class="report-badge">基于账号统一八字命盘</span>',
+    `<span class="report-badge">${escapeHtml(t(locale, accessLevel === 'membership' ? 'report_badge_member' : 'report_badge_unlocked'))}</span>`,
+    `<span class="report-badge">${escapeHtml(t(locale, 'report_badge_chart'))}</span>`,
     bodyHtml,
-    '<div class="report-warning">本内容为传统命理参考与自我规划，不构成投资、医疗或法律建议；财运只讨论命理层面的机会与风险，不预测行情、不推荐标的；涉及疾病、法律纠纷或极端风险请寻求持牌专业人士帮助。</div>',
+    `<div class="report-warning">${escapeHtml(t(locale, 'report_disclaimer'))}</div>`,
     '</div>'
   ].join('');
 }
 
 // —— LLM 未配置/失败时的兜底：结构完整但简版，并提示可刷新重试（不入库缓存）。
-function buildFallback(type, profile, period, accessLevel) {
+// 命盘摘要（四柱/日主）本身是命理数据，三语通用，只翻译包裹它的说明文字。
+function chartSummaryLine(profile) {
   const p = profile && profile.pillarsStr ? profile.pillarsStr : {};
-  const y = profile && profile.yongShen ? profile.yongShen : {};
-  const xi = Array.isArray(y.xi) && y.xi.length ? y.xi.map(elementLabel).join('、') : '综合判断';
-  const chart = `日主 ${profile?.dayStem || '-'}${profile?.dayElement || ''}，强弱 ${profile?.strength?.category || '-'}；四柱 ${p.year || '-'}·${p.month || '-'}·${p.day || '-'}·${p.hour || '-'}；喜用 ${xi}。`;
-  const body = [
-    `<p>${escapeHtml(chart)}</p>`,
-    '<p>完整深度解读（命格总论、性格天赋、事业、财运、婚姻感情、健康、六亲、大运流年、开运建议）正在生成，请稍后回到本页点击「生成报告」刷新重试。若持续无法生成，请联系 support@madeshed.com。</p>'
-  ].join('');
-  return wrapReport(type, period, accessLevel, body);
+  return `${profile?.dayStem || '-'}${profile?.dayElement || ''} · ${profile?.strength?.category || '-'} · ${p.year || '-'}·${p.month || '-'}·${p.day || '-'}·${p.hour || '-'}`;
 }
 
-function buildFortunePreview(type, profile, targetPeriod) {
-  const product = FORTUNE_REPORT_TYPES[type] || FORTUNE_REPORT_TYPES.full;
-  const period = cleanText(targetPeriod) || (type === 'month' ? '本月' : '当前周期');
-  const p = profile && profile.pillarsStr ? profile.pillarsStr : {};
-  const summary = profile ? `日主 ${profile.dayStem || '-'}${profile.dayElement || ''}，强弱 ${profile.strength?.category || '-'}；四柱 ${p.year || '-'}·${p.month || '-'}·${p.day || '-'}·${p.hour || '-'}。` : '尚未提供命盘';
+function buildFallback(type, profile, period, accessLevel, locale) {
+  const body = [
+    `<p>${escapeHtml(chartSummaryLine(profile))}</p>`,
+    `<p>${escapeHtml(t(locale, 'report_fallback_generating'))}</p>`
+  ].join('');
+  return wrapReport(type, period, accessLevel, body, locale);
+}
+
+function buildFortunePreview(type, profile, targetPeriod, locale) {
+  const period = cleanText(targetPeriod) || t(locale, type === 'month' ? 'period_this_month' : 'period_current');
+  const summary = profile ? chartSummaryLine(profile) : t(locale, 'preview_no_chart');
   return [
     '<div class="report-generated fortune-generated">',
-    `<h2>${product.label} · 结构预览</h2>`,
+    `<h2>${escapeHtml(productLabelFor(type, locale))} · ${escapeHtml(t(locale, 'preview_suffix'))}</h2>`,
     `<span class="report-badge">${escapeHtml(period)}</span>`,
-    '<span class="report-badge">预览版</span>',
-    `<p>${escapeHtml(summary)} 完整报告会读取账号里的统一命盘，校验会员/购买权益后由 AI 命理师逐项深入生成。</p>`,
-    '<h3>完整报告包含</h3>',
-    '<ul><li>命格总论、格局层次、用神喜忌。</li><li>性格天赋、事业方向、财运（正偏财/求财/破财/财旺时机）。</li><li>婚姻感情（配偶星、夫妻宫、正缘时机）、健康（五行脏腑）、六亲缘分。</li><li>当前大运、今年流年、未来节奏与关键时间窗口。</li><li>趋吉避凶与开运建议。</li></ul>',
-    '<div class="report-warning">预览不返回完整正文；解锁后由 AI 命理师生成逐项深度解读。</div>',
+    `<span class="report-badge">${escapeHtml(t(locale, 'preview_badge'))}</span>`,
+    `<p>${escapeHtml(summary)} ${escapeHtml(t(locale, 'preview_intro'))}</p>`,
+    `<h3>${escapeHtml(t(locale, 'preview_includes_title'))}</h3>`,
+    `<ul>${t(locale, 'preview_includes_list')}</ul>`,
+    `<div class="report-warning">${escapeHtml(t(locale, 'preview_warning'))}</div>`,
     '</div>'
   ].join('');
 }
 
 // v2：升级为 LLM 深度报告后换 key，让旧的浅版缓存自然失效、下次查看即重新生成；
 // 同时把目标月份纳入 key（此前 month 各月共用一个 key、会互相覆盖）。
-function reportKey(type, targetPeriod) {
+/* 缓存键必须包含 locale：报告正文是按语言生成的，若不隔离，英文用户会命中别人缓存的
+   中文报告（反之亦然），而且用户切换语言后永远拿不到新语言的版本。v3 = 加入 locale 后的新代次，
+   顺带让此前生成的所有单语缓存自然失效。 */
+function reportKey(type, targetPeriod, locale) {
   const p = cleanText(targetPeriod).replace(/\s+/g, '-') || 'default';
-  return `${type}:${p}:v2`;
+  return `${type}:${p}:${normalizeLocale(locale)}:v3`;
 }
 
 export default async function handler(req, res) {
@@ -334,21 +350,25 @@ export default async function handler(req, res) {
       const auth = await getUserFromRequest(req);
       if (auth.user) profile = await loadSavedProfile(auth.user.id);
     }
+    const pvLocale = await resolveUserLocale(req, null);
     return send(res, 200, {
       reportType,
-      title: FORTUNE_REPORT_TYPES[reportType].label,
-      reportHtml: buildFortunePreview(reportType, profile, body.targetPeriod),
+      title: productLabelFor(reportType, pvLocale),
+      reportHtml: buildFortunePreview(reportType, profile, body.targetPeriod, pvLocale),
+      locale: pvLocale,
       accessLevel: 'preview',
       mode,
-      disclaimer: '不构成投资、医疗或法律建议'
+      disclaimer: t(locale, 'report_disclaimer')
     });
   }
 
   const gate = await authorizeFortuneReportAccess(req, reportType, mode);
   if (!gate.ok) return send(res, gate.status, gate.body);
 
+  // 用户注册时选的语言（gate 已按 account_profiles.locale 解析），全程以它为准。
+  const locale = gate.locale || (await resolveUserLocale(req, gate.user && gate.user.id));
   const period = cleanText(body.targetPeriod) || (reportType === 'month' ? '本月' : '当前周期');
-  const key = reportKey(reportType, body.targetPeriod);
+  const key = reportKey(reportType, body.targetPeriod, locale);
   const existing = await supabaseSelect('fortune_reports', `user_id=eq.${encodeURIComponent(gate.user.id)}&report_key=eq.${encodeURIComponent(key)}&access_level=in.(paid,membership)&select=report_type,title,report_html,access_level,updated_at&limit=1`);
   if (existing.length && existing[0].report_html && !body.forceRefresh) {
     return send(res, 200, {
@@ -357,7 +377,7 @@ export default async function handler(req, res) {
       reportHtml: existing[0].report_html,
       accessLevel: existing[0].access_level,
       source: 'fortune_reports',
-      disclaimer: '不构成投资、医疗或法律建议'
+      disclaimer: t(locale, 'report_disclaimer')
     });
   }
 
@@ -372,12 +392,12 @@ export default async function handler(req, res) {
         // timing 是尊享旗舰（¥688），给更大的 token 预算以撑起"五千字级"的深度。
         const parts = reportType === 'timing' ? ['timingA', 'timingB', 'timingC'] : ['fullA', 'fullB', 'fullC'];
         const mtPart = reportType === 'timing' ? 3600 : 2800;
-        const [a, b, c] = await Promise.all(parts.map((p) => callLlm(buildUserPrompt(p, gate.profile, body.targetPeriod), mtPart)));
+        const [a, b, c] = await Promise.all(parts.map((p) => callLlm(buildUserPrompt(p, gate.profile, body.targetPeriod, locale), mtPart, locale)));
         aiText = [a.text, b.text, c.text].filter(Boolean).join('\n\n');
         llmError = a.error || b.error || c.error || '';
       } else {
         const mt = reportType === 'month' ? 1600 : (reportType === 'wealth' ? 2800 : 2000);
-        const llm = await callLlm(buildUserPrompt(reportType, gate.profile, body.targetPeriod), mt);
+        const llm = await callLlm(buildUserPrompt(reportType, gate.profile, body.targetPeriod, locale), mt, locale);
         aiText = llm.text || '';
         llmError = llm.error || '';
       }
@@ -391,33 +411,33 @@ export default async function handler(req, res) {
   if (!aiText || aiText.length < 120) {
     return send(res, 200, {
       reportType,
-      title: FORTUNE_REPORT_TYPES[reportType].label,
-      reportHtml: buildFallback(reportType, gate.profile, period, gate.accessLevel),
+      title: productLabelFor(reportType, locale),
+      reportHtml: buildFallback(reportType, gate.profile, period, gate.accessLevel, locale),
       accessLevel: gate.accessLevel,
       source: 'fallback',
       degraded: true,
       llmError,
-      disclaimer: '不构成投资、医疗或法律建议'
+      disclaimer: t(locale, 'report_disclaimer')
     });
   }
 
-  const reportHtml = wrapReport(reportType, period, gate.accessLevel, mdToHtml(aiText));
+  const reportHtml = wrapReport(reportType, period, gate.accessLevel, mdToHtml(aiText), locale);
   await supabaseInsert('fortune_reports', {
     user_id: gate.user.id,
     report_key: key,
     report_type: reportType,
     target_period: cleanText(body.targetPeriod),
-    title: FORTUNE_REPORT_TYPES[reportType].label,
+    title: productLabelFor(reportType, locale),
     context: body.context || {},
     report_html: reportHtml,
     access_level: gate.accessLevel
   }, { upsert: true, onConflict: 'user_id,report_key' });
   return send(res, 200, {
     reportType,
-    title: FORTUNE_REPORT_TYPES[reportType].label,
+    title: productLabelFor(reportType, locale),
     reportHtml,
     accessLevel: gate.accessLevel,
     source: 'ai',
-    disclaimer: '不构成投资、医疗或法律建议'
+    disclaimer: t(locale, 'report_disclaimer')
   });
 }

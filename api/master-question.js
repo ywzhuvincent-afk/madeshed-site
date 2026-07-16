@@ -1,5 +1,6 @@
 import { getUserFromRequest, hasSupabaseService, supabaseInsert, supabaseSelect } from './_supabase.js';
 import { MEMBERSHIP_MONTHLY_CREDITS } from './_access.js';
+import { resolveUserLocale, normalizeLocale, t, LLM_LANGUAGE_RULE } from './_locale.js';
 
 const MASTER_CATEGORIES = ['marriage', 'career', 'wealth', 'windfall', 'family', 'health', 'timing', 'life', 'custom'];
 const MASTER_DEPTH_COST = { normal:1, deep:3 };
@@ -50,7 +51,7 @@ function buildFortuneContext(profile, payload) {
   };
 }
 
-function buildMasterPrompt(context, question, depth) {
+function buildMasterPrompt(context, question, depth, locale) {
   return [
     '你是一位谨慎、专业的传统命理师。必须基于提供的结构化八字上下文分析，不得编造不存在的命盘信息。',
     '回答格式固定为：结论、命理依据、关键时间窗口、风险点、建议行动、可追问方向。',
@@ -63,7 +64,7 @@ function buildMasterPrompt(context, question, depth) {
   ].join('\n');
 }
 
-async function callLlm(prompt) {
+async function callLlm(prompt, locale) {
   const baseUrl = process.env.LLM_BASE_URL;
   const apiKey = process.env.LLM_API_KEY;
   const model = process.env.LLM_MODEL || 'gpt-4.1-mini';
@@ -80,7 +81,7 @@ async function callLlm(prompt) {
     body: JSON.stringify({
       model,
       messages: [
-        { role: 'system', content: '你输出中文，语气像专业命理师，但要克制、清楚、可执行。' },
+        { role: 'system', content: '语气像专业命理师，但要克制、清楚、可执行。' + (LLM_LANGUAGE_RULE[normalizeLocale(locale)] || LLM_LANGUAGE_RULE.zh) },
         { role: 'user', content: prompt }
       ],
       temperature: 0.4
@@ -132,16 +133,16 @@ async function maybeGrantUltimateCredits(userId) {
 
 async function authorizeAndReserve(req, creditsNeeded) {
   if (!hasSupabaseService()) {
-    return { ok: false, status: 503, body: { error: 'supabase_service_not_configured', message: '云端点数账本暂未配置，本次不消耗点数。', creditsSpent: 0 } };
+    return { ok: false, status: 503, body: { error: 'supabase_service_not_configured', message: t(locale, 'credits_ledger_not_configured'), creditsSpent: 0 } };
   }
   const auth = await getUserFromRequest(req);
   if (!auth.user) {
-    return { ok: false, status: 401, body: { error: auth.error || 'unauthorized', message: '请先登录后再使用问大师。', creditsSpent: 0 } };
+    return { ok: false, status: 401, body: { error: auth.error || 'unauthorized', message: t(locale, 'master_login_required'), creditsSpent: 0 } };
   }
   await maybeGrantUltimateCredits(auth.user.id);
   const balance = await creditBalance(auth.user.id);
   if (balance < creditsNeeded) {
-    return { ok: false, status: 402, body: { error: 'insufficient_credits', message: `点数余额不足，本次需要 ${creditsNeeded} 点。`, balance, creditsNeeded, creditsSpent: 0 } };
+    return { ok: false, status: 402, body: { error: 'insufficient_credits', message: t(locale, 'insufficient_credits', { n: creditsNeeded }), balance, creditsNeeded, creditsSpent: 0 } };
   }
   return { ok: true, user: auth.user, balance };
 }
@@ -160,11 +161,11 @@ export default async function handler(req, res) {
   if (!MASTER_CATEGORIES.includes(category)) return send(res, 400, { error: 'invalid_category' });
   if (!['short', 'month', 'year', 'dayun', 'lifetime'].includes(horizon)) return send(res, 400, { error: 'invalid_horizon' });
   if (!question) return send(res, 400, { error: 'missing_question' });
-  if (!body.profile) return send(res, 400, { error: 'missing_profile', message: '请先生成并保存八字命盘。' });
+  if (!body.profile) return send(res, 400, { error: 'missing_profile', message: t(locale, 'profile_required') });
   if (!llmConfigured()) {
     return send(res, 503, {
       error: 'llm_not_configured',
-      message: 'AI 服务暂未配置，本次不消耗点数。',
+      message: t(locale, 'llm_not_configured'),
       creditsSpent: 0,
       creditsNeeded,
       noChargeReason: '不消耗点数'
@@ -172,14 +173,15 @@ export default async function handler(req, res) {
   }
 
   const context = buildFortuneContext(body.profile, { category, horizon, targetDate: body.targetDate, targetMonth: body.targetMonth });
-  const prompt = buildMasterPrompt(context, question, depth);
+  const locale = await resolveUserLocale(req, null);
+  const prompt = buildMasterPrompt(context, question, depth, locale);
   const billing = await authorizeAndReserve(req, creditsNeeded);
   if (!billing.ok) return send(res, billing.status, billing.body);
-  const llm = await callLlm(prompt);
+  const llm = await callLlm(prompt, locale);
   if (!llm.configured) {
     return send(res, 503, {
       error: 'llm_not_configured',
-      message: 'AI 服务暂未配置，本次不消耗点数。',
+      message: t(locale, 'llm_not_configured'),
       creditsSpent: 0,
       creditsNeeded,
       noChargeReason: '不消耗点数'

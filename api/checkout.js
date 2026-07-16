@@ -2,6 +2,7 @@ import { getUserFromRequest, hasSupabaseService, requireAccountReadyForPaidActio
 import { cleanEnv, priceFromEnv, siteOrigin, stripeFormRequest, stripeGet, ensureStripeCustomer } from './_stripe.js';
 import { hasTradeReportEntitlement, hasFortuneReportEntitlement } from './_access.js';
 import { resolveCurrencyPrice, parseSale, activeSaleAmount, toUnitAmount } from './_catalog.js';
+import { resolveUserLocale, t } from './_locale.js';
 
 // 商品名中英文各自一份：结账页按用户语言显示各自语言（不混）。改名时两边都要改。
 const CREDIT_PACK_PRODUCT = {
@@ -145,14 +146,16 @@ function requestAction(req) {
   return String(req.query?.action || url.searchParams.get('action') || req.body?.action || '').trim().toLowerCase();
 }
 
-async function requireUser(req, res, message) {
+// messageKey = _locale.js 里的三语 key（不再传写死的中文句子）。未登录时只能用请求带的语言。
+async function requireUser(req, res, messageKey) {
+  const locale = await resolveUserLocale(req, null);
   if (!hasSupabaseService()) {
-    send(res, 503, { error: 'supabase_service_not_configured', message: '会员账号系统暂未连接云端。' });
+    send(res, 503, { error: 'supabase_service_not_configured', message: t(locale, 'membership_cloud_not_configured'), locale });
     return null;
   }
   const auth = await getUserFromRequest(req);
   if (!auth.user) {
-    send(res, 401, { error: auth.error || 'unauthorized', message });
+    send(res, 401, { error: auth.error || 'unauthorized', message: t(locale, messageKey || 'login_required'), locale });
     return null;
   }
   return auth.user;
@@ -161,7 +164,16 @@ async function requireUser(req, res, message) {
 async function ensurePaidAccount(req, res, user) {
   const readiness = await requireAccountReadyForPaidAction(req, user);
   if (!readiness.ok) {
-    send(res, readiness.status, readiness.body);
+    /* _supabase.js 不能 import _locale.js（_locale 依赖它，会形成循环依赖），所以那边只回
+       messageKey，由这里按用户语言渲染成 message。漏了这一步，用户会收到一条没有正文的报错。 */
+    const body = Object.assign({}, readiness.body);
+    if (body.messageKey) {
+      const lc = await resolveUserLocale(req, user && user.id);
+      body.message = t(lc, body.messageKey);
+      body.locale = lc;
+      delete body.messageKey;
+    }
+    send(res, readiness.status, body);
     return null;
   }
   return readiness.account;
@@ -172,17 +184,17 @@ async function createCreditCheckout(req, res) {
     res.setHeader('Allow', 'POST');
     return send(res, 405, { error: 'method_not_allowed' });
   }
-  const user = await requireUser(req, res, '请先登录后再购买点数。');
+  const user = await requireUser(req, res, 'login_before_purchase');
   if (!user) return null;
   if (!(await ensurePaidAccount(req, res, user))) return null;
 
   const priceId = cleanEnv(process.env.STRIPE_CREDIT_PRICE_ID);
   if (!process.env.STRIPE_SECRET_KEY || !priceId) {
-    return send(res, 503, { error: 'stripe_not_configured', message: '点数购买暂未配置 Stripe。' });
+    return send(res, 503, { error: 'stripe_not_configured', message: t(locale, 'stripe_not_configured') });
   }
 
   const origin = siteOrigin(req);
-  const locale = checkoutLocale(req);
+  const locale = await resolveUserLocale(req, user && user.id);
   const params = new URLSearchParams();
   params.set('mode', 'payment');
   params.set('locale', stripePageLocale(locale));
@@ -216,7 +228,7 @@ async function createMembershipCheckout(req, res) {
     res.setHeader('Allow', 'POST');
     return send(res, 405, { error: 'method_not_allowed' });
   }
-  const user = await requireUser(req, res, '请先登录后再开通会员。');
+  const user = await requireUser(req, res, 'login_before_membership');
   if (!user) return null;
   if (!(await ensurePaidAccount(req, res, user))) return null;
 
@@ -226,7 +238,7 @@ async function createMembershipCheckout(req, res) {
   const product = MEMBERSHIP_PRODUCTS[tier];
   const reqPlan = String((req.body && req.body.plan) || '');
   const plan = product.plans[reqPlan] ? reqPlan : 'monthly';
-  const locale = checkoutLocale(req);
+  const locale = await resolveUserLocale(req, user && user.id);
 
   // 防重复订阅（曾为 blocker：双开标签/换设备可开出两个 ¥199/月 订阅，旧订阅站内不可见持续扣费）
   let existingMembership = null;
@@ -256,7 +268,7 @@ async function createMembershipCheckout(req, res) {
   if (!process.env.STRIPE_SECRET_KEY || !price.value) {
     return send(res, 503, {
       error: 'stripe_not_configured',
-      message: `会员订阅暂未配置 Stripe。缺少 ${!process.env.STRIPE_SECRET_KEY ? 'STRIPE_SECRET_KEY' : price.key}。`,
+      message: t(locale, 'stripe_not_configured'),
       missing: !process.env.STRIPE_SECRET_KEY ? 'STRIPE_SECRET_KEY' : price.key
     });
   }
@@ -302,7 +314,7 @@ async function createMembershipCheckout(req, res) {
     return send(res, error.status || 500, {
       error: error.message || 'stripe_error',
       detail: error.detail || null,
-      message: '会员订阅页面创建失败，请稍后再试。'
+      message: t(locale, 'checkout_session_failed')
     });
   }
 }
@@ -319,13 +331,13 @@ async function createReportCheckout(req, res) {
     res.setHeader('Allow', 'POST');
     return send(res, 405, { error: 'method_not_allowed' });
   }
-  const user = await requireUser(req, res, '请先登录后再购买报告。');
+  const user = await requireUser(req, res, 'login_before_purchase');
   if (!user) return null;
   if (!(await ensurePaidAccount(req, res, user))) return null;
 
   const item = reportProductFor(req.body || {});
-  if (!item) return send(res, 400, { error: 'invalid_report_type', message: '报告类型无效。' });
-  const locale = checkoutLocale(req);
+  if (!item) return send(res, 400, { error: 'invalid_report_type', message: t(locale, 'invalid_report_type') });
+  const locale = await resolveUserLocale(req, user && user.id);
 
   // 防重复购买，但仅拦"仍在有效期内"的权益——已过期(30天)的报告允许再次购买（曾为 major）
   // 权益查询失败必须 fail-closed：Supabase 抖动时若放行创建付款，会对已持有有效报告的用户重复扣款（曾为确认缺陷）。
@@ -361,7 +373,7 @@ async function createReportCheckout(req, res) {
   if (!process.env.STRIPE_SECRET_KEY || !price.value) {
     return send(res, 503, {
       error: 'stripe_not_configured',
-      message: `报告购买暂未配置 Stripe。缺少 ${!process.env.STRIPE_SECRET_KEY ? 'STRIPE_SECRET_KEY' : price.key}。`,
+      message: t(locale, 'stripe_not_configured'),
       missing: !process.env.STRIPE_SECRET_KEY ? 'STRIPE_SECRET_KEY' : price.key
     });
   }
@@ -404,7 +416,7 @@ async function createReportCheckout(req, res) {
     return send(res, error.status || 500, {
       error: error.message || 'stripe_error',
       detail: error.detail || null,
-      message: '报告购买页面创建失败，请稍后再试。'
+      message: t(locale, 'checkout_session_failed')
     });
   }
 }
@@ -414,15 +426,15 @@ async function createCustomerPortal(req, res) {
     res.setHeader('Allow', 'POST');
     return send(res, 405, { error: 'method_not_allowed' });
   }
-  const user = await requireUser(req, res, '请先登录后再管理会员。');
+  const user = await requireUser(req, res, 'login_before_membership');
   if (!user) return null;
   const rows = await supabaseSelect('memberships', `user_id=eq.${encodeURIComponent(user.id)}&select=stripe_customer_id,status,tier&limit=1`);
   const membership = rows[0];
   if (!membership || !membership.stripe_customer_id) {
-    return send(res, 404, { error: 'membership_not_found', message: '当前账号还没有可管理的 Stripe 会员订阅。' });
+    return send(res, 404, { error: 'membership_not_found', message: t(locale, 'no_subscription_to_manage') });
   }
   if (!process.env.STRIPE_SECRET_KEY) {
-    return send(res, 503, { error: 'stripe_not_configured', message: 'Stripe 暂未配置，不能打开会员管理页面。' });
+    return send(res, 503, { error: 'stripe_not_configured', message: t(locale, 'portal_stripe_not_configured') });
   }
   const params = new URLSearchParams();
   params.set('customer', membership.stripe_customer_id);
@@ -434,7 +446,7 @@ async function createCustomerPortal(req, res) {
     return send(res, error.status || 500, {
       error: error.message || 'stripe_error',
       detail: error.detail || null,
-      message: '会员管理页面创建失败，请稍后再试。'
+      message: t(locale, 'checkout_session_failed')
     });
   }
 }
@@ -448,7 +460,7 @@ export default async function handler(req, res) {
     if (action === 'portal') return await createCustomerPortal(req, res);
     return send(res, 400, {
       error: 'invalid_checkout_action',
-      message: '付款接口 action 无效。',
+      message: t(locale, 'invalid_checkout_action'),
       actions: ['credit', 'membership', 'report', 'portal']
     });
   } catch (error) {
@@ -456,7 +468,7 @@ export default async function handler(req, res) {
     if (!res.headersSent) {
       return send(res, 500, {
         error: 'checkout_failed',
-        message: '购买接口出错：' + ((error && error.message) || 'unknown') + '。当前不会扣费。',
+        message: t(await resolveUserLocale(req, null), 'checkout_error'),
         detail: String((error && error.stack) || error || '').split('\n').slice(0, 3)
       });
     }

@@ -1377,7 +1377,9 @@ includesAll(fortuneReportApi, [
   'full',
   'dayun',
   'month',
-  '不构成投资、医疗或法律建议',
+  // 免责声明已改为按用户注册语言渲染（t(locale,'report_disclaimer')）；此前钉死中文串
+  // 恰恰是英文/繁体用户看到中文免责声明的原因。三语完整性由 tests/i18n-checks.mjs 保证。
+  "t(locale, 'report_disclaimer')",
 ], 'fortune report API (LLM 深度命理)');
 
 // 偏财运 / 机会财：新增付费专测 + 问大师提问方向 + 定位拓宽（非敏感词）
@@ -1411,7 +1413,8 @@ includesAll(masterQuestionApi, [
   'LLM_BASE_URL',
   'LLM_API_KEY',
   'LLM_MODEL',
-  'AI 服务暂未配置',
+  // 已改为按用户注册语言渲染；三语完整性由 tests/i18n-checks.mjs 保证
+  "t(locale, 'llm_not_configured')",
   '不消耗点数',
   '不提供具体投资标的建议',
   'buildMasterPrompt',
@@ -1557,7 +1560,8 @@ includesAll(chart, ["dataKey:'mon'", 'cell.dataset.mon!=null', 'state.selMonthGz
 includesAll(chart, ["dataKey:'ld'", 'cell.dataset.ld!=null', 'function renderDayDetail', 'B.actionScore(prof,ctx,dr,fnd)', 'id="ld-detail"'], 'chart-full 时间轴：点流日弹出行动指数明细（财运/结构/互动/岁运/风险，引擎口径）');
 // 流日明细英文态：命理"值"也译成英文（不止行标签）——band/仓位/十神/财运/互动/岁运
 includesAll(chart, ['function ldBandEn', 'function ldInterEn', 'function ldCLabelEn', 'en?ldBandEn(act.label)', 'en?ldInterEn(dr.interaction.note)'], 'chart-full 流日明细：英文态把命理值(标签/仓位/财运/四柱互动/岁运)整体译成英文');
-includesAll(fortuneReportApi, ['cleanText(targetPeriod) || (type'], 'fortune-report 期间用 cleanText||默认，不再恒空');
+// 默认期间现按用户语言取（period_this_month / period_current），仍保持"绝不恒空"这一原意
+includesAll(fortuneReportApi, ['cleanText(targetPeriod) || t(locale,'], 'fortune-report 期间用 cleanText||默认，不再恒空');
 assert.ok(/const scored = entries\.filter\(\(entry\) => Number\.isFinite\(entry\.score\)\)/.test(reportApi), 'report avgScore 只计入有真实分数的记录');
 // 购买前置：去掉冗余的"邮箱确认"闸门（Stripe 自会验证付款邮箱），仅保留法律条款接受
 const supabaseLib = readFileSync('api/_supabase.js', utf8);

@@ -168,7 +168,8 @@ export async function requireAccountReadyForPaidAction(req, user) {
       status: 403,
       body: {
         error: 'legal_acceptance_required',
-        message: '请先阅读并接受服务条款、隐私政策、风险免责声明和会员扣费条款。',
+        // 文案由调用方按 locale 渲染（此处不 import _locale.js：_locale 依赖本文件，会形成循环依赖）
+        messageKey: 'legal_acceptance_required',
         missingLegal: status.missingLegal,
         account: status
       }

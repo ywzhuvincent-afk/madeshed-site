@@ -1,4 +1,5 @@
 import { getUserFromRequest, hasSupabaseService, supabaseSelect } from './_supabase.js';
+import { resolveUserLocale, t } from './_locale.js';
 
 function send(res, status, body) {
   res.status(status).json(body);
@@ -13,7 +14,7 @@ export default async function handler(req, res) {
     return send(res, 200, {
       source: 'master_questions',
       history: [],
-      message: '云端历史接口已预留；前端会先显示本机历史记录。'
+      message: t(await resolveUserLocale(req, null), 'master_history_placeholder')
     });
   }
   const auth = await getUserFromRequest(req);
