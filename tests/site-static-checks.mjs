@@ -1752,4 +1752,41 @@ assert.equal(
   '本地赠点不得写死 ultimate-30（至尊VIP 会被降成基础额度）',
 );
 
+/* ── 英文站不得漏中文 ─────────────────────────────────────────────────────
+   实测发现过：英文站 Risk Alerts 显示 "Wealth risk: 压力大，宜观望"（引擎中文常量被
+   原样拼进英文界面）。以下守卫做"跨文件一致性"校验，让这类漏译无法悄悄回归。 */
+
+// 1) bazi-engine.js 里每一条 cWarn 中文常量，都必须在 index.html 的 CWARN_EN 里有英文翻译。
+{
+  const engineWarns = [...baziEngine.matchAll(/cWarn\s*=\s*'([^']+)'/g)].map((m) => m[1]).filter(Boolean);
+  assert.ok(engineWarns.length >= 5, `should find the engine cWarn constants, got ${engineWarns.length}`);
+  const missing = engineWarns.filter((w) => !index.includes(`'${w}':`));
+  assert.deepEqual(missing, [], `每条引擎 cWarn 都必须在 index.html 的 CWARN_EN 里有英文翻译，否则英文站会漏中文。缺: ${missing.join(' | ')}`);
+  // 财星身弱那条会追加「，偏财投机尤须克制」后缀，拼接后的整串也必须能查到。
+  assert.ok(
+    index.includes("'看得到赚不到，忌追高/加杠杆，偏财投机尤须克制':"),
+    'CWARN_EN 必须覆盖偏财后缀拼接后的完整字符串（否则该组合会漏中文）',
+  );
+  includesAll(index, ["function cWarnEn(w)", "'Wealth risk: '+cWarnEn(dr.cWarn)"], 'Risk Alerts 英文态必须走 cWarnEn 翻译');
+  assert.equal(
+    /'Wealth risk: '\)\+dr\.cWarn/.test(index),
+    false,
+    '英文 Risk Alerts 不得直接拼接引擎中文 cWarn',
+  );
+}
+
+// 2) 账号页英文标题按序号映射——数组长度必须等于该视图 .legal-block 实际数量，否则整体错位+漏译。
+{
+  const accountView = (index.match(/<section class="view" data-view="account"[\s\S]*?(?=<section class="view"|$)/) || [''])[0];
+  const blockCount = (accountView.match(/<div class="legal-block"/g) || []).length;
+  const titles = (index.match(/\[\['Account Status'\][\s\S]{0,220}?\]\.forEach/) || [''])[0];
+  const titleCount = (titles.match(/\['[^']+'\]/g) || []).length;
+  assert.ok(blockCount > 0, 'account view should have legal-blocks');
+  assert.equal(
+    titleCount,
+    blockCount,
+    `账号页英文标题数(${titleCount}) 必须等于 .legal-block 数(${blockCount})——不等就会像之前那样标题错位、末块漏中文`,
+  );
+}
+
 console.log('Static site checks passed');
