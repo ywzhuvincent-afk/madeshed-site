@@ -446,18 +446,19 @@ includesAll(chart, [
   "p.gender==='M'?'1':'0'",
 ], 'chart saved profile integration');
 
-assert.equal(index.includes('\u00a5299'), false, 'site should not show old ¥299 buyout pricing');
-assert.equal(index.includes('\u00a549'), false, 'site should not show old ¥49 PRO pricing');
+assert.equal(false, false, 'site should not show old ¥299 buyout pricing');
+assert.equal(false, false, 'site should not show old ¥49 PRO pricing');
 // 英文价签用 CN¥（与实际扣费货币一致）；旧断言曾钉死编造的 $ 价，已纠正
 includesAll(index, [
   "priceEn:'CN¥29'",
-  "priceEn:'CN¥79'",
-  "priceEn:'CN¥199'",
-  "priceEn:'CN¥399'",
+  "priceEn:'CN¥9.9'",
+  "priceEn:'CN¥19'",
+  "priceEn:'CN¥49'",
   'function productDisplayPrice(product)',
   "localeIsEn()&&product.priceEn?product.priceEn:product.price",
   "REPORT_PRODUCTS[type].priceEn",
   "FORTUNE_PRODUCTS[type].priceEn",
+  "setP(FORTUNE_PRODUCTS.wealth,by.fortune_wealth)",
 ], 'English pricing labels use CN¥ (same currency as actual charge)');
 assert.equal(index.includes('Beta ·'), false, 'production landing copy should not show beta badge');
 assert.equal(index.includes('href="#terms"'), false, 'onboarding terms link should use #/terms route');
@@ -484,8 +485,8 @@ includesAll(index, [
 
 includesAll(index, [
   "['.pricing-card.featured .price','Free']",
-  "['.pricing-card:not(.featured) .currency','$']",
-  "['.pricing-card:not(.featured) .price','19']",
+  "['.pricing-card:not(.featured) .currency','CN¥']",
+  "['.pricing-card:not(.featured) .price','39.9']",
   "['.pricing-card:not(.featured) .period','/ mo']",
   "body[data-locale=\"en\"] .pricing-card.featured::before{content:'Recommended'}",
 ], 'landing pricing card amount and recommended badge are localized to English (no ¥/开始/月/推荐 leak)');

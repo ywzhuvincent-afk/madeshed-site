@@ -5,10 +5,10 @@ import { getUserFromRequest, hasSupabaseService, supabaseInsert, supabaseSelect 
 export const config = { maxDuration: 60 };
 
 const FORTUNE_REPORT_TYPES = {
-  full: { label: '全盘解读', price: '¥69' },
-  dayun: { label: '流年大运解读', price: '¥99' },
-  month: { label: '每月运程', price: '¥29' },
-  wealth: { label: '偏财运 · 机会财专测', price: '¥39' }
+  full: { label: '全盘解读', price: '¥29' },
+  dayun: { label: '流年大运解读', price: '¥25' },
+  month: { label: '每月运程', price: '¥9.9' },
+  wealth: { label: '偏财运 · 机会财专测', price: '¥19' }
 };
 
 function send(res, status, body) {

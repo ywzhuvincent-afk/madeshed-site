@@ -9,7 +9,7 @@ const CREDIT_PACK_PRODUCT = {
   label: '问大师 10 点包',
   labelEn: 'Ask Master · 10 Credits',
   labelHant: '問大師 10 點包',
-  price: '¥99'
+  price: '¥49'
 };
 
 const MEMBERSHIP_PRODUCTS = {
@@ -17,7 +17,7 @@ const MEMBERSHIP_PRODUCTS = {
     label: '最高级会员',
     labelEn: 'Ultimate Membership',
     labelHant: '最高級會員',
-    price: '¥199/月',
+    price: '¥39.9/月',
     monthlyCredits: 30,
     priceEnv: ['STRIPE_ULTIMATE_PRICE_ID', 'STRIPE_MEMBERSHIP_PRICE_ID']
   }
