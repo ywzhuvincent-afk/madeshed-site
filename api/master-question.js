@@ -1,6 +1,6 @@
 import { getUserFromRequest, hasSupabaseService, supabaseInsert, supabaseSelect } from './_supabase.js';
 
-const MASTER_CATEGORIES = ['marriage', 'career', 'wealth', 'family', 'health', 'timing', 'life', 'custom'];
+const MASTER_CATEGORIES = ['marriage', 'career', 'wealth', 'windfall', 'family', 'health', 'timing', 'life', 'custom'];
 const MASTER_DEPTH_COST = { normal:1, deep:3 };
 
 function send(res, status, body) {
@@ -54,6 +54,7 @@ function buildMasterPrompt(context, question, depth) {
     '你是一位谨慎、专业的传统命理师。必须基于提供的结构化八字上下文分析，不得编造不存在的命盘信息。',
     '回答格式固定为：结论、命理依据、关键时间窗口、风险点、建议行动、可追问方向。',
     '财运只讲传统命理里的收入机会、事业财星、破财风险、花费压力和适合求稳/开拓，不提供具体投资标的建议。',
+    '涉及偏财/机会财/投机性求财时，从命理偏财星旺弱、日主能否担财与引动时机分析倾向，务必给理性与风险提示（偏财来去快、量力而行、不借贷不透支不沉迷），绝不承诺收益或中奖。',
     '不得承诺必然发生。医疗、法律、极端风险问题必须建议用户寻求现实专业帮助。',
     `深度：${depth}`,
     `结构化上下文：${JSON.stringify(context)}`,

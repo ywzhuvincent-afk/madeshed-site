@@ -33,7 +33,8 @@ const REPORT_PRODUCTS = {
 const FORTUNE_PRODUCTS = {
   full: { label: '全盘解读', labelEn: 'Full Chart Reading', labelHant: '全盤解讀', priceEnv: ['STRIPE_FORTUNE_FULL_PRICE_ID'] },
   dayun: { label: '流年大运解读', labelEn: 'Luck Pillar Reading', labelHant: '流年大運解讀', priceEnv: ['STRIPE_FORTUNE_DAYUN_PRICE_ID'] },
-  month: { label: '每月运程', labelEn: 'Monthly Timing Reading', labelHant: '每月運程', priceEnv: ['STRIPE_FORTUNE_MONTH_PRICE_ID'] }
+  month: { label: '每月运程', labelEn: 'Monthly Timing Reading', labelHant: '每月運程', priceEnv: ['STRIPE_FORTUNE_MONTH_PRICE_ID'] },
+  wealth: { label: '偏财运机会财专测', labelEn: 'Windfall Wealth Reading', labelHant: '偏財運機會財專測', priceEnv: ['STRIPE_FORTUNE_WEALTH_PRICE_ID'] }
 };
 
 // 结账语言：前端把当前站点语言放进 body.locale（en / zh-Hant / zh）。

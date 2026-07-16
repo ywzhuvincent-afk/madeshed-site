@@ -1359,6 +1359,12 @@ includesAll(fortuneReportApi, [
   '不构成投资、医疗或法律建议',
 ], 'fortune report API (LLM 深度命理)');
 
+// 偏财运 / 机会财：新增付费专测 + 问大师提问方向 + 定位拓宽（非敏感词）
+includesAll(fortuneReportApi, ['wealth', '偏财运', '偏财与机会财潜质', '机会财活跃的时间窗'], '偏财运机会财专测报告');
+includesAll(checkoutApi, ['STRIPE_FORTUNE_WEALTH_PRICE_ID', '偏财运机会财专测'], 'checkout 偏财运产品');
+includesAll(masterQuestionApi, ['windfall', '偏财/机会财/投机性求财'], '问大师偏财方向');
+includesAll(index, ['偏财机会财', "wealth:{label:'偏财运机会财专测'", 'Windfall Wealth Reading', '投资、投机、机会财'], '前端偏财运产品+问大师类目+定位拓宽');
+
 includesAll(reportApi, [
   'authorizeTradeReportAccess',
   'loadCloudCheckins',
