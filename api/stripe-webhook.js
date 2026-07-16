@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { hasSupabaseService, supabaseInsert, supabaseSelect, supabaseUpdate } from './_supabase.js';
 import { cleanEnv, stripeGet, stripeFormRequest } from './_stripe.js';
+import { MEMBERSHIP_MONTHLY_CREDITS } from './_access.js';
 import { sendEmail, notifyOwner, getUserEmail, getUserLocale, normalizeEmailLocale, productLabel, siteLink, reportReadyEmail, creditsAddedEmail, membershipWelcomeEmail, paymentFailedEmail, refundEmail } from './_email.js';
 
 function send(res, status, body) {
@@ -149,7 +150,9 @@ async function creditBalance(userId) {
 }
 
 async function grantMembershipCredits(userId, tier, source, referenceId = currentGrantMonth()) {
-  if (!hasSupabaseService() || !userId || tier !== 'ultimate') return { granted: false };
+  // 额度按层级取自 _access.js 的共用表（基础 30 / 至尊VIP 200）；未知层级不发点。
+  const amount = MEMBERSHIP_MONTHLY_CREDITS[tier];
+  if (!hasSupabaseService() || !userId || !amount) return { granted: false };
   // 幂等口径：每用户每个日历月至多一次月度赠点（按 created_at 月窗口查重，而非只比 reference_id——
   // 否则 invoice 键与月份键并存的多事件源会在同月各发一次 30 点）。
   const monthStart = `${currentGrantMonth()}-01T00:00:00Z`;
@@ -162,13 +165,13 @@ async function grantMembershipCredits(userId, tier, source, referenceId = curren
   await supabaseInsert('credit_ledger', {
     user_id: userId,
     entry_type: 'membership_grant',
-    amount: 30,
-    balance_after: balance + 30,
+    amount,
+    balance_after: balance + amount,
     reference_type: 'membership_month',
     reference_id: referenceId,
     payload: { tier, source }
   });
-  return { granted: true, amount: 30 };
+  return { granted: true, amount };
 }
 
 async function logMembershipEvent(event, userId) {
@@ -702,7 +705,7 @@ async function handleInvoicePaid(invoice) {
   if (!subscriptionId) return null;
   const subscription = await stripeGet(`subscriptions/${encodeURIComponent(subscriptionId)}`);
   const updated = await upsertMembershipFromSubscription(subscription || { id: subscriptionId, customer: invoice.customer, status: 'active' });
-  if (updated && updated.userId && updated.tier === 'ultimate' && (updated.status === 'active' || updated.status === 'trialing')) {
+  if (updated && updated.userId && MEMBERSHIP_MONTHLY_CREDITS[updated.tier] && (updated.status === 'active' || updated.status === 'trialing')) {
     // 引用真实发票 id（月窗口幂等在 grantMembershipCredits 内统一处理）
     await grantMembershipCredits(updated.userId, updated.tier, 'invoice.paid', invoice.id || currentGrantMonth());
   }

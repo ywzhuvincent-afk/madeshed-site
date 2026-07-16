@@ -8,7 +8,9 @@ const FORTUNE_REPORT_TYPES = {
   full: { label: '全盘解读', price: '¥29' },
   dayun: { label: '流年大运解读', price: '¥25' },
   month: { label: '每月运程', price: '¥9.9' },
-  wealth: { label: '偏财运 · 机会财专测', price: '¥19' }
+  wealth: { label: '偏财运 · 机会财专测', price: '¥19' },
+  // 尊享线旗舰：基础会员不含（_access.js VIP_ONLY_FORTUNE_REPORTS），至尊VIP免费、他人单买。
+  timing: { label: '八字投资择时全案', price: '¥688' }
 };
 
 function send(res, status, body) {
@@ -162,7 +164,41 @@ const PROMPTS = {
 ## 五、风险与理性提示
 偏财的特点是来得快去得快、波动大。请务必给出理性建议：量力而行、设好上限、切勿借贷或透支去博机会财、不可沉迷、更不能把偏财当稳定收入。
 
-只讲命理层面的偏财倾向与时机参考，不预测任何具体结果、不承诺收益或中奖、不构成投资建议。`
+只讲命理层面的偏财倾向与时机参考，不预测任何具体结果、不承诺收益或中奖、不构成投资建议。`,
+
+  /* 【八字投资择时全案】尊享线旗舰（一次性 ¥688）。与 full 同样拆 3 段并行生成：
+     单段更短不会被 max_tokens 截断，并行墙钟≈单段。三段合起来是全站最深的一份报告。 */
+  timingA: `这是一份【八字投资择时全案】的第 1/3 部分——本站最高规格的深度专案，读者已付费购买尊享服务，请拿出资深命理师压箱底的功力，逐章展开、篇幅充分、务必结合命盘里的具体干支五行讲透，不要泛泛而谈：
+
+## 一、你的财富格局总纲
+定日主强弱与格局；正财、偏财在命盘中的旺衰、位置、透干通根情况；日主能否担财。给出这个命的财富总定位：是靠正财稳健积累，还是有偏财/机会财的潜质，抑或需先补身再谈财。
+
+## 二、你的用神喜忌与「财路」
+明确用神、喜神、忌神，并把它们翻译成可用的择时语言：哪些五行/十神出现时你的财被引动、状态最好；哪些出现时最容易破财、冲动、判断失准。这是后面所有择时的底层依据，务必讲清原理。
+
+## 三、你的行为风险画像
+从命理角度讲清你在求财时最容易犯的错（如身弱财多易追高、比劫重易被劫财/合伙纠纷、伤官旺易冲动开仓、印重易犹豫错失等），并指出这些倾向在什么五行时段会被放大。`,
+
+  timingB: `这是一份【八字投资择时全案】的第 2/3 部分（承接前文，直接从第四章开始，不要重复前面内容）。这是本报告最核心、读者最看重的部分，请务必详尽、落到具体年份月份：
+
+## 四、未来三年逐年推演
+以当前大运为背景，对未来三年（从今年起，逐年写出具体公历年份与流年干支）逐年深入推演：该年流年与命局的生克合冲、财星是否被引动、整体是进取年还是守成年、该年的主线机会与主要风险。每年都要单独成段、讲透。
+
+## 五、逐月择时年历
+这是本专案的招牌。请对未来三年，逐年列出「相对顺手的月份」与「需要提防的月份」（用公历月份，并说明对应的五行/十神理由）。要具体到月，形成一份可对照使用的择时年历。宁可讲清楚少数几个关键月，也不要含糊带过。`,
+
+  timingC: `这是一份【八字投资择时全案】的第 3/3 部分（承接前文，直接从第六章开始，不要重复前面内容）：
+
+## 六、关键时间窗口清单
+把前面的推演收敛成一份「窗口清单」：列出未来三年里最值得把握的几个时间窗（年+月），以及最该收手观望的几个窗口，各自给出命理依据与该窗口的建议姿态（进取／标准／保守／观望）。
+
+## 七、风险与纪律
+针对这个命盘量身给出求财纪律：仓位与上限如何设、什么信号出现必须收手、如何对治第三章里那些行为弱点。务必强调：偏财/机会财来去快，量力而行、不借贷、不透支、不沉迷，不可把机会财当稳定收入。
+
+## 八、给你的话
+以资深命理师的口吻做一段有分量的总结与寄语，回到「命是底盘、运是节奏、人是变量」，鼓励其用纪律把好的时机兑现。
+
+全篇只讲命理层面的倾向与时机参考：不预测具体点位或结果、不推荐任何标的、不承诺收益或中奖、不构成投资建议。`
 };
 
 function buildUserPrompt(type, profile, targetPeriod) {
@@ -331,13 +367,12 @@ export default async function handler(req, res) {
   let llmError = '';
   if (llmConfigured()) {
     try {
-      if (reportType === 'full') {
-        // 拆 3 段（各 3 个板块）并行生成：单段更短不会被 max_tokens 截断，并行墙钟≈单段，覆盖全部 9 章。
-        const [a, b, c] = await Promise.all([
-          callLlm(buildUserPrompt('fullA', gate.profile, body.targetPeriod), 2800),
-          callLlm(buildUserPrompt('fullB', gate.profile, body.targetPeriod), 2800),
-          callLlm(buildUserPrompt('fullC', gate.profile, body.targetPeriod), 2800)
-        ]);
+      if (reportType === 'full' || reportType === 'timing') {
+        // 拆 3 段并行生成：单段更短不会被 max_tokens 截断，并行墙钟≈单段，覆盖全部章节。
+        // timing 是尊享旗舰（¥688），给更大的 token 预算以撑起"五千字级"的深度。
+        const parts = reportType === 'timing' ? ['timingA', 'timingB', 'timingC'] : ['fullA', 'fullB', 'fullC'];
+        const mtPart = reportType === 'timing' ? 3600 : 2800;
+        const [a, b, c] = await Promise.all(parts.map((p) => callLlm(buildUserPrompt(p, gate.profile, body.targetPeriod), mtPart)));
         aiText = [a.text, b.text, c.text].filter(Boolean).join('\n\n');
         llmError = a.error || b.error || c.error || '';
       } else {

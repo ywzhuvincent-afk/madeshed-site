@@ -28,11 +28,20 @@ export async function loadSavedProfile(userId) {
   return null;
 }
 
-export async function activeUltimateMembership(userId) {
+// 会员层级与每月赠点额度。至尊VIP(highest)走"每月大量点数"而非无限，成本可控。
+// 发点有两条路径且必须共用此表：stripe-webhook.js（付款时发）与 master-question.js（当月首次
+// 使用时兜底补发，年费会员的 11 个月全靠它）。改额度务必同时检查这两处，否则两条路径会给出不同额度。
+export const MEMBERSHIP_MONTHLY_CREDITS = { ultimate: 30, highest: 200 };
+export const MEMBERSHIP_TIERS = Object.keys(MEMBERSHIP_MONTHLY_CREDITS);
+// 尊享报告：只有至尊VIP(highest)免费；基础会员(ultimate)必须单次购买，不得白拿。
+export const VIP_ONLY_FORTUNE_REPORTS = ['timing'];
+
+// 有效会员（基础 ultimate 或至尊 highest）。返回整行，供按 tier 判定尊享权益。
+export async function activeMembership(userId) {
   if (!hasSupabaseService() || !userId) return null;
   const rows = await supabaseSelect('memberships', `user_id=eq.${encodeURIComponent(userId)}&select=tier,status,current_period_end&limit=1`);
   const membership = rows[0] || null;
-  if (membership && membership.tier === 'ultimate' && ACTIVE_MEMBERSHIP_STATUSES.has(membership.status)) return membership;
+  if (membership && MEMBERSHIP_TIERS.indexOf(membership.tier) >= 0 && ACTIVE_MEMBERSHIP_STATUSES.has(membership.status)) return membership;
   return null;
 }
 
@@ -46,7 +55,7 @@ function purchaseStillValid(expiresAt) {
 }
 
 export async function hasTradeReportEntitlement(userId, reportType) {
-  if (await activeUltimateMembership(userId)) return { ok: true, accessLevel: 'membership' };
+  if (await activeMembership(userId)) return { ok: true, accessLevel: 'membership' };
   const rows = await supabaseSelect(
     'report_entitlements',
     `user_id=eq.${encodeURIComponent(userId)}&report_type=eq.${encodeURIComponent(reportType)}&status=eq.active&select=source,payload&limit=1`
@@ -61,9 +70,13 @@ export async function hasTradeReportEntitlement(userId, reportType) {
 }
 
 export async function hasFortuneReportEntitlement(userId, reportType) {
-  if (await activeUltimateMembership(userId)) return { ok: true, accessLevel: 'membership' };
+  const membership = await activeMembership(userId);
+  // 尊享报告（择时全案）只有至尊VIP免费；基础会员在此不放行，落到下面的单次购买校验。
+  if (membership && (VIP_ONLY_FORTUNE_REPORTS.indexOf(reportType) < 0 || membership.tier === 'highest')) {
+    return { ok: true, accessLevel: 'membership' };
+  }
   // 只认权威的“<type>-entitlement”权益行（唯一带 expires_at），且必须 access_level='paid'。
-  // 不再匹配任何 membership 内容行——会员访问已由上面的 activeUltimateMembership 独立判定，
+  // 不再匹配任何 membership 内容行——会员访问已由上面的 activeMembership 独立判定，
   // 否则会员到期后残留的 access_level='membership' 内容行会永久免费泄漏（曾为 paywall leak）。
   const rows = await supabaseSelect(
     'fortune_reports',

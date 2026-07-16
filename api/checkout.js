@@ -12,6 +12,8 @@ const CREDIT_PACK_PRODUCT = {
   price: '¥49'
 };
 
+/* 会员层级 × 计费周期。tier/plan 均只接受本表里的键（白名单），绝不用请求值拼环境变量名。
+   monthlyCredits 必须与 _access.js 的 MEMBERSHIP_MONTHLY_CREDITS 一致（发点以那张表为准）。 */
 const MEMBERSHIP_PRODUCTS = {
   ultimate: {
     label: '最高级会员',
@@ -19,7 +21,22 @@ const MEMBERSHIP_PRODUCTS = {
     labelHant: '最高級會員',
     price: '¥39.9/月',
     monthlyCredits: 30,
-    priceEnv: ['STRIPE_ULTIMATE_PRICE_ID', 'STRIPE_MEMBERSHIP_PRICE_ID']
+    priceEnv: ['STRIPE_ULTIMATE_PRICE_ID', 'STRIPE_MEMBERSHIP_PRICE_ID'],
+    plans: {
+      monthly: { priceEnv: ['STRIPE_ULTIMATE_PRICE_ID', 'STRIPE_MEMBERSHIP_PRICE_ID'] }
+    }
+  },
+  highest: {
+    label: '至尊VIP会员',
+    labelEn: 'VIP Membership',
+    labelHant: '至尊VIP會員',
+    price: '¥299/月',
+    monthlyCredits: 200,
+    priceEnv: ['STRIPE_HIGHEST_PRICE_ID'],
+    plans: {
+      monthly: { priceEnv: ['STRIPE_HIGHEST_PRICE_ID'] },
+      annual: { priceEnv: ['STRIPE_HIGHEST_ANNUAL_PRICE_ID'] }
+    }
   }
 };
 
@@ -34,7 +51,9 @@ const FORTUNE_PRODUCTS = {
   full: { label: '全盘解读', labelEn: 'Full Chart Reading', labelHant: '全盤解讀', priceEnv: ['STRIPE_FORTUNE_FULL_PRICE_ID'] },
   dayun: { label: '流年大运解读', labelEn: 'Luck Pillar Reading', labelHant: '流年大運解讀', priceEnv: ['STRIPE_FORTUNE_DAYUN_PRICE_ID'] },
   month: { label: '每月运程', labelEn: 'Monthly Timing Reading', labelHant: '每月運程', priceEnv: ['STRIPE_FORTUNE_MONTH_PRICE_ID'] },
-  wealth: { label: '偏财运机会财专测', labelEn: 'Windfall Wealth Reading', labelHant: '偏財運機會財專測', priceEnv: ['STRIPE_FORTUNE_WEALTH_PRICE_ID'] }
+  wealth: { label: '偏财运机会财专测', labelEn: 'Windfall Wealth Reading', labelHant: '偏財運機會財專測', priceEnv: ['STRIPE_FORTUNE_WEALTH_PRICE_ID'] },
+  // 尊享线：基础会员不含（见 _access.js VIP_ONLY_FORTUNE_REPORTS），至尊VIP免费、他人可单买。
+  timing: { label: '八字投资择时全案', labelEn: 'Investment Timing Master Plan', labelHant: '八字投資擇時全案', priceEnv: ['STRIPE_FORTUNE_TIMING_PRICE_ID'] }
 };
 
 // 结账语言：前端把当前站点语言放进 body.locale（en / zh-Hant / zh）。
@@ -201,8 +220,12 @@ async function createMembershipCheckout(req, res) {
   if (!user) return null;
   if (!(await ensurePaidAccount(req, res, user))) return null;
 
-  const tier = 'ultimate';
+  // tier/plan 走白名单：只接受 MEMBERSHIP_PRODUCTS 里存在的键，绝不用请求值拼环境变量名。
+  const reqTier = String((req.body && req.body.tier) || '');
+  const tier = MEMBERSHIP_PRODUCTS[reqTier] ? reqTier : 'ultimate';
   const product = MEMBERSHIP_PRODUCTS[tier];
+  const reqPlan = String((req.body && req.body.plan) || '');
+  const plan = product.plans[reqPlan] ? reqPlan : 'monthly';
   const locale = checkoutLocale(req);
 
   // 防重复订阅（曾为 blocker：双开标签/换设备可开出两个 ¥199/月 订阅，旧订阅站内不可见持续扣费）
@@ -211,15 +234,25 @@ async function createMembershipCheckout(req, res) {
     const rows = await supabaseSelect('memberships', `user_id=eq.${encodeURIComponent(user.id)}&select=status,tier,stripe_customer_id,stripe_subscription_id&limit=1`);
     existingMembership = rows[0] || null;
   } catch (e) { existingMembership = null; }
+  // 已有订阅一律不再开第二笔（曾为 blocker：双开标签/换设备可开出两个订阅并持续扣费）。
+  // 升级/降级（基础↔至尊VIP、月↔年）必须走 Stripe 账单门户改订阅，由 Stripe 处理按比例计费。
   if (existingMembership && ['active', 'trialing', 'past_due'].indexOf(existingMembership.status) >= 0) {
+    const upgrading = existingMembership.tier !== tier;
     return send(res, 409, {
       error: 'already_member',
+      currentTier: existingMembership.tier || null,
+      requestedTier: tier,
       message: locale === 'en'
-        ? 'You already have an active Ultimate membership. Use "Manage Billing" to view or change it — no second subscription was created.'
-        : '你已经是最高级会员，无需重复开通。请用「管理会员/账单」查看或调整订阅——本次未创建新的订阅、未扣费。'
+        ? (upgrading
+          ? 'You already have an active membership. To switch plans, open "Manage Billing" and change your subscription there — Stripe will prorate it. No second subscription was created and you were not charged.'
+          : 'You already have an active membership. Use "Manage Billing" to view or change it — no second subscription was created.')
+        : (upgrading
+          ? '你已有生效中的会员订阅。要更换档位请点「管理会员/账单」在订阅里切换，Stripe 会自动按比例计费——本次未创建新订阅、未扣费。'
+          : '你已经是会员，无需重复开通。请用「管理会员/账单」查看或调整订阅——本次未创建新的订阅、未扣费。')
     });
   }
-  const price = priceFromEnv(product.priceEnv);
+  // 计费周期（月/年）由 Stripe 价上的 recurring.interval 决定，setLocalizedLineItem 会原样复制。
+  const price = priceFromEnv(product.plans[plan].priceEnv);
   if (!process.env.STRIPE_SECRET_KEY || !price.value) {
     return send(res, 503, {
       error: 'stripe_not_configured',
@@ -246,11 +279,13 @@ async function createMembershipCheckout(req, res) {
   params.set('metadata[product]', 'membership');
   params.set('metadata[user_id]', user.id);
   params.set('metadata[tier]', tier);
+  params.set('metadata[plan]', plan);
   params.set('metadata[monthly_credits]', String(product.monthlyCredits));
   params.set('metadata[locale]', locale);
   params.set('subscription_data[metadata][product]', 'membership');
   params.set('subscription_data[metadata][user_id]', user.id);
   params.set('subscription_data[metadata][tier]', tier);
+  params.set('subscription_data[metadata][plan]', plan);
   params.set('subscription_data[metadata][monthly_credits]', String(product.monthlyCredits));
   params.set('subscription_data[metadata][locale]', locale);
 

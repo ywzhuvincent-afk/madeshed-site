@@ -12,7 +12,11 @@ export const PRODUCT_CATALOG = [
   { key: 'fortune_full', envs: ['STRIPE_FORTUNE_FULL_PRICE_ID'], name: '八字全盘解读', description: '日主强弱、用神喜忌、婚姻、事业、财运、健康的长期主题解读。' },
   { key: 'fortune_dayun', envs: ['STRIPE_FORTUNE_DAYUN_PRICE_ID'], name: '流年大运解读', description: '当前大运、今年流年、以及未来三年的高低节奏。' },
   { key: 'fortune_month', envs: ['STRIPE_FORTUNE_MONTH_PRICE_ID'], name: '每月运程报告', description: '流月五行、财星与风险，本月适合推进 / 观望 / 避险的时间窗口。' },
-  { key: 'fortune_wealth', envs: ['STRIPE_FORTUNE_WEALTH_PRICE_ID'], name: '偏财运机会财专测', description: '偏财旺弱、有无偏财命、偏财运大运流年、机会财活跃的时间窗与风险理性提示。' }
+  { key: 'fortune_wealth', envs: ['STRIPE_FORTUNE_WEALTH_PRICE_ID'], name: '偏财运机会财专测', description: '偏财旺弱、有无偏财命、偏财运大运流年、机会财活跃的时间窗与风险理性提示。' },
+  // 尊享线：基础会员不解锁择时全案（见 _access.js VIP_ONLY_FORTUNE_REPORTS），至尊VIP免费。
+  { key: 'fortune_timing', envs: ['STRIPE_FORTUNE_TIMING_PRICE_ID'], name: '八字投资择时全案', description: '最深度的一次性专案：财星格局全解 + 未来三年逐年逐月择时年历 + 关键窗口与风险纪律。基础会员不含，至尊VIP免费。' },
+  { key: 'highest', envs: ['STRIPE_HIGHEST_PRICE_ID'], name: '至尊VIP会员（月付）', description: '基础会员全部权益 + 尊享择时全案免费 + 每月赠送 200 点问大师。' },
+  { key: 'highest_annual', envs: ['STRIPE_HIGHEST_ANNUAL_PRICE_ID'], name: '至尊VIP会员（年付）', description: '至尊VIP 年费方案，长期锁定优惠。' }
 ];
 
 const ZERO_DECIMAL_CURRENCIES = ['jpy', 'krw', 'vnd', 'clp'];

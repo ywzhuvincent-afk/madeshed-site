@@ -1694,4 +1694,40 @@ assert.ok(/accountDeletedEmail/.test(adminApi), 'admin 硬删除前发"账号已
 // 前端：改密码后触发安全提醒 + 3 语言 checkout 助手
 assert.ok(/ACCOUNT_NOTIFY_ENDPOINT/.test(index) && /type:'password_changed'/.test(index) && /function checkoutLocaleValue/.test(index), '前端：改密码触发安全提醒 + checkoutLocaleValue 三语助手');
 
+/* ── 尊享线（VIP + 择时全案）：以下每条失败都会直接漏钱或错发权益 ───────────────────── */
+const vipAccessSrc = readFileSync('api/_access.js', utf8);
+const vipMqSrc = readFileSync('api/master-question.js', utf8);
+const vipHookSrc = readFileSync('api/stripe-webhook.js', utf8);
+const vipCatalogSrc = readFileSync('api/_catalog.js', utf8);
+
+// 1) 基础会员不得白拿择时全案：VIP_ONLY 名单 + tier==='highest' 才放行
+includesAll(vipAccessSrc, [
+  "export const VIP_ONLY_FORTUNE_REPORTS = ['timing']",
+  "VIP_ONLY_FORTUNE_REPORTS.indexOf(reportType) < 0 || membership.tier === 'highest'",
+], '择时全案只有至尊VIP免费，基础会员必须单买');
+assert.equal(
+  /export async function hasFortuneReportEntitlement[\s\S]{0,220}activeMembership\(userId\)\)\s*return\s*\{\s*ok:\s*true/.test(vipAccessSrc),
+  false,
+  'hasFortuneReportEntitlement must not grant membership access before the VIP-only tier check (that would give 基础会员 the ¥688 report free)',
+);
+
+// 2) 两条发点路径必须共用同一张 tier→额度表（否则同一层级两处发的点数不一致）
+includesAll(vipAccessSrc, ["export const MEMBERSHIP_MONTHLY_CREDITS = { ultimate: 30, highest: 200 }"], '会员赠点额度表（共用唯一真源）');
+[[vipMqSrc, 'master-question.js'], [vipHookSrc, 'stripe-webhook.js']].forEach(([src, name]) => {
+  assert.ok(/import \{ MEMBERSHIP_MONTHLY_CREDITS \} from '\.\/_access\.js'/.test(src), `${name} 必须从 _access.js 引用共用赠点表`);
+  assert.equal(/amount:\s*30\b/.test(src), false, `${name} 不得写死 30 点——必须按 tier 取额度，否则至尊VIP只会拿到基础额度`);
+});
+// 年费会员的 11 个月全靠这个"当月未领即补发"兜底；删掉它会让年费会员每年只得一次点数。
+includesAll(vipMqSrc, ['entry_type=eq.membership_grant&created_at=gte.'], '月度赠点按日历月窗口兜底（年费会员据此每月拿点）');
+
+// 3) tier/plan 必须走白名单，绝不能用请求值拼环境变量名
+includesAll(checkoutApi, [
+  'MEMBERSHIP_PRODUCTS[reqTier] ? reqTier : \'ultimate\'',
+  'product.plans[reqPlan] ? reqPlan : \'monthly\'',
+  "priceFromEnv(product.plans[plan].priceEnv)",
+], '会员结账 tier/plan 走白名单');
+
+// 4) 尊享 SKU 已接入目录（后台可改价 + 价格接口可见）
+includesAll(vipCatalogSrc, ["key: 'fortune_timing'", "key: 'highest'", "key: 'highest_annual'"], '尊享线 SKU 已进商品目录');
+
 console.log('Static site checks passed');

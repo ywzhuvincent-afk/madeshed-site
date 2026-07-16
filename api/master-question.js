@@ -1,4 +1,5 @@
 import { getUserFromRequest, hasSupabaseService, supabaseInsert, supabaseSelect } from './_supabase.js';
+import { MEMBERSHIP_MONTHLY_CREDITS } from './_access.js';
 
 const MASTER_CATEGORIES = ['marriage', 'career', 'wealth', 'windfall', 'family', 'health', 'timing', 'life', 'custom'];
 const MASTER_DEPTH_COST = { normal:1, deep:3 };
@@ -102,14 +103,18 @@ async function creditBalance(userId) {
   return rows.reduce((sum, row) => sum + (Number(row.amount) || 0), 0);
 }
 
+/* 月度赠点兜底：按"活跃会员 + 当月未领"发放，与账单周期无关。
+   这是年费会员在两次账单之间的 11 个月拿到点数的唯一途径（webhook 的 invoice.paid 一年只触发一次），
+   删掉它会让年费会员每年只得一次点数。额度取自 _access.js 共用表（基础 30 / 至尊VIP 200）。 */
 async function maybeGrantUltimateCredits(userId) {
   const memberships = await supabaseSelect('memberships', `user_id=eq.${encodeURIComponent(userId)}&select=tier,status&limit=1`);
   const membership = memberships[0];
-  const activeUltimate = membership && (membership.tier === 'ultimate' || membership.tier === 'highest') && (membership.status === 'active' || membership.status === 'trialing');
-  if (!activeUltimate) return;
+  const amount = membership && MEMBERSHIP_MONTHLY_CREDITS[membership.tier];
+  const activeMember = amount && (membership.status === 'active' || membership.status === 'trialing');
+  if (!activeMember) return;
   const referenceId = currentGrantMonth();
   // 与 stripe-webhook 同口径：按"日历月窗口"查重（webhook 的 grant 以 invoice.id 为 reference_id，
-  // 若仍按 reference_id 精确比对，本兜底会在同月再发一次 30 点）
+  // 若仍按 reference_id 精确比对，本兜底会在同月再发一次点数）
   const monthStart = `${referenceId}-01T00:00:00Z`;
   const grants = await supabaseSelect('credit_ledger', `user_id=eq.${encodeURIComponent(userId)}&entry_type=eq.membership_grant&created_at=gte.${encodeURIComponent(monthStart)}&select=id&limit=1`);
   if (grants.length) return;
@@ -117,8 +122,8 @@ async function maybeGrantUltimateCredits(userId) {
   await supabaseInsert('credit_ledger', {
     user_id: userId,
     entry_type: 'membership_grant',
-    amount: 30,
-    balance_after: balance + 30,
+    amount,
+    balance_after: balance + amount,
     reference_type: 'membership_month',
     reference_id: referenceId,
     payload: { tier: membership.tier }
