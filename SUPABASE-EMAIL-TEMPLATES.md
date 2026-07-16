@@ -20,6 +20,37 @@ supa.auth.signUp({ email, password, options:{ data:{ display_name, locale: check
 ## 操作路径
 
 Supabase 后台 → **Authentication → Emails → Templates**，逐个替换。
+直达 URL：`https://supabase.com/dashboard/project/tkltasrbhjqwurybcyxo/auth/templates/<slug>`
+
+## 完整模板清单（实测得到，共 13 个 —— 不是 4 个）
+
+| slug | 名称 | 状态 |
+|---|---|---|
+| `confirm-sign-up` | Confirm sign up | ✅ 已粘（2026-07-16） |
+| `reset-password` | Reset password | ✅ 已粘（2026-07-16） |
+| `magic-link-or-otp` | Magic link or OTP | ⬜ 待粘（注意：slug 不是 `magic-link`） |
+| `change-email-address` | Change email address | ⬜ 待粘 |
+| `invite-user` | Invite user | ⬜ 用不到可跳过 |
+| `reauthentication` | Reauthentication | ⬜ 待粘 |
+| `password-changed` | Password changed | ⬜ Security 类通知 |
+| `email-address-changed` | Email address changed | ⬜ Security 类通知 |
+| `phone-number-changed` | Phone number changed | ⬜ 未用短信可跳过 |
+| `sign-in-method-linked` | Sign-in method linked | ⬜ Security 类通知 |
+| `sign-in-method-removed` | Sign-in method removed | ⬜ Security 类通知 |
+| `mfa-method-added` | MFA method added | ⬜ 未开 MFA 可跳过 |
+| `mfa-method-removed` | MFA method removed | ⬜ 未开 MFA 可跳过 |
+
+**优先级**：`magic-link-or-otp` > `change-email-address` > `reauthentication` > Security 类。
+其余（invite / phone / MFA）当前产品用不到，可暂时不管。
+
+## 粘贴手法（实测有效）
+
+1. Subject 是普通输入框：点进去 → Ctrl+A → 直接粘。
+2. Body 点 **Source**（不是 Preview）→ 点进编辑器 → Ctrl+A → Delete → 粘。
+   实测 `{{ }}` **不会**被编辑器自动补全破坏。
+3. 点 **Save changes**，等按钮转圈结束。
+4. **验证必须整页重载后看 Source**——不要信 Preview，也不要信 JS 读 DOM（读不到 CodeMirror 内容）。
+   若跳转时弹「离开站点？」= 没保存成功，别强行离开。
 
 ---
 
