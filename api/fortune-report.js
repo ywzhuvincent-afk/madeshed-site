@@ -74,7 +74,7 @@ const SYSTEM_PROMPT = '你是一位有数十年经验的资深八字命理师，
 const FORMAT_SPEC = '\n\n【输出格式】每一章用「## 章节标题」另起一行作标题；正文分段，段与段之间空一行；要点用「- 」开头。不要输出任何 HTML 标签，不要用 markdown 的 ** 加粗。';
 
 const PROMPTS = {
-  full: `这是一份【全盘命理解读】，请像资深命理师当面批命一样，基于下面这个人的真实八字逐章深入解读。每一章都必须有、都要结合这张命盘的具体干支五行来讲、篇幅充分，不许泛泛而谈：
+  fullA: `这是【全盘命理解读 · 上篇】。请像资深命理师当面批命一样，基于下面这个人的真实八字深入解读以下五个方面。每一章都必须有、都要结合这张命盘的具体干支五行来讲、篇幅充分，不许泛泛而谈：
 
 ## 一、命格总论
 定这张八字的格局与层次：日主是什么五行、在月令是否得令、整体旺衰（结合给出的强弱判断），用神/喜神/忌神是哪些五行、为什么这样取。给出这个命的整体气象、格局高低与一生大方向。
@@ -89,7 +89,9 @@ const PROMPTS = {
 分正财与偏财；看财星旺衰以及日主能否担财（身强能担财、身弱财多则看得到赚不到）；求财方式（正职/偏门/合作/投资倾向）；破财与花费压力的来源；哪些大运流年财旺、哪些财紧；守财与理财提醒。只讲命理层面，不预测行情、不荐股。
 
 ## 五、婚姻感情（务必详细）
-配偶星（男看财星、女看官杀）的旺衰与位置；夫妻宫（日支）的状态与冲合刑害；桃花与异性缘；正缘的特征、以及容易出现或成婚的有利时机（落到大运流年）；婚姻的稳定度与要留意的地方；相处建议。
+配偶星（男看财星、女看官杀）的旺衰与位置；夫妻宫（日支）的状态与冲合刑害；桃花与异性缘；正缘的特征、以及容易出现或成婚的有利时机（落到大运流年）；婚姻的稳定度与要留意的地方；相处建议。`,
+
+  fullB: `这是【全盘命理解读 · 下篇】。请像资深命理师当面批命一样，基于下面这个人的真实八字深入解读以下方面（不要重复前面的内容，直接从健康讲起）。每一章都必须有、都要结合这张命盘的具体干支五行来讲、篇幅充分：
 
 ## 六、健康（务必详细）
 从五行的太过与不及，看容易偏弱的脏腑与系统（木肝胆、火心小肠、土脾胃、金肺大肠、水肾膀胱）、体质倾向、要留意的季节与年份、冲刑对健康的影响、调养与生活建议。只作命理提示，务必叮嘱有不适请就医、不替代医疗诊断。
@@ -142,21 +144,22 @@ const PROMPTS = {
 };
 
 function buildUserPrompt(type, profile, targetPeriod) {
-  const base = PROMPTS[type] || PROMPTS.full;
+  const base = PROMPTS[type] || PROMPTS.fullA;
   const period = cleanText(targetPeriod);
   const periodLine = type === 'month' && period ? `\n\n【目标月份】${period}` : '';
   return `${base}${FORMAT_SPEC}\n\n以下是这个人的真实命盘，请严格据此解读：\n${buildChartText(profile)}${periodLine}`;
 }
 
-async function callLlm(userPrompt) {
+async function callLlm(userPrompt, maxTokens) {
   const baseUrl = process.env.LLM_BASE_URL;
   const apiKey = process.env.LLM_API_KEY;
   const model = process.env.LLM_MODEL || 'gpt-4.1-mini';
   if (!baseUrl || !apiKey) return { text: '', error: 'not_configured' };
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 55000);
+  // 52s 中止：留出兜底与返回时间，保证在 maxDuration(60s) 内返回，不被平台硬杀。
+  const timer = setTimeout(() => ctrl.abort(), 52000);
   try {
-    // 与「问大师」同一套调用（问大师在生产可用）：不传 max_tokens，避免个别模型/代理拒绝该参数导致整单失败。
+    // 用 max_tokens 限定单次输出长度以控住生成时间（全盘拆两半并行时每半更短、更快）。DeepSeek 等均支持该参数。
     const response = await fetch(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
@@ -166,7 +169,8 @@ async function callLlm(userPrompt) {
           { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.6
+        temperature: 0.6,
+        max_tokens: maxTokens || 2000
       }),
       signal: ctrl.signal
     });
@@ -299,14 +303,24 @@ export default async function handler(req, res) {
     });
   }
 
-  // 调 AI 命理师生成深度报告。失败/未配置则返回兜底（不入库，允许刷新重试）。
+  // 调 AI 命理师生成深度报告。全盘拆成上/下两半并行生成（各更短更快，避免单次超时），再拼接。
+  // 失败/未配置则返回兜底（不入库，允许刷新重试）。
   let aiText = '';
   let llmError = '';
   if (llmConfigured()) {
     try {
-      const llm = await callLlm(buildUserPrompt(reportType, gate.profile, body.targetPeriod));
-      aiText = llm.text || '';
-      llmError = llm.error || '';
+      if (reportType === 'full') {
+        const [a, b] = await Promise.all([
+          callLlm(buildUserPrompt('fullA', gate.profile, body.targetPeriod), 2000),
+          callLlm(buildUserPrompt('fullB', gate.profile, body.targetPeriod), 2000)
+        ]);
+        aiText = [a.text, b.text].filter(Boolean).join('\n\n');
+        llmError = a.error || b.error || '';
+      } else {
+        const llm = await callLlm(buildUserPrompt(reportType, gate.profile, body.targetPeriod), reportType === 'month' ? 1600 : 2000);
+        aiText = llm.text || '';
+        llmError = llm.error || '';
+      }
     } catch (error) {
       llmError = String((error && error.message) || error).slice(0, 180);
     }
