@@ -2922,7 +2922,7 @@ function updateTodaySurfaces(profile,today,dr){
   const score=action.score, position=action.position;
   const dateText=now.getFullYear()+' 年 '+(now.getMonth()+1)+' 月 '+now.getDate()+' 日 · 星期'+W[now.getDay()];
   const compactDate=now.getFullYear()+'.'+pad(now.getMonth()+1)+'.'+pad(now.getDate());
-  window.__todayState={dateText,compactDate,day:today.day,label:action.label,score:action.score,position,role:dr.role,wealth:dr.cScore,foundation:action.foundation.score,flow:action.flowScore,riskPenalty:action.riskPenalty,interactionNote:(dr.interaction&&dr.interaction.note)||'',interactionAdjust:(dr.interaction&&dr.interaction.adjust)||0,cWarn:dr.cWarn||''};
+  window.__todayState={dateText,compactDate,day:today.day,label:action.label,score:action.score,position,role:dr.role,wealth:dr.cScore,foundation:action.foundation.score,flow:action.flowScore,riskPenalty:action.riskPenalty,interactionNote:(dr.interaction&&dr.interaction.note)||'',interactionAdjust:(dr.interaction&&dr.interaction.adjust)||0,cWarn:dr.cWarn||'',tenGod:dr.tenGod||''};
   document.querySelectorAll('.m-score-label').forEach(el=>{el.textContent='今日行动指数';});
   document.querySelectorAll('.m-score-num').forEach(el=>{el.textContent=score;});
   document.querySelectorAll('.m-score-tag').forEach(el=>{el.textContent='仓位 '+position;});
@@ -2948,7 +2948,7 @@ function updateTodaySurfaces(profile,today,dr){
     if(title)title.innerHTML='今日: <span style="color:'+col+'">'+action.label+'</span>';
     if(scoreEl){scoreEl.innerHTML=score+'<span class="score-max">/100</span>';scoreEl.style.color=col;}
     if(tag){tag.textContent='行动指数';tag.style.color=col;tag.style.background=bandTint(action.score);}
-    if(meta)meta.innerHTML='仓位 <b>'+position+'</b> · '+dr.advice;
+    if(meta){var _pc=(dr.tenGod==='偏财')?(' · <b style="color:var(--accent)">偏财窗</b>'+(dr.cScore>=68?'·相对活跃':'·宜克制')):'';meta.innerHTML='仓位 <b>'+position+'</b> · '+dr.advice+_pc;}
     renderDailyScoreDetailZh(daily,dr,action);
   }
   if(typeof setDailyInsight==='function')setDailyInsight();
