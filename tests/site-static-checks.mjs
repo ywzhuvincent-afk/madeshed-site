@@ -325,7 +325,6 @@ includesAll(index, [
   'Xin Wei',
   'Yang Earth Rat',
   'Hidden Stem',
-  'Action Mode: Full Plan',
   'Wealth Signal',
   'Suggested Discipline',
   'Day Master',
@@ -1017,12 +1016,28 @@ includesAll(index, [
   '今日行动指数 · TODAY',
   'window.__todayState={dateText,compactDate,day:today.day,label:action.label,score:action.score',
   'flow:action.flowScore',
-  "document.querySelectorAll('.m-score-label').forEach(el=>{el.textContent='今日行动指数';});",
-  "document.querySelectorAll('.score-n').forEach(el=>{paintScoreNum(el,action.score);});",
-  "document.querySelectorAll('.score-l').forEach(el=>{el.textContent=action.label+' · 财运 '+dr.cScore+' · 底盘 '+action.foundation.score;paintScorePill(el,action.score);});",
+  'function applyTodayScoreNodes()',
+  "document.querySelectorAll('.score-n').forEach(function(el){paintScoreNum(el,s.score);",
+  "document.querySelectorAll('.score-l').forEach(function(el){put(el,lineTxt);paintScorePill(el,s.score);});",
   "html+='<div class=\"forecast-card",
   "+(en?'Action ':'行动 ')+a.score",
 ], 'connected action score surfaces');
+
+/* 动态分数节点必须只由 applyTodayScoreNodes 赋值：曾因被登记进 EN_COPY 静态语言表 +
+   罐头英文覆盖，导致 setLocaleText 用 localeOriginalText 缓存把真实分数还原成写死占位
+   （34 分高风险日显示"浅绿 · 仓位 60%"、"顺势 · 仓位 80%"，等于在高风险日建议重仓）。 */
+includesAll(index, [
+  "if(el.dataset)el.dataset.localeOriginalText=txt;",
+  "if(typeof applyTodayScoreNodes==='function')applyTodayScoreNodes();",
+], 'today score nodes refresh the locale cache so re-render/locale-switch cannot restore stale placeholders');
+[
+  "['.score-l','Full Plan Mode · risk-aware execution']",
+  "['.today-strip-left .v','Full Plan Mode · trade only planned setups']",
+  "el.textContent='Full Plan Mode · risk-aware execution'",
+  "el.textContent='Action Mode: Full Plan'",
+].forEach((canned) => {
+  assert.equal(index.includes(canned), false, `dynamic score node must not be overwritten by canned copy: ${canned}`);
+});
 
 includesAll(index, [
   '.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:20px;margin-bottom:20px}',
