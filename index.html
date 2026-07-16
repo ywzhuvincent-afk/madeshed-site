@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -2039,7 +2039,27 @@ function restoreHant(){
 }
 function applyEnglishAfterRender(){if(localeIsEn()){localizeEnglishWholeSite();localizeDynamicContent();localizeEnglishMetaContent();refreshPillarsForLocale();translateLuckCyclesForEnglish(window.__profile||null);translateForecastPillarsForEnglish();}else if(localeIsHant()){applyHantAfterRender();}if(typeof setDailyInsight==='function')setDailyInsight();}
 function rerenderLocaleSurfaces(){if(window.__madeshedLocaleRerendering)return;window.__madeshedLocaleRerendering=true;try{if(window.madeshed&&typeof window.madeshed.refresh==='function')window.madeshed.refresh();else if(typeof refresh==='function')refresh();if(typeof renderStoredCheckin==='function')renderStoredCheckin();if(typeof renderDailyStats==='function')renderDailyStats();if(typeof renderReport==='function')renderReport();if(typeof renderFortuneCenter==='function')renderFortuneCenter();if(typeof renderAccount==='function')renderAccount();if(!localeIsEn()&&typeof restoreChineseDailyWidgets==='function')restoreChineseDailyWidgets();if(typeof applyEnglishAfterRender==='function')applyEnglishAfterRender();}finally{window.__madeshedLocaleRerendering=false;}}
-function applyLocale(locale,confirmed){const prev=document.body.dataset.locale;const l=normalizeLocale(locale);if(normalizeLocale(prev)==='zh-Hant'&&l!=='zh-Hant'&&typeof restoreHant==='function')restoreHant();document.documentElement.lang=l==='en'?'en':(l==='zh-Hant'?'zh-Hant':'zh-CN');document.body.dataset.locale=l;setLocaleButtons(l);localizeStaticContent();if(typeof refreshPillarsForLocale==='function')refreshPillarsForLocale();if(typeof translateLuckCyclesForEnglish==='function')translateLuckCyclesForEnglish(window.__profile||null);if(typeof translateForecastPillarsForEnglish==='function')translateForecastPillarsForEnglish();if(typeof updateAuthNav==='function')updateAuthNav();if(l==='zh-Hant'&&typeof applyHantAfterRender==='function')applyHantAfterRender();if(typeof ensureHantObserver==='function')ensureHantObserver();if(confirmed)document.body.classList.remove('language-pending');}
+
+/* SEO/分享 meta 按语言切换。此前静态 meta 是简体且 <html lang="en">，
+   等于对爬虫谎报语言；英文/繁体用户分享链接时预览也全是简体。
+   繁体：opencc 只转可见 DOM 文本，碰不到 <meta content>，故这里显式给繁体文案。 */
+const META_TEXT={
+  zh:{title:'Madeshed · 国学投资助手',desc:'把八字流日评分、个人交易回测、行为科学干预,整合进一个决策仪表盘。'},
+  'zh-Hant':{title:'Madeshed · 國學投資助手',desc:'把八字流日評分、個人交易回測、行為科學干預，整合進一個決策儀表板。'},
+  en:{title:'Madeshed · BaZi Trading Discipline Dashboard',desc:'A trading discipline dashboard powered by BaZi timing, your own trade journal, and behavioral science.'}
+};
+function applyLocaleMeta(){
+  var l=(typeof normalizeLocale==='function')?normalizeLocale(document.body&&document.body.dataset.locale):'zh';
+  var m=META_TEXT[l]||META_TEXT.zh;
+  document.title=m.title;
+  var set=function(sel,v){var el=document.querySelector(sel);if(el)el.setAttribute('content',v);};
+  set('meta[name="description"]',m.desc);
+  set('meta[property="og:title"]',m.title);
+  set('meta[property="og:description"]',m.desc);
+  set('meta[name="twitter:title"]',m.title);
+  set('meta[name="twitter:description"]',m.desc);
+}
+function applyLocale(locale,confirmed){const prev=document.body.dataset.locale;const l=normalizeLocale(locale);if(normalizeLocale(prev)==='zh-Hant'&&l!=='zh-Hant'&&typeof restoreHant==='function')restoreHant();document.documentElement.lang=l==='en'?'en':(l==='zh-Hant'?'zh-Hant':'zh-CN');document.body.dataset.locale=l;setLocaleButtons(l);localizeStaticContent();if(typeof refreshPillarsForLocale==='function')refreshPillarsForLocale();if(typeof translateLuckCyclesForEnglish==='function')translateLuckCyclesForEnglish(window.__profile||null);if(typeof translateForecastPillarsForEnglish==='function')translateForecastPillarsForEnglish();if(typeof updateAuthNav==='function')updateAuthNav();if(l==='zh-Hant'&&typeof applyHantAfterRender==='function')applyHantAfterRender();if(typeof ensureHantObserver==='function')ensureHantObserver();if(typeof applyLocaleMeta==='function')applyLocaleMeta();if(confirmed)document.body.classList.remove('language-pending');}
 // 登录/登出入口：按"是否登录"驱动，而不是按页面。未登录→显示"登录"（所有页）；已登录→显示头像+下拉菜单（账号中心/退出登录）。
 function updateAuthNav(){
   var en=typeof localeIsEn==='function'&&localeIsEn();
