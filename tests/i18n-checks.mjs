@@ -263,4 +263,49 @@ const HANT_SAME_OK = new Set(['period_this_month', 'trade_period_to']);
   ok('注册语言写入 user_metadata（供 Supabase 邮件模板分支）');
 }
 
+/* ── 11. 商品卡不得被"罐头文案覆盖层"改写 ─────────────────────────────────
+   实测：英文站命理页出现两张一模一样的 "Ultimate Membership"。因为
+   localizeEnglishFortuneProducts 按「无 fortuneReportType 即会员卡」来认，把至尊VIP卡
+   整张改写成 Ultimate 的假副本（标题/价格/描述/两个按钮/徽章全错）。
+   渲染函数自身已按 locale 输出正确英文 —— 覆盖层只会帮倒忙且认不出新卡。 */
+{
+  const index = read('index.html');
+  for (const bad of [
+    "if(!type){if(t)t.textContent='Ultimate Membership'",
+    "badge.textContent='Single unlock'",
+    "if(b.dataset.membershipAction)b.textContent='Start Ultimate'",
+  ]) {
+    assert.equal(index.includes(bad), false,
+      `商品卡不得被罐头文案覆盖（会把 VIP/新商品卡改写成假副本）：${bad}`);
+  }
+  // 这两个函数只允许"重新渲染"，不得再自己写文案
+  for (const fn of ['localizeEnglishReportProducts', 'localizeEnglishFortuneProducts']) {
+    const m = index.match(new RegExp(`function ${fn}\\(\\)\\{[^\\n]*`));
+    assert.ok(m, `找不到 ${fn}`);
+    assert.ok(/render(PaidReport|Fortune)Products\(\)/.test(m[0]),
+      `${fn} 必须委托给渲染函数`);
+    assert.equal(/textContent\s*=\s*'/.test(m[0]), false,
+      `${fn} 不得自己写文案——渲染函数已按 locale 输出，覆盖只会认不出新卡`);
+  }
+  ok('商品卡无罐头覆盖层（VIP/新卡不会被改写成假副本）');
+}
+
+/* ── 12. 关键渲染/本地化函数不得重复定义 ──────────────────────────────────
+   本项目已两次被这个坑咬：同名函数声明两次，后者静默覆盖前者，
+   导致「我改了代码但线上没变」——localizeDynamicContent 与 localizeEnglishFortuneProducts 都中过。 */
+{
+  const index = read('index.html');
+  const dupes = [];
+  for (const fn of [
+    'renderFortuneProducts', 'renderPaidReportProducts',
+    'localizeEnglishFortuneProducts', 'localizeEnglishReportProducts',
+    'localizeDynamicContent', 'applyTodayScoreNodes', 'applyLivePriceNodes',
+  ]) {
+    const n = (index.match(new RegExp(`function ${fn}\\(`, 'g')) || []).length;
+    if (n > 1) dupes.push(`${fn} 被定义 ${n} 次`);
+  }
+  assert.deepEqual(dupes, [], `以下函数重复定义（后者静默覆盖前者，改了代码线上却不变）：\n  ${dupes.join('\n  ')}`);
+  ok('关键渲染/本地化函数无重复定义');
+}
+
 console.log(`\ni18n contract: all ${checks} checks passed`);

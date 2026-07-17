@@ -455,8 +455,10 @@ includesAll(index, [
   "priceEn:'CN¥49'",
   'function productDisplayPrice(product)',
   "localeIsEn()&&product.priceEn?product.priceEn:product.price",
-  "REPORT_PRODUCTS[type].priceEn",
-  "FORTUNE_PRODUCTS[type].priceEn",
+  // 英文价签由 priceDisplayHTML→productDisplayPrice 统一取 priceEn（渲染函数内完成）。
+  // 原先钉的是"罐头覆盖层"里的 X_PRODUCTS[type].priceEn —— 那层已删除（它会把 VIP 卡改写成假副本）。
+  "function productDisplayPrice(product)",
+  "priceDisplayHTML(p)",
   "setP(FORTUNE_PRODUCTS.wealth,by.fortune_wealth)",
 ], 'English pricing labels use CN¥ (same currency as actual charge)');
 assert.equal(index.includes('Beta ·'), false, 'production landing copy should not show beta badge');
