@@ -21,7 +21,7 @@ const ok = (name) => { checks++; console.log(`  ok  ${name}`); };
 /* 简繁写法本来就完全相同的文案，必须显式列在这里。
    刻意做成"白名单"而不是"智能判断"：宁可误报，也不能让一条真该繁体化的文案悄悄溜过去。
    新增文案若简繁相同，请在此登记一次——这是一个需要有意识做出的声明。 */
-const HANT_SAME_OK = new Set(['period_this_month']);
+const HANT_SAME_OK = new Set(['period_this_month', 'trade_period_to']);
 
 // ── 1. MESSAGES 三语完整性 ────────────────────────────────────────────────
 {
@@ -84,14 +84,44 @@ const HANT_SAME_OK = new Set(['period_this_month']);
   ok('三个 AI 入口都按 locale 注入输出语言规则');
 }
 
-// ── 4. 报告缓存必须按语言隔离 ────────────────────────────────────────────
+// ── 4. 报告缓存必须按语言隔离（两个报告接口都要）────────────────────────
 {
-  const src = read('api/fortune-report.js');
+  const fr = read('api/fortune-report.js');
   assert.ok(
-    /function reportKey\(type, targetPeriod, locale\)/.test(src) && /\$\{normalizeLocale\(locale\)\}/.test(src),
-    '报告缓存键必须包含 locale，否则英文用户会命中别人缓存的中文报告（反之亦然）',
+    /function reportKey\(type, targetPeriod, locale\)/.test(fr) && /\$\{normalizeLocale\(locale\)\}/.test(fr),
+    'fortune-report 缓存键必须包含 locale，否则英文用户会命中别人缓存的中文报告',
   );
-  ok('报告缓存键按语言隔离');
+  const rp = read('api/report.js');
+  assert.ok(
+    /function reportKey\(type, period, locale\)/.test(rp) && /\$\{normalizeLocale\(locale\)\}/.test(rp),
+    'report.js（交易复盘）缓存键同样必须包含 locale —— 曾漏掉，导致英文用户拿到缓存的中文报告',
+  );
+  ok('两个报告接口的缓存键都按语言隔离');
+}
+
+/* ── 4b. 报告"外壳"必须三语 ───────────────────────────────────────────────
+   实测漏网：英文站报告卡显示 "7 Day Report · 深度复盘版" —— 我只本地化了 fortune-report
+   的外壳，report.js 的标题后缀/徽章/免责声明仍写死中文，而当时的守卫只查 message: 字段，
+   完全看不见报告外壳。这条就是补上那个缺口。 */
+{
+  for (const f of ['fortune-report.js', 'report.js']) {
+    const src = read(`api/${f}`);
+    // 商品名必须三语（只有中文 label → 英文用户直接看到中文标题）
+    assert.ok(/labelEn:/.test(src) && /labelHant:/.test(src), `api/${f} 的商品名必须有 labelEn/labelHant`);
+    // 标题/徽章/免责声明不得写死中文：扫描 HTML 片段里的中文字面量
+    const offenders = [];
+    const re = /['"`]([^'"`\n]{0,60}?[一-鿿][^'"`\n]{0,60}?)['"`]/g;
+    let m;
+    while ((m = re.exec(src))) {
+      const v = m[1];
+      // 只看会进 HTML 输出的片段（带标签或徽章类），其余（提示词/中文注释/干支表）不管
+      if (!/<h2>|<h3>|report-badge|report-warning|<p>|<ul>/.test(v)) continue;
+      if (!/[一-鿿]/.test(v.replace(/<[^>]*>/g, ''))) continue;
+      offenders.push(`api/${f}: ${v.slice(0, 50)}`);
+    }
+    assert.deepEqual(offenders, [], `报告外壳不得写死中文（英文/繁体用户会直接看到）。请改用 t(locale,'key')：\n  ${offenders.join('\n  ')}`);
+  }
+  ok('两个报告接口的外壳（标题/徽章/免责）均无写死中文');
 }
 
 // ── 5. 语言解析：账号上存的语言优先于请求带的 ────────────────────────────

@@ -12,10 +12,11 @@ import { resolveUserLocale, normalizeLocale, t, LLM_LANGUAGE_RULE } from './_loc
 export const config = { maxDuration: 60 };
 
 const REPORT_PRODUCTS = {
-  '7': { label: '7 天报告', days: 7 },
-  '30': { label: '月度报告', days: 30 },
-  '365': { label: '年度报告', days: 365 },
-  all: { label: '全部历史报告', days: null }
+  // label 三语齐全：报告标题会直接显示给用户，只有中文就会让英文/繁体用户看到中文标题。
+  '7': { label: '7 天报告', labelHant: '7 天報告', labelEn: '7 Day Report', days: 7 },
+  '30': { label: '月度报告', labelHant: '月度報告', labelEn: 'Monthly Report', days: 30 },
+  '365': { label: '年度报告', labelHant: '年度報告', labelEn: 'Annual Report', days: 365 },
+  all: { label: '全部历史报告', labelHant: '全部歷史報告', labelEn: 'Full History Report', days: null }
 };
 
 const OUTCOMES = ['big_win', 'win', 'flat', 'loss', 'big_loss', 'notrade'];
@@ -111,8 +112,10 @@ function elementLabel(v) {
   return { wood: '木', fire: '火', earth: '土', metal: '金', water: '水' }[v] || v || '';
 }
 
-function reportKey(type, period) {
-  return `${type}-${period.start}-${period.end}`;
+/* 缓存键必须含 locale：报告正文按语言生成，不隔离则英文用户会命中别人缓存的中文报告，
+   且切换语言后永远拿不到新语言版本。:v2 = 加入 locale 后的新代次，顺带让旧单语缓存失效。 */
+function reportKey(type, period, locale) {
+  return `${type}-${period.start}-${period.end}-${normalizeLocale(locale)}-v2`;
 }
 
 function llmConfigured() {
@@ -212,46 +215,51 @@ function mdToHtml(text) {
   return html;
 }
 
-function wrapReport(type, period, accessLevel, summary, bodyHtml) {
-  const product = REPORT_PRODUCTS[type] || REPORT_PRODUCTS['30'];
+// 报告标题按 locale 取三语商品名；缺失时退回中文名（绝不留空）。
+function tradeLabelFor(type, locale) {
+  const p = REPORT_PRODUCTS[type] || REPORT_PRODUCTS['30'];
+  const loc = normalizeLocale(locale);
+  return (loc === 'en' ? p.labelEn : loc === 'zh-Hant' ? p.labelHant : p.label) || p.label;
+}
+
+function wrapReport(type, period, accessLevel, summary, bodyHtml, locale) {
   return [
     '<div class="report-generated">',
-    `<h2>${product.label} · 深度复盘版</h2>`,
+    `<h2>${escapeHtml(tradeLabelFor(type, locale))} · ${escapeHtml(t(locale, 'trade_detail_suffix'))}</h2>`,
     `<span class="report-badge">${escapeHtml(period.label)}</span>`,
-    `<span class="report-badge">${escapeHtml(period.start)} 至 ${escapeHtml(period.end)}</span>`,
-    `<span class="report-badge">${accessLevel === 'membership' ? '高级会员' : '已解锁'}</span>`,
-    `<span class="report-badge">胜率 ${escapeHtml(summary.rate)}</span>`,
+    `<span class="report-badge">${escapeHtml(period.start)} ${escapeHtml(t(locale, 'trade_period_to'))} ${escapeHtml(period.end)}</span>`,
+    `<span class="report-badge">${escapeHtml(t(locale, accessLevel === 'membership' ? 'report_badge_member' : 'report_badge_unlocked'))}</span>`,
+    `<span class="report-badge">${escapeHtml(t(locale, 'trade_winrate', { v: summary.rate }))}</span>`,
     bodyHtml,
-    '<div class="report-warning">报告用于交易纪律与命理参考，不构成投资建议，不预测行情、不推荐标的。</div>',
+    `<div class="report-warning">${escapeHtml(t(locale, 'trade_disclaimer'))}</div>`,
     '</div>'
   ].join('');
 }
 
 // 兜底：LLM 未配置/失败时，用真实统计给出结构化简版（不入库缓存，可刷新重试）。
-function buildFallback(type, period, summary, profile, accessLevel) {
-  const c = summary.counts;
+function buildFallback(type, period, summary, profile, accessLevel, locale) {
   const body = [
-    '<h3>一、统计结论</h3>',
-    `<p>本周期共记录 ${summary.total} 天，实际交易 ${summary.traded} 次；大赚 ${c.big_win} 赚 ${c.win} 平 ${c.flat} 亏 ${c.loss} 大亏 ${c.big_loss} 未交易 ${c.notrade}。胜率 ${escapeHtml(summary.rate)}，样本可信度：${summary.confidence}。</p>`,
-    '<h3>二、命盘</h3>',
+    `<h3>${escapeHtml(t(locale, 'trade_stats_heading'))}</h3>`,
+    `<p>${escapeHtml(t(locale, 'trade_stats_line', { total: summary.total, traded: summary.traded }))}</p>`,
+    `<h3>${escapeHtml(t(locale, 'trade_chart_heading'))}</h3>`,
     `<p>${escapeHtml(chartText(profile))}</p>`,
-    '<h3>三、说明</h3>',
-    '<p>命理×行为的完整深度复盘正在生成，请稍后回到本页点击「生成报告」刷新重试。若持续无法生成，请联系 support@madeshed.com。</p>'
+    `<h3>${escapeHtml(t(locale, 'trade_note_heading'))}</h3>`,
+    `<p>${escapeHtml(t(locale, 'trade_fallback_generating'))}</p>`
   ].join('');
-  return wrapReport(type, period, accessLevel, summary, body);
+  return wrapReport(type, period, accessLevel, summary, body, locale);
 }
 
-function buildPreviewHtml(type) {
-  const product = REPORT_PRODUCTS[type] || REPORT_PRODUCTS['30'];
+function buildPreviewHtml(type, locale) {
   return [
     '<div class="report-generated">',
-    `<h2>${product.label} · 结构预览</h2>`,
-    '<p>完整报告需要登录、已购买本报告或拥有最高级会员，并从云端真实记录生成。</p>',
-    '<ul><li>战绩综述：交易样本、胜率、大赚/大亏分布。</li><li>命理×行为印证：财星、日主强弱、喜忌五行与你的实盘表现。</li><li>风险模式与下一阶段仓位纪律建议。</li></ul>',
-    '<div class="report-warning">预览不返回完整付费正文。</div>',
+    `<h2>${escapeHtml(tradeLabelFor(type, locale))} · ${escapeHtml(t(locale, 'preview_suffix'))}</h2>`,
+    `<p>${escapeHtml(t(locale, 'trade_preview_note'))}</p>`,
+    `<ul>${t(locale, 'trade_preview_list')}</ul>`,
+    `<div class="report-warning">${escapeHtml(t(locale, 'trade_preview_warning'))}</div>`,
     '</div>'
   ].join('');
 }
+
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -264,7 +272,9 @@ export default async function handler(req, res) {
   if (!REPORT_PRODUCTS[reportType]) return send(res, 400, { error: 'invalid_report_type' });
 
   if (mode === 'preview') {
-    return send(res, 200, { reportType, reportHtml: buildPreviewHtml(reportType), accessLevel: 'preview', mode, disclaimer: '不构成投资建议' });
+    // 预览跑在鉴权之前：此处只有 pvLocale，写成 locale 会 ReferenceError 把接口打成 500。
+    const pvLocale = await resolveUserLocale(req, null);
+    return send(res, 200, { reportType, reportHtml: buildPreviewHtml(reportType, pvLocale), accessLevel: 'preview', mode, locale: pvLocale, disclaimer: t(pvLocale, 'trade_disclaimer') });
   }
 
   const gate = await authorizeTradeReportAccess(req, reportType, mode);
@@ -300,15 +310,15 @@ export default async function handler(req, res) {
 
   const degraded = !aiText || aiText.length < 120;
   const reportHtml = degraded
-    ? buildFallback(reportType, period, summary, profile, gate.accessLevel)
-    : wrapReport(reportType, period, gate.accessLevel, summary, mdToHtml(aiText));
+    ? buildFallback(reportType, period, summary, profile, gate.accessLevel, locale)
+    : wrapReport(reportType, period, gate.accessLevel, summary, mdToHtml(aiText), locale);
 
   const report = {
-    reportKey: reportKey(reportType, period),
+    reportKey: reportKey(reportType, period, locale),
     reportType,
     periodStart: period.start === 'all' ? entries[0].date : period.start,
     periodEnd: period.end === 'all' ? entries[entries.length - 1].date : period.end,
-    title: `${REPORT_PRODUCTS[reportType].label} · 深度复盘版`,
+    title: `${tradeLabelFor(reportType, locale)} · ${t(locale, 'trade_detail_suffix')}`,
     summary,
     reportHtml,
     accessLevel: gate.accessLevel

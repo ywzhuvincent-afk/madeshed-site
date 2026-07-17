@@ -245,6 +245,54 @@ export const MESSAGES = {
     'zh-Hant': '預覽不返回完整正文；解鎖後由 AI 命理師生成逐項深度解讀。',
     en: 'The preview does not include the full text. Once unlocked, an AI BaZi master generates the complete section-by-section reading.'
   },
+  // —— 交易复盘报告外壳 ——
+  trade_detail_suffix: {
+    zh: '深度复盘版', 'zh-Hant': '深度複盤版', en: 'Deep Review'
+  },
+  trade_period_to: {
+    zh: '至', 'zh-Hant': '至', en: 'to'
+  },
+  trade_winrate: {
+    zh: '胜率 {v}', 'zh-Hant': '勝率 {v}', en: 'Win rate {v}'
+  },
+  trade_disclaimer: {
+    zh: '报告用于交易纪律与命理参考，不构成投资建议，不预测行情、不推荐标的。',
+    'zh-Hant': '報告用於交易紀律與命理參考，不構成投資建議，不預測行情、不推薦標的。',
+    en: 'This report is for trading discipline and BaZi reference only. It is not investment advice, does not forecast markets, and recommends no securities.'
+  },
+  trade_fallback_generating: {
+    zh: '命理×行为的完整深度复盘正在生成，请稍后回到本页点击「生成报告」刷新重试。若持续无法生成，请联系 support@madeshed.com。',
+    'zh-Hant': '命理×行為的完整深度複盤正在生成，請稍後回到本頁點擊「生成報告」重新整理重試。若持續無法生成，請聯絡 support@madeshed.com。',
+    en: 'Your full BaZi-by-behaviour review is still being generated. Please come back and click "Generate Report" to retry. If it keeps failing, contact support@madeshed.com.'
+  },
+  trade_stats_heading: {
+    zh: '一、统计结论', 'zh-Hant': '一、統計結論', en: '1. Statistics'
+  },
+  trade_chart_heading: {
+    zh: '二、命盘', 'zh-Hant': '二、命盤', en: '2. Your chart'
+  },
+  trade_note_heading: {
+    zh: '三、说明', 'zh-Hant': '三、說明', en: '3. Note'
+  },
+  trade_stats_line: {
+    zh: '本周期共记录 {total} 天，实际交易 {traded} 次。',
+    'zh-Hant': '本週期共記錄 {total} 天，實際交易 {traded} 次。',
+    en: 'This period logged {total} days with {traded} trades.'
+  },
+  trade_preview_note: {
+    zh: '完整报告需要登录、已购买本报告或拥有最高级会员，并从云端真实记录生成。',
+    'zh-Hant': '完整報告需要登入、已購買本報告或擁有最高級會員，並從雲端真實記錄生成。',
+    en: 'The full report requires sign-in plus a purchase or Ultimate membership, and is generated from your real synced records.'
+  },
+  trade_preview_list: {
+    zh: '<li>战绩综述：交易样本、胜率、大赚/大亏分布。</li><li>命理×行为印证：财星、日主强弱与实际盈亏的对照。</li><li>风险模式：连亏后加码、忌神日追单等行为识别。</li><li>下一阶段纪律建议。</li>',
+    'zh-Hant': '<li>戰績綜述：交易樣本、勝率、大賺/大虧分布。</li><li>命理×行為印證：財星、日主強弱與實際盈虧的對照。</li><li>風險模式：連虧後加碼、忌神日追單等行為識別。</li><li>下一階段紀律建議。</li>',
+    en: '<li>Performance summary: trade sample, win rate, big-win/big-loss distribution.</li><li>BaZi vs behaviour: wealth star and Day Master strength checked against your real P&L.</li><li>Risk patterns: adding size after losses, chasing on unfavorable days.</li><li>Discipline plan for the next period.</li>'
+  },
+  trade_preview_warning: {
+    zh: '预览不返回完整付费正文。', 'zh-Hant': '預覽不返回完整付費正文。', en: 'The preview does not include the full paid report.'
+  },
+
   period_this_month: {
     zh: '本月', 'zh-Hant': '本月', en: 'This month'
   },
