@@ -2396,11 +2396,16 @@ function applyLivePriceNodes(){
   var amt=useUsd?u.usd:u.amount;
   var sym=useUsd?'$':(en?'CN¥':'¥');
   var monthTxt=sym+amt+(en?'/mo':'/月');
-  // 只匹配"月费"（会员价）——一次性报告价不带 /月，天然不会被误伤（年度报告 ¥199 保持原样）。
+  /* 这个盲替换只用于更新散落在营销文案里的 Ultimate 月价（cta-t 等写死的 "CN¥39.9/mo"）。
+     它把"任意月价样式文本"都改写成 Ultimate 价——在只有 Ultimate 一个月费商品时安全，
+     但加了至尊VIP（第二个月费商品 ¥299/月）后会把 VIP 卡价冲成 Ultimate 价。
+     故必须排除各自有专门渲染的容器：.report-product（商品卡，由 renderFortuneProducts 按各自
+     live 价渲染）、.pricing-card（下方 pcard 专门处理）、.hero-stat（下方 heroCell 专门处理）。 */
   var MONTH_RE=/(CN)?[¥$]\s?\d+(\.\d+)?\s?\/\s?(月|mo)/;
   document.querySelectorAll('body *').forEach(function(el){
     if(el.children.length)return; // 只改叶子节点，避免破坏含子元素的容器
     var tn=el.tagName;if(tn==='SCRIPT'||tn==='STYLE')return;
+    if(el.closest&&el.closest('.report-product,.pricing-card,.hero-stat'))return; // 有专门渲染，勿盲替换（防 VIP 价被冲成 Ultimate 价）
     var t=el.textContent;if(!t||!MONTH_RE.test(t))return;
     el.textContent=t.replace(MONTH_RE,function(){return monthTxt;}); // 函数式替换：避免 monthTxt 里的 "$29" 被当成 $2 反向引用
     // 同步刷新 setLocaleText 的缓存，否则切换语言/重渲染会把 live 价还原成写死值。

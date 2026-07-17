@@ -308,4 +308,26 @@ const HANT_SAME_OK = new Set(['period_this_month', 'trade_period_to']);
   ok('关键渲染/本地化函数无重复定义');
 }
 
+/* ── 13. 价格盲替换必须放过商品卡 ─────────────────────────────────────────
+   applyLivePriceNodes 用 MONTH_RE 把"任意月价样式文本"改写成 Ultimate 月价。
+   实测：加了至尊VIP（第二个月费商品 ¥299/月）后，VIP 卡价被冲成 Ultimate 的 $5.99/mo。
+   商品卡/定价卡/hero 各有专门渲染，必须从这个盲替换里排除。 */
+{
+  const index = read('index.html');
+  const m = index.match(/function applyLivePriceNodes\(\)\{[\s\S]*?\n\}/);
+  assert.ok(m, '找不到 applyLivePriceNodes');
+  const body = m[0];
+  assert.ok(/MONTH_RE\s*=\s*\//.test(body), 'applyLivePriceNodes 应含 MONTH_RE 盲替换');
+  assert.ok(
+    /closest\('\.report-product,\.pricing-card,\.hero-stat'\)\)return/.test(body),
+    'MONTH_RE 盲替换必须排除 .report-product/.pricing-card/.hero-stat，否则会把 VIP 等第二个月费商品的价冲成 Ultimate 价',
+  );
+  // 排除必须在 MONTH_RE.test 之前（否则先替换了才排除，无效）
+  assert.ok(
+    body.indexOf("closest('.report-product") < body.indexOf('MONTH_RE.test'),
+    '排除商品卡的 return 必须在 MONTH_RE.test(t) 之前',
+  );
+  ok('价格盲替换放过商品卡（VIP 价不会被冲成 Ultimate 价）');
+}
+
 console.log(`\ni18n contract: all ${checks} checks passed`);
