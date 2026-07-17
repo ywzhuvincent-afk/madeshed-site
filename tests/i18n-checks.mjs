@@ -330,4 +330,38 @@ const HANT_SAME_OK = new Set(['period_this_month', 'trade_period_to']);
   ok('价格盲替换放过商品卡（VIP 价不会被冲成 Ultimate 价）');
 }
 
+/* ── 14. 生成报告列表：从 reportType 组装标题，不得再用正则补丁翻译 ──────────
+   实测：英文站出现「7 Day Report · 深度复盘版」——旧覆盖层用正则把中文逐段替换，漏了后缀。 */
+{
+  const index = read('index.html');
+  assert.ok(/function generatedReportTitle\(r\)/.test(index), '必须有 generatedReportTitle 从 reportType 现算标题');
+  assert.equal(
+    /title\.textContent\s*=\s*title\.textContent\.replace\(/.test(index),
+    false,
+    '生成报告标题不得用正则补丁翻译（会漏后缀导致中英混排）——应由 generatedReportTitle 现算',
+  );
+  ok('生成报告标题从 reportType 现算（无正则补丁）');
+}
+
+/* ── 15. 颜色色块只当色板、不放字 ──────────────────────────────────────────
+   实测：色块里放 enColorLabel("Light Green") 在英文下溢出被裁切；颜色名旁边 .name 已显示。 */
+{
+  const index = read('index.html');
+  assert.ok(/color-chip \$\{s\.color\}"><\/div>/.test(index), '颜色色块必须为空（纯色板），颜色名由旁边 .name 显示');
+  assert.equal(
+    /chip\)chip\.textContent=enColorLabel/.test(index),
+    false,
+    '不得往 .color-chip 塞 enColorLabel（英文会溢出）',
+  );
+  ok('颜色色块为纯色板（英文不溢出）');
+}
+
+/* ── 16. 商品卡布局：按钮钉底、卡片 flex 纵向（避免短卡中间留空隙）────────── */
+{
+  const index = read('index.html');
+  assert.ok(/\.report-product\{[^}]*display:flex;flex-direction:column/.test(index), '.report-product 应 flex 纵向');
+  assert.ok(/\.report-actions\{[^}]*margin-top:auto/.test(index), '.report-actions 应 margin-top:auto 钉底');
+  ok('商品卡按钮钉底、内容顶对齐');
+}
+
 console.log(`\ni18n contract: all ${checks} checks passed`);
