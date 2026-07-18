@@ -1922,11 +1922,9 @@ const I18N_BY_DESIGN = new Set([
   'renderDailyScoreDetailZh', // 中文专用变体，另有 renderDailyScoreDetailEn 兄弟
   'renderTrendExplanation',   // 核心为中文，外层 renderTrendExplanation=function 包装器按 en 接管
 ]);
-const I18N_TODO = [
-  // 簇①账号+会员已迁移（renderAccount / renderAccountStatusList / renderMembershipCenter）
-  // 簇②已完成（renderLuck / renderColorStats / renderColorMeaning / renderFortuneCenter）
-  'renderHistoryPanel', 'renderMasterHistory', 'renderDetailedReport',
-];
+/* 三簇（账号+会员 / 命理展示 / 打卡历史）全部迁移完成，基线已清零。
+   此后任何"把中文写进 DOM 却没有语言分支"的渲染函数都会让这条测试失败。 */
+const I18N_TODO = [];
 function rendersWritingChineseWithoutLocale(src) {
   const CJK = /[一-鿿]/, out = [];
   for (const line of src.split('\n')) {
