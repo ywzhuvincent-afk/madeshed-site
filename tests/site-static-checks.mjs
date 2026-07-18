@@ -1724,7 +1724,8 @@ assert.ok(index.includes('data-language-choice="zh-Hant"'), 'index：欢迎页 3
 const chartFull = readFileSync('chart-full.html', utf8);
 assert.ok(/function chartLocaleIsHant/.test(chartFull) && /function applyChartHant/.test(chartFull) && chartFull.includes("closest('.lang')") && /t==='繁'\?'zh-Hant'/.test(chartFull), 'chart-full：繁体运行时转换 + 3 语言按钮 + 选择器不转换');
 // 英文态一致性批B：账户/报告/命理/chart-full（多代理审计 CONFIRMED）
-assert.ok(index.includes('synced to Supabase cloud') && index.includes("window.__cloudUser?'This browser + Supabase cloud'"), 'EN 账户 Cloud Sync 行按登录态派生（不再硬编码 Not signed in）');
+assert.ok(index.includes('synced to Supabase cloud') && index.includes("signedIn?'Signed in · synced to Supabase cloud'") && index.includes("en?'This browser + Supabase cloud'"),
+  'EN 账户 Cloud Sync / Data Location 由 renderAccount 按登录态派生（英文不得回落到中文的 __cloudStatus.text）');
 assert.ok(index.includes('chart cast at noon 12:00') && index.includes('no hour correction') && index.includes('hour pillar estimated at noon'), 'EN 账户无时辰行英文化');
 assert.ok(index.includes("Eligible (buy directly; billing email verified by Stripe)"), 'EN 账户会员购买条件英文化');
 assert.ok(index.includes('Full auto-report locked.') && index.includes('This auto-report was generated and saved for the period.'), 'EN 交易报告预览英文化');
@@ -1918,7 +1919,7 @@ const I18N_BY_DESIGN = new Set([
   'renderTrendExplanation',   // 核心为中文，外层 renderTrendExplanation=function 包装器按 en 接管
 ]);
 const I18N_TODO = [
-  'renderAccount', 'renderAccountStatusList', 'renderMembershipCenter',
+  // 簇①账号+会员已迁移（renderAccount / renderAccountStatusList / renderMembershipCenter）
   'renderLuck', 'renderColorStats', 'renderColorMeaning', 'renderFortuneCenter',
   'renderHistoryPanel', 'renderMasterHistory', 'renderDetailedReport',
 ];
