@@ -1920,7 +1920,8 @@ const I18N_BY_DESIGN = new Set([
 ]);
 const I18N_TODO = [
   // 簇①账号+会员已迁移（renderAccount / renderAccountStatusList / renderMembershipCenter）
-  'renderLuck', 'renderColorStats', 'renderColorMeaning', 'renderFortuneCenter',
+  // 簇②部分完成（renderColorStats / renderColorMeaning / renderFortuneCenter）
+  'renderLuck',
   'renderHistoryPanel', 'renderMasterHistory', 'renderDetailedReport',
 ];
 function rendersWritingChineseWithoutLocale(src) {
