@@ -1638,6 +1638,8 @@ function localizeEnglishDailyView(){
   setLocaleText('[data-auth-action="signin"] span:not(.icon)','Sign in with Email');
   setLocaleText('.signup-btn.wechat span:not(.icon):not(.soon)','WeChat Sign-in');
   setLocaleText('.signup-btn.wechat .soon','Planned');
+  /* onboarding 结果区的静态样例值（未生成命盘时可见）。 */
+  setLocaleText('.meta-item .v.strong','Strong · 72.4 / 100');
   /* 历史记录面板自成一套控件（data-history-range），此前完全没进 EN_COPY，
      英文站长期显示「近 1 月/全部/自定义/应用/至」。 */
   setLocaleText('[data-history-range="30"]','Last 30 Days');
@@ -3256,7 +3258,7 @@ function updateTodaySurfaces(profile,today,dr){
   if(typeof renderDailyStats==='function')renderDailyStats();
   if(typeof applyEnglishAfterRender==='function')applyEnglishAfterRender();
 }
-function clearProfileSurfaces(today){
+function clearProfileSurfaces(today){var _en=typeof localeIsEn==='function'&&localeIsEn();
   window.__todayState=null;
   window.__profile=null;
   /* 命盘失效时把结果页收起回表单：否则会残留上一张命盘的四柱/用神/喜忌（曾出现旧忌神被当现值） */
@@ -3272,22 +3274,22 @@ function clearProfileSurfaces(today){
   const dateText=now.getFullYear()+' 年 '+(now.getMonth()+1)+' 月 '+now.getDate()+' 日 · 星期'+W[now.getDay()];
   const dash=document.querySelector('[data-view="dashboard"]');
   if(dash){
-    const pillars=dash.querySelector('.pillars');if(pillars)pillars.textContent='尚未生成命盘';
+    const pillars=dash.querySelector('.pillars');if(pillars)pillars.textContent=(_en?'Chart not generated yet':'尚未生成命盘');
     dash.querySelectorAll('.dash-meta .v').forEach(el=>{el.textContent='—';});
     const dateMarks=dash.querySelectorAll('.dash-hero > .dash-meta .k');
     if(dateMarks[0])dateMarks[0].textContent=compactDate;
     if(dateMarks[1])dateMarks[1].textContent='星期'+W[now.getDay()];
     const sn=dash.querySelector('.score-n');if(sn){sn.textContent='—';sn.style.color='';}
-    const sl=dash.querySelector('.score-l');if(sl){sl.textContent='请先生成命盘';sl.style.color='';sl.style.background='';}
-    const sd=dash.querySelector('.score-d');if(sd)sd.innerHTML='<div class="row"><span class="k">命盘状态</span><span class="v">尚未生成</span></div><div class="row"><span class="k">今日行动指数</span><span class="v">—</span></div><div class="row"><span class="k">操作建议</span><span class="v">先完成出生信息输入</span></div>';
-    const trendTitle=dash.querySelector('#trend-title');if(trendTitle)trendTitle.textContent='生成命盘后显示行动走势';
+    const sl=dash.querySelector('.score-l');if(sl){sl.textContent=(_en?'Generate your chart first':'请先生成命盘');sl.style.color='';sl.style.background='';}
+    const sd=dash.querySelector('.score-d');if(sd)sd.innerHTML='<div class="row"><span class="k">'+(_en?'Chart status':'命盘状态')+'</span><span class="v">'+(_en?'Not generated':'尚未生成')+'</span></div><div class="row"><span class="k">今日行动指数</span><span class="v">—</span></div><div class="row"><span class="k">操作建议</span><span class="v">先完成出生信息输入</span></div>';
+    const trendTitle=dash.querySelector('#trend-title');if(trendTitle)trendTitle.textContent=(_en?'Generate your chart to see the action trend':'生成命盘后显示行动走势');
     const stat=dash.querySelector('#trend-stat');if(stat)stat.textContent='';
-    const svg=dash.querySelector('#trend-svg');if(svg){svg.setAttribute('viewBox','0 0 800 260');svg.innerHTML='<text x="400" y="132" text-anchor="middle" fill="#6E7681" font-size="13">生成命盘后显示流月 / 流日 / 当天走势</text>';}
-    const explain=dash.querySelector('#trend-explain');if(explain)explain.textContent='生成命盘后，这里会解释运势、触发、财运和风险扣分。';
-    const yong=dash.querySelector('#yong-list');if(yong)yong.innerHTML='<div class="el-note"><b>尚未生成命盘。</b> 完成出生信息输入后，这里会显示喜用神、权重和解释。</div>';
-    const dy=dash.querySelector('.dy-list');if(dy)dy.innerHTML='<div class="el-note">完成命盘后显示大运时间轴。</div>';
-    const luck=dash.querySelector('#luck-summary');if(luck)luck.textContent='完成命盘后显示流年、流月、流日与时段建议。';
-    const al=dash.querySelector('#alert-list');if(al)al.innerHTML='<div class="warn"><span class="warn-i">ℹ️</span><div>生成命盘后显示当日真实风险提示（财运/刑冲/岁运/空亡）</div></div>';
+    const svg=dash.querySelector('#trend-svg');if(svg){svg.setAttribute('viewBox','0 0 800 260');svg.innerHTML='<text x="400" y="132" text-anchor="middle" fill="#6E7681" font-size="13">'+(_en?'Generate your chart to see month / day / intraday trend':'生成命盘后显示流月 / 流日 / 当天走势')+'</text>';}
+    const explain=dash.querySelector('#trend-explain');if(explain)explain.textContent=(_en?'Once your chart is generated, this explains fortune, trigger, wealth and risk penalty.':'生成命盘后，这里会解释运势、触发、财运和风险扣分。');
+    const yong=dash.querySelector('#yong-list');if(yong)yong.innerHTML='<div class="el-note"><b>'+(_en?'Chart not generated yet.':'尚未生成命盘。')+'</b> '+(_en?'Enter your birth details and your favorable elements, weights and explanation appear here.':'完成出生信息输入后，这里会显示喜用神、权重和解释。')+'</div>';
+    const dy=dash.querySelector('.dy-list');if(dy)dy.innerHTML='<div class="el-note">'+(_en?'Your luck-cycle timeline appears once the chart is generated.':'完成命盘后显示大运时间轴。')+'</div>';
+    const luck=dash.querySelector('#luck-summary');if(luck)luck.textContent=(_en?'Generate your chart to see year, month, day and best-window guidance.':'完成命盘后显示流年、流月、流日与时段建议。');
+    const al=dash.querySelector('#alert-list');if(al)al.innerHTML='<div class="warn"><span class="warn-i">ℹ️</span><div>'+(_en?'Generate your chart to see real daily risk flags (wealth / clash / cycle / void)':'生成命盘后显示当日真实风险提示（财运/刑冲/岁运/空亡）')+'</div></div>';
     const th=dash.querySelector('#trend-title');if(th){const head=th.closest('.card-h');if(head)[].slice.call(head.children).forEach(function(c){if(/均值/.test(c.textContent)&&!c.querySelector('button'))c.textContent='';});}
   }
   const daily=document.querySelector('[data-view="daily"]');

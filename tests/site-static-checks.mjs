@@ -600,8 +600,9 @@ includesAll(index, [
 includesAll(index, [
   'function clearProfileSurfaces(today)',
   'window.__todayState=null',
-  "pillars.textContent='尚未生成命盘'",
-  "sl.textContent='请先生成命盘'",
+  // 空态也已按语言渲染（新英文用户首次进来不该看到中文占位），故钉双分支
+  "pillars.textContent=(_en?'Chart not generated yet':'尚未生成命盘')",
+  "sl.textContent=(_en?'Generate your chart first':'请先生成命盘')",
   "scoreEl.textContent='—'",
   "tag.textContent='未生成命盘'",
   'function refresh(){const p=loadProfile(),t=getTodayGZ();if(p)applyProfile(p,t);else clearProfileSurfaces(t);}',
