@@ -1903,4 +1903,49 @@ for (const fn of ['function renderReport()', 'function renderReportCenter()']) {
 assert.equal(/setLocaleText\('#report-range-note'/.test(index), false,
   "#report-range-note 由 renderReportCenter 动态渲染（含区间+置信度），不得再用 setLocaleText 覆盖成静态营销语");
 
+/* ── i18n 棘轮：中英必须在渲染层就分开 ──────────────────────────────────
+   规矩：渲染函数要把中文写进 DOM，就必须同时有语言分支（localeIsEn）。
+   禁止再靠事后翻译覆盖层（localizeEnglish* / translate*ForEnglish）把已渲染的中文
+   改写成英文——那层由点击后 60ms 的 applyEnglishAfterRender 触发，任何重渲染跑在它
+   之后就露中文；它还靠 /还没有/、/点数/ 这类正则嗅探中文判状态，渲染一改就误判。
+   （2026-07 报告页中英混排即此症。）
+
+   棘轮语义：TODO 名单只能变短。
+   - 冒出名单外的新违规 → 失败（新债进不来）
+   - 名单里的已修好  → 也失败，强制从名单删掉（旧债只减不增，最终归零） */
+const I18N_BY_DESIGN = new Set([
+  'renderDailyScoreDetailZh', // 中文专用变体，另有 renderDailyScoreDetailEn 兄弟
+  'renderTrendExplanation',   // 核心为中文，外层 renderTrendExplanation=function 包装器按 en 接管
+]);
+const I18N_TODO = [
+  'renderAccount', 'renderAccountStatusList', 'renderMembershipCenter',
+  'renderLuck', 'renderColorStats', 'renderColorMeaning', 'renderFortuneCenter',
+  'renderHistoryPanel', 'renderMasterHistory', 'renderDetailedReport',
+];
+function rendersWritingChineseWithoutLocale(src) {
+  const CJK = /[一-鿿]/, out = [];
+  for (const line of src.split('\n')) {
+    for (const m of line.matchAll(/function (render[A-Za-z0-9_]*)\s*\(/g)) {
+      let body = line.slice(m.index);
+      const nxt = body.indexOf('function ', 9);
+      if (nxt > 0) body = body.slice(0, nxt);
+      if (!/innerHTML\s*=|textContent\s*=/.test(body)) continue; // 不写 DOM 的不管
+      if (!CJK.test(body)) continue;                              // 不含中文的不管
+      if (body.includes('localeIsEn()')) continue;                // 已按语言渲染
+      if (!out.includes(m[1])) out.push(m[1]);
+    }
+  }
+  return out;
+}
+{
+  const offenders = rendersWritingChineseWithoutLocale(index).filter((n) => !I18N_BY_DESIGN.has(n));
+  const added = offenders.filter((n) => !I18N_TODO.includes(n));
+  assert.deepEqual(added, [],
+    `新增了"中文写死、无语言分支"的渲染函数：${added.join(', ')}\n` +
+    `  → 渲染时就按语言出文案（en?'English':'中文'），不要再加事后翻译覆盖层`);
+  const stale = I18N_TODO.filter((n) => !offenders.includes(n));
+  assert.deepEqual(stale, [],
+    `这些已改成按语言渲染了，请从 I18N_TODO 删掉（棘轮只减不增）：${stale.join(', ')}`);
+}
+
 console.log('Static site checks passed');
