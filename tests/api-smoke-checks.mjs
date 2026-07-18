@@ -9,6 +9,7 @@
  * 这同时也验证了"未配置外部服务时不会白屏/500"这条产品要求。
  */
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 function mockRes() {
   const r = { statusCode: null, body: null, headers: {} };
@@ -56,6 +57,17 @@ for (const [file, name, req] of cases) {
   }
   n++;
   console.log(`  ok  ${name} → HTTP ${res.statusCode}`);
+}
+
+/* 静态守卫：会员结账在 Supabase memberships 未命中活跃行时，必须再查 Stripe 该客户的活跃订阅兜底，
+   防"遗留/未同步订阅"（Stripe 有活跃订阅但无 memberships 行，如早期缺 user_id 的测试订阅）
+   被误导去开重复订阅、跳重复付款页（2026-07 站长 ¥1 测试号即此症）。 */
+{
+  const src = readFileSync(new URL('../api/checkout.js', import.meta.url), 'utf8');
+  assert.ok(/subscriptions\?customer=/.test(src), 'checkout.js 会员结账必须查 Stripe 客户订阅兜底（subscriptions?customer=）');
+  assert.ok(src.includes('already_member_stripe'), 'checkout.js Stripe 已有活跃订阅时须返回 already_member_stripe，不开重复订阅');
+  n++;
+  console.log('  ok  会员结账 Stripe 订阅兜底守卫存在');
 }
 
 console.log(`\napi smoke: all ${n} handler invocations returned JSON without throwing`);

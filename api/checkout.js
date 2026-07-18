@@ -263,6 +263,31 @@ async function createMembershipCheckout(req, res) {
           : '你已经是会员，无需重复开通。请用「管理会员/账单」查看或调整订阅——本次未创建新的订阅、未扣费。')
     });
   }
+  // 加固：Supabase memberships 未命中活跃行时，再查 Stripe 该客户是否已有活跃订阅。
+  // 防"遗留/未同步订阅"（Stripe 有活跃订阅但 memberships 无对应行——例如早期缺 user_id 的
+  // 测试订阅，webhook 建不了行）被误导去开出重复订阅、跳到重复付款页。查询失败不阻断正常结账。
+  // 本站订阅仅用于会员（点数/报告是一次性支付，不会出现在 subscriptions 里），故任一活跃订阅即视为已是会员。
+  try {
+    let stripeCustomerId = (existingMembership && existingMembership.stripe_customer_id) || null;
+    if (!stripeCustomerId && user.email) {
+      const found = await stripeGet(`customers?email=${encodeURIComponent(user.email)}&limit=1`);
+      stripeCustomerId = found && Array.isArray(found.data) && found.data[0] ? found.data[0].id : null;
+    }
+    if (stripeCustomerId) {
+      const subs = await stripeGet(`subscriptions?customer=${encodeURIComponent(stripeCustomerId)}&status=all&limit=100`);
+      const live = subs && Array.isArray(subs.data)
+        ? subs.data.find((s) => s && ['active', 'trialing', 'past_due'].indexOf(s.status) >= 0)
+        : null;
+      if (live) {
+        return send(res, 409, {
+          error: 'already_member_stripe',
+          message: locale === 'en'
+            ? 'You already have an active membership subscription on file. Open "Manage Billing" to view or change it — no second subscription was created and you were not charged.'
+            : '你在 Stripe 已有一笔生效中的会员订阅。请点「管理会员/账单」查看或调整——本次未创建新订阅、未扣费。'
+        });
+      }
+    }
+  } catch (e) { /* Stripe 查询失败：不阻断正常结账 */ }
   // 计费周期（月/年）由 Stripe 价上的 recurring.interval 决定，setLocalizedLineItem 会原样复制。
   const price = priceFromEnv(product.plans[plan].priceEnv);
   if (!process.env.STRIPE_SECRET_KEY || !price.value) {
