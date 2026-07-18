@@ -927,6 +927,18 @@ includesAll(index, [
   "interactionAdjust:(dr.interaction&&dr.interaction.adjust)||0",
 ], 'progressive disclosure: plain-language headline stays visible, BaZi jargon collapses behind a toggle');
 
+/* 回归守卫：英文站每次点击都会 60ms 后重跑 applyEnglishAfterRender 重渲染分数卡。
+   若 rows 写死 hidden，"Show BaZi calculation" 一展开就被塌回（点了没反应）。
+   用 __scoreDetailOpen 持久化展开态，渲染时按它决定 hidden，点击时更新它。 */
+includesAll(index, [
+  'var __scoreDetailOpen=false;',
+  "aria-expanded=\"'+(__scoreDetailOpen?'true':'false')+'\"",
+  "score-detail-rows\"'+(__scoreDetailOpen?'':' hidden')+'>'",
+  'rows.hidden=open;__scoreDetailOpen=!open;',
+], '八字推算折叠态持久化：英文站重渲染（applyEnglishAfterRender）不会把已展开的详情塌回');
+assert.equal(/score-detail-rows" hidden>/.test(index), false,
+  'score-detail-rows 不能再写死 hidden（会被英文站重渲染塌回）——必须走 __scoreDetailOpen 条件渲染');
+
 includesAll(index, [
   'function ensureDailyDetailBox(daily)',
   'function renderDailyScoreDetailZh(daily,dr,action)',
