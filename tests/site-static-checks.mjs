@@ -355,7 +355,7 @@ includesAll(index, [
   'Not investment advice',
   'Use scores as timing and behavior signals, not trade calls.',
   'Scores are calibrated to express timing rhythm, not expected return.',
-  'Background Trend',
+  'Fortune',
   'Flow Trigger',
   'Wealth Signal',
   'Risk Penalty',
@@ -928,17 +928,17 @@ includesAll(index, [
 ], 'progressive disclosure: plain-language headline stays visible, BaZi jargon collapses behind a toggle');
 
 /* 指标改名 + 悬停解释：foundation 那个含糊的"Base Timing / 综合年月日 / 底盘"统一成
-   Background Trend / 大势背景，并给每行指标名挂 title 人话解释（annotateScoreRows）。 */
+   Fortune / 运势，并给每行指标名挂 title 人话解释（annotateScoreRows）。 */
 includesAll(index, [
   'function annotateScoreRows(root)',
-  "'Background Trend':'How favorable your current 10-year",
-  "'大势背景':'当前大运、流年、流月、流日综合的顺逆",
+  "'Fortune':'How favorable your current 10-year",
+  "'运势':'当前大运、流年、流月、流日综合的顺逆",
   'root.querySelectorAll(\'.score-detail-rows .row .k\')',
   'if(typeof annotateScoreRows===\'function\')annotateScoreRows();',
   'annotateScoreRows(toggle.parentElement);',
-], 'foundation 指标统一改名 Background Trend/大势背景 + 每行挂 title 悬停解释（annotateScoreRows 在重渲染与展开时都调用）');
+], 'foundation 指标统一改名 Fortune/运势 + 每行挂 title 悬停解释（annotateScoreRows 在重渲染与展开时都调用）');
 assert.equal(/class="k">Base Timing<|class="k">综合年月日<|' · 底盘 '\+|' · Base '\+/.test(index), false,
-  '不得再残留旧的 foundation 叫法（Base Timing / 综合年月日 / 底盘 / Base 紧凑标签）——已统一为 Background Trend / 大势背景');
+  '不得再残留旧的 foundation 叫法（Base Timing / 综合年月日 / 底盘 / Base 紧凑标签）——已统一为 Fortune / 运势');
 /* 回归守卫：英文站每次点击都会 60ms 后重跑 applyEnglishAfterRender 重渲染分数卡。
    若 rows 写死 hidden，"Show BaZi calculation" 一展开就被塌回（点了没反应）。
    用 __scoreDetailOpen 持久化展开态，渲染时按它决定 hidden，点击时更新它。 */
@@ -1083,13 +1083,13 @@ assert.ok(
   'renderLuck composite score should remain the final dashboard score',
 );
 includesAll(index, [
-  '大势背景 <b style="color:var(--accent)">',
+  '运势 <b style="color:var(--accent)">',
   '今日行动指数',
-  '<span class="k">大势背景</span>',
+  '<span class="k">运势</span>',
   '<span class="k">流日触发</span>',
   '<span class="k">风险扣分</span>',
   'paintScoreNum(sn,action.score)',
-  "sl.textContent=action.label+' · 财运 '+(drT?drT.cScore:'')+' · 大势背景 '+foundation.score;paintScorePill(sl,action.score)",
+  "sl.textContent=action.label+' · 财运 '+(drT?drT.cScore:'')+' · 运势 '+foundation.score;paintScorePill(sl,action.score)",
 ], 'dashboard action score rendering');
 
 includesAll(index, [
