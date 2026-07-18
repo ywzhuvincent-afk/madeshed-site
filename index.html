@@ -1629,6 +1629,15 @@ function localizeEnglishDailyView(){
   setLocaleText('[data-range="all"]','All History');
   setLocaleText('[data-range="custom"]','Custom');
   setLocaleText('[data-stats-action="apply-custom"]','Apply');
+  /* onboarding 命盘结果的四柱静态标签（此前英文站显示「年柱/月柱/日柱/时柱」）。 */
+  setLocaleText('.result-labels span:nth-child(1)','Year Pillar');
+  setLocaleText('.result-labels span:nth-child(2)','Month Pillar');
+  setLocaleText('.result-labels span:nth-child(3)','Day Pillar');
+  setLocaleText('.result-labels span:nth-child(4)','Hour Pillar');
+  /* onboarding 保存/登录按钮（此前英文站显示「邮箱登录保存 / 微信登录 / 规划中」）。 */
+  setLocaleText('[data-auth-action="signin"] span:not(.icon)','Sign in with Email');
+  setLocaleText('.signup-btn.wechat span:not(.icon):not(.soon)','WeChat Sign-in');
+  setLocaleText('.signup-btn.wechat .soon','Planned');
   /* 历史记录面板自成一套控件（data-history-range），此前完全没进 EN_COPY，
      英文站长期显示「近 1 月/全部/自定义/应用/至」。 */
   setLocaleText('[data-history-range="30"]','Last 30 Days');
@@ -3312,7 +3321,7 @@ function applyProfile(profile,today){
     // 曾误用 dash-meta 的写法把月令/大运塞进用神/喜槽、且忌槽从未填充而残留占位符，导致喜忌显示反了。
     const ys=profile.yongShen||{};
     if(items[0]){const v=items[0].querySelector('.v');if(v)v.innerHTML='<span class="cn">'+profile.dayStem+'</span> · '+profile.dayElement;}
-    if(items[1]){const v=items[1].querySelector('.v');if(v)v.textContent=profile.strength.category+' '+profile.strength.score;}
+    if(items[1]){const v=items[1].querySelector('.v');if(v){var _en=typeof localeIsEn==='function'&&localeIsEn();v.textContent=(_en&&typeof strengthNameEn==='function'?strengthNameEn(profile.strength):profile.strength.category)+' '+profile.strength.score;}}
     if(items[2]){const v=items[2].querySelector('.v');if(v)v.innerHTML='<span class="cn">'+(ys.mainCn||'—')+'</span>';}
     if(items[3]){const v=items[3].querySelector('.v');if(v)v.innerHTML='<span class="cn">'+((ys.xiCn&&ys.xiCn.length)?ys.xiCn.join(', '):'—')+'</span>';}
     if(items[4]){const v=items[4].querySelector('.v');if(v)v.innerHTML='<span class="cn">'+((ys.jiCn&&ys.jiCn.length)?ys.jiCn.join(', '):'—')+'</span>';}
