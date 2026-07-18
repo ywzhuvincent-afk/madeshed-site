@@ -1082,15 +1082,19 @@ assert.ok(
   !/renderLuck\(profile,today\);[\s\S]{0,220}if\(dr\)updateTodaySurfaces\(profile,today,dr\);/.test(index),
   'renderLuck composite score should remain the final dashboard score',
 );
+/* renderLuck 已改为按语言渲染：中文分支保留原文案，英文分支不再靠覆盖层补翻译。
+   下面同时钉住两条分支，避免任一语言被改坏。 */
 includesAll(index, [
-  '运势 <b style="color:var(--accent)">',
-  '今日行动指数',
+  "(en?'Fortune ':'运势 ')",
+  "(en?'Daily Action Index ':'今日行动指数 ')",
   '<span class="k">运势</span>',
   '<span class="k">流日触发</span>',
   '<span class="k">风险扣分</span>',
   'paintScoreNum(sn,action.score)',
-  "sl.textContent=action.label+' · 财运 '+(drT?drT.cScore:'')+' · 运势 '+foundation.score;paintScorePill(sl,action.score)",
-], 'dashboard action score rendering');
+  "sl.textContent=en?(scoreBandEn(action.score)+' · wealth '+(drT?drT.cScore:'')+' · fortune '+foundation.score):(action.label+' · 财运 '+(drT?drT.cScore:'')+' · 运势 '+foundation.score);paintScorePill(sl,action.score)",
+  'function luckLayerHtmlEn(profile,x)',
+  "if(sd&&en&&typeof renderEnglishScoreDetails==='function')",
+], 'dashboard action score rendering（中英双分支）');
 
 includesAll(index, [
   '今日行动指数 · TODAY',
@@ -1920,8 +1924,7 @@ const I18N_BY_DESIGN = new Set([
 ]);
 const I18N_TODO = [
   // 簇①账号+会员已迁移（renderAccount / renderAccountStatusList / renderMembershipCenter）
-  // 簇②部分完成（renderColorStats / renderColorMeaning / renderFortuneCenter）
-  'renderLuck',
+  // 簇②已完成（renderLuck / renderColorStats / renderColorMeaning / renderFortuneCenter）
   'renderHistoryPanel', 'renderMasterHistory', 'renderDetailedReport',
 ];
 function rendersWritingChineseWithoutLocale(src) {
