@@ -1952,4 +1952,11 @@ function rendersWritingChineseWithoutLocale(src) {
     `这些已改成按语言渲染了，请从 I18N_TODO 删掉（棘轮只减不增）：${stale.join(', ')}`);
 }
 
+/* VIP 卡按钮：已是会员只给一个「管理会员」入口。此前月付/年付两个按钮在会员态下
+   都会退化成同一个「管理会员」，卡片上出现两个一模一样的按钮。 */
+assert.ok(index.includes("+(memberActive?('<button class=\"report-btn primary\" type=\"button\" data-membership-action=\"'+memberAction+'\" data-membership-tier=\"highest\" data-membership-plan=\"monthly\">'+memberText+'</button>')"),
+  'VIP 卡在会员态必须只渲染一个按钮（不得月付/年付都退化成「管理会员」）');
+assert.equal(/memberActive\?\(en\?'Manage Billing':'管理会员'\)/.test(index), false,
+  'VIP 年付按钮不得再在会员态显示「管理会员」——会和月付按钮重复');
+
 console.log('Static site checks passed');
