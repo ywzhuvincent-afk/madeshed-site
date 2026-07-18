@@ -723,7 +723,7 @@ async function refund(req, res) {
   }
 }
 
-// 手动发放报告权益（补履约）：webhook 抖动导致"付了钱没解锁"时兜底。带 30 天有效期（与购买一致）。
+// 手动发放报告权益（补履约）：webhook 抖动导致"付了钱没解锁"时兜底。带一年有效期（与购买一致）。
 async function grantEntitlement(req, res) {
   const admin = await requireAdmin(req, res);
   if (!admin) return;
@@ -732,7 +732,7 @@ async function grantEntitlement(req, res) {
   const userId = String(body.userId || '').trim();
   const reportType = String(body.reportType || '').trim();
   const kind = String(body.kind || 'trade').trim();
-  const days = Number(body.days) > 0 ? Math.min(3650, Math.round(Number(body.days))) : 30;
+  const days = Number(body.days) > 0 ? Math.min(3650, Math.round(Number(body.days))) : 365;
   if (!userId || !reportType) return send(res, 400, { error: 'missing_params', message: '需要 userId + reportType。' });
   const expiresAt = new Date(Date.now() + days * 86400000).toISOString();
   try {

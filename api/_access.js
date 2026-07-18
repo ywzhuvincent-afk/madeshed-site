@@ -47,7 +47,8 @@ export async function activeMembership(userId) {
 }
 
 // 单次购买的报告权益有效期（天）。会员生成的报告不受此限（会员在期内一直可生成）。
-export const REPORT_VALIDITY_DAYS = 30;
+// 2026-07 由 30 天改为一年：单次买一份深度报告只给 30 天，用户会以为内容丢了，且比订会员还亏。
+export const REPORT_VALIDITY_DAYS = 365;
 // 无 expires_at 的历史记录视为长期有效（向后兼容，不追溯旧订单）
 function purchaseStillValid(expiresAt) {
   if (!expiresAt) return true;
@@ -160,7 +161,8 @@ export async function authorizeFortuneReportAccess(req, reportType, mode = 'full
     };
   }
   // locale 一路带给报告生成器：AI 提示词、报告标题/免责声明、缓存键都必须按它走。
-  return { ok: true, user: userResult.user, profile, accessLevel: entitlement.accessLevel, locale };
+  // expiresAt 透传给前端：卡片徽章要能诚实显示到期日，不能只靠本地猜。
+  return { ok: true, user: userResult.user, profile, accessLevel: entitlement.accessLevel, expiresAt: entitlement.expiresAt || null, locale };
 }
 
 export async function loadCloudCheckins(userId) {

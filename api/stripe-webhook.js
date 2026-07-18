@@ -303,7 +303,7 @@ async function handleCreditPack(session, metadata) {
 }
 
 // 单次购买报告有效期：30 天（会员生成的不受此限）。到期后 _access 判为 expired、可再次购买。
-const REPORT_VALIDITY_DAYS = 30;
+const REPORT_VALIDITY_DAYS = 365;
 function reportExpiryFromNow() {
   return new Date(Date.now() + REPORT_VALIDITY_DAYS * 86400000).toISOString();
 }

@@ -377,6 +377,7 @@ export default async function handler(req, res) {
       title: existing[0].title,
       reportHtml: existing[0].report_html,
       accessLevel: existing[0].access_level,
+      expiresAt: gate.expiresAt || null,
       source: 'fortune_reports',
       disclaimer: t(locale, 'report_disclaimer')
     });
@@ -415,6 +416,7 @@ export default async function handler(req, res) {
       title: productLabelFor(reportType, locale),
       reportHtml: buildFallback(reportType, gate.profile, period, gate.accessLevel, locale),
       accessLevel: gate.accessLevel,
+      expiresAt: gate.expiresAt || null,
       source: 'fallback',
       degraded: true,
       llmError,
@@ -438,6 +440,7 @@ export default async function handler(req, res) {
     title: productLabelFor(reportType, locale),
     reportHtml,
     accessLevel: gate.accessLevel,
+    expiresAt: gate.expiresAt || null,
     source: 'ai',
     disclaimer: t(locale, 'report_disclaimer')
   });

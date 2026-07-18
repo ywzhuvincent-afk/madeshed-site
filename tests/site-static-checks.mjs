@@ -522,8 +522,8 @@ includesAll(index, [
   "<div class=\"report-incl\">'+incl+'</div>",
 ], '单买报告卡显性化"会员已含"锚点（命理解读+交易复盘；vip 旗舰显示"至尊VIP 已含"）');
 includesAll(index, [
-  "buy=en?'Buy · 30-day access':'单次购买 · 30天有效'",
-], 'Buy·30-day 文案改为更清楚的 30-day access（消歧"买的是什么"）');
+  "buy=en?'Buy · 1-year access':'单次购买 · 一年有效'",
+], '单次购买有效期文案与 REPORT_VALIDITY_DAYS 一致（一年）');
 includesAll(index, [
   'function fortuneCard(type){',
   'filter(function(type){return !FORTUNE_PRODUCTS[type].vip;}).map(fortuneCard)',
@@ -1700,10 +1700,10 @@ includesAll(index, ['function renderPurchaseHistory', "fetch('/api/account?actio
 // 6) 数据库硬化脚本存在（需在 Supabase SQL Editor 执行）
 assert.ok(existsSync('supabase/2026-07-10-purchase-hardening.sql'), '购买硬化 SQL（封付费绕过+账本唯一约束）');
 // 7) 单次报告 30 天有效期：webhook 盖 expires_at + _access 到期判定 + 结账过期可续买 + CTA 标注
-assert.ok(/REPORT_VALIDITY_DAYS = 30/.test(accessApi) && /function purchaseStillValid/.test(accessApi) && /accessLevel: 'expired'/.test(accessApi), '_access：报告权益 30 天有效期判定（会员不受限）');
+assert.ok(/REPORT_VALIDITY_DAYS = 365/.test(accessApi) && /function purchaseStillValid/.test(accessApi) && /accessLevel: 'expired'/.test(accessApi), '_access：报告权益 30 天有效期判定（会员不受限）');
 assert.ok(/reportExpiryFromNow\(\)/.test(stripeWebhookApi) && /expires_at: reportExpiryFromNow/.test(stripeWebhookApi), 'webhook：报告购买盖 30 天有效期');
 assert.ok(/hasTradeReportEntitlement|hasFortuneReportEntitlement/.test(checkoutApi) && /import \{ hasTradeReportEntitlement/.test(checkoutApi), '结账防重复用到期判定（过期报告允许续买）');
-assert.ok(/单次购买 · 30天有效/.test(index) && /Buy · 30-day/.test(index), '报告 CTA 标注"单次购买·30天有效"（承诺与实现一致）');
+assert.ok(/单次购买 · 一年有效/.test(index) && /Buy · 1-year access/.test(index), '报告 CTA 标注"单次购买·一年有效"（承诺与实现一致）');
 
 // 8) 钱路对抗式预检修复（10 项确认缺陷）
 // 8.1 结账去重查询失败 fail-closed，不放行创建付款
@@ -1966,5 +1966,19 @@ assert.equal(/最高级|最高級/.test(index), false,
   '不得再出现「最高级/最高級」——中间档已改名为「高级会员/高級會員」（它上面还有至尊VIP，自称最高级会自相矛盾）');
 assert.ok(index.includes('高级会员') && index.includes('至尊VIP会员'),
   '档位名应为「高级会员」+「至尊VIP会员」');
+
+/* 命理报告"查看已生成"入口：报告早就存在 localStorage，此前却没有任何 UI 能打开它，
+   用户只能再点「生成报告」，误以为要重新生成/重新付费（交易复盘报告一直是有回看入口的）。
+   同时把 expiresAt 存下来，卡片徽章才能诚实显示到期，而不是永远「已解锁」。 */
+includesAll(index, [
+  'function openSavedFortuneReport(type)',
+  "data-fortune-action=\"open-saved\"",
+  "if(act==='open-saved'){openSavedFortuneReport(type);return;}",
+  'expiresAt:j.expiresAt||null',
+], '命理报告可回看（不重新生成）+ 本地记录带 expiresAt');
+assert.equal((index.match(/function openSavedFortuneReport\(type\)/g)||[]).length, 1,
+  'openSavedFortuneReport 只能定义一次（openFortuneReport 有历史重复定义，插入时容易被复制两份）');
+/* 单次购买有效期：三处口径必须一致（_access 判定、webhook 盖章、admin 补发默认值）。 */
+assert.ok(/REPORT_VALIDITY_DAYS = 365/.test(stripeWebhookApi), 'webhook 盖章有效期须与 _access 一致（一年）');
 
 console.log('Static site checks passed');
