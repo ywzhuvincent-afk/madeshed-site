@@ -1606,7 +1606,16 @@ assert.ok(/score >= 82\) return \{ color: '绿'/.test(baziRuntimeApi) && /score 
 assert.ok(/s>=82\?'#26A69A':\(s>=70\?'#4DD0E1'/.test(chart), 'chart-full ldColor：强顺势=深绿(#26A69A)、顺势=浅绿(#4DD0E1)');
 // 动态重建的日历/状态图例（zh restoreChineseDailyWidgets + en localizeEnglishDailyWidgets/ScoreEducation）不得残留旧“浅绿=强”
 assert.ok(!index.includes('浅绿=高顺势') && !index.includes('Light Green = strong'), '不得残留旧图例（浅绿=强）：含动态重建的中英日历/状态图例');
-assert.ok(index.includes('Green = strong support') && index.includes('Light Green = supportive'), 'EN 图例：深绿=strong support、浅绿=supportive');
+/* EN 图例词必须与 scoreBandEn 档位词逐字一致：用户在分数上看到 "Favorable 72"，图例里就得能找到
+   Favorable。此前图例写 "Light Green = supportive"，与分数词对不上，是"看不懂这个指数"的主因。
+   同时不再用"颜色 = 描述"句式——旁边已有色块（冗余），且长标题会把 5 等分列撑得高低不齐。 */
+for (const band of ['Strong Momentum', 'Favorable', 'Neutral', 'Cautious', 'High Risk']) {
+  assert.ok(index.includes('>' + band + '<'), `EN 图例必须用 scoreBandEn 档位词「${band}」（图例词须与分数上显示的词一致）`);
+}
+assert.equal(/(?:Green|Light Green|Yellow|Orange|Red) = [a-z]/.test(index), false,
+  'EN 图例不得再用"颜色 = 描述"句式（色块已表达颜色，长标题还会让 5 等分列高低不齐）');
+assert.ok(/function scoreBandEn\(score\)\{[\s\S]{0,200}Strong Momentum[\s\S]{0,80}Favorable/.test(index),
+  'scoreBandEn 档位词若改动，上面的图例断言须同步更新（两处必须一致）');
 // COLORS 顺序驱动"按命理颜色分组"列表 + 命理状态图例 + insights：最强在上→绿在前、浅绿次之
 assert.ok(/const COLORS=\['green','green-l','yellow','orange','red'\]/.test(index), 'COLORS 顺序：绿(强顺势)在前、浅绿(顺势)次之（列表/图例最强在上）');
 // 标记图例整洁化（| 分隔，中英同步）
