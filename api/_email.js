@@ -38,7 +38,7 @@ function esc(v) {
 // —— 商品展示名（报告就绪 / 退款邮件共用），三语。
 export function productLabel(locale, { product, reportType, fortuneType } = {}) {
   if (product === 'credit_pack') return T(locale, { zh: '问大师 10 点包', hant: '問大師 10 點包', en: 'Ask Master 10-Credit Pack' });
-  if (product === 'membership') return T(locale, { zh: '最高级会员', hant: '最高級會員', en: 'Ultimate Membership' });
+  if (product === 'membership') return T(locale, { zh: '高级会员', hant: '高級會員', en: 'Ultimate Membership' });
   if (product === 'report') {
     const map = {
       '7': { zh: '交易复盘报告（近 7 天）', hant: '交易復盤報告（近 7 天）', en: 'Trading Review Report (7 days)' },
@@ -213,12 +213,12 @@ export function creditsAddedEmail(locale, { credits, balance, href } = {}) {
 }
 
 export function membershipWelcomeEmail(locale, { href } = {}) {
-  const subject = T(locale, { zh: '最高级会员已开通', hant: '最高級會員已開通', en: 'Your Ultimate membership is active' });
+  const subject = T(locale, { zh: '高级会员已开通', hant: '高級會員已開通', en: 'Your Ultimate membership is active' });
   const html = layout(locale, {
-    heading: T(locale, { zh: '欢迎成为最高级会员', hant: '歡迎成為最高級會員', en: 'Welcome to Ultimate' }),
+    heading: T(locale, { zh: '欢迎成为高级会员', hant: '歡迎成為高級會員', en: 'Welcome to Ultimate' }),
     intro: T(locale, {
-      zh: '你的最高级会员已开通：固定命理报告免费生成，问大师每月赠送 30 点。会员将按月自动续费，可随时在账号中心的「管理会员/账单」里查看或取消。',
-      hant: '你的最高級會員已開通：固定命理報告免費生成，問大師每月贈送 30 點。會員將按月自動續費，可隨時在賬號中心的「管理會員/賬單」裡查看或取消。',
+      zh: '你的高级会员已开通：固定命理报告免费生成，问大师每月赠送 30 点。会员将按月自动续费，可随时在账号中心的「管理会员/账单」里查看或取消。',
+      hant: '你的高級會員已開通：固定命理報告免費生成，問大師每月贈送 30 點。會員將按月自動續費，可隨時在賬號中心的「管理會員/賬單」裡查看或取消。',
       en: 'Your Ultimate membership is active: fixed BaZi reports are free to generate and you get 30 Ask Master credits every month. It renews monthly; view or cancel anytime under Manage Billing.'
     }),
     ctaText: T(locale, { zh: '进入面板', hant: '進入面板', en: 'Open dashboard' }),
@@ -232,8 +232,8 @@ export function paymentFailedEmail(locale, { href } = {}) {
   const html = layout(locale, {
     heading: T(locale, { zh: '这个月的续费没有扣款成功', hant: '這個月的續費沒有扣款成功', en: 'This month\'s renewal did not go through' }),
     intro: T(locale, {
-      zh: '我们尝试为你的最高级会员续费，但银行卡扣款失败。你的会员暂时进入宽限期，权益仍可使用几天。请尽快更新支付方式，避免会员到期后被取消。',
-      hant: '我們嘗試為你的最高級會員續費，但銀行卡扣款失敗。你的會員暫時進入寬限期，權益仍可使用幾天。請盡快更新支付方式，避免會員到期後被取消。',
+      zh: '我们尝试为你的高级会员续费，但银行卡扣款失败。你的会员暂时进入宽限期，权益仍可使用几天。请尽快更新支付方式，避免会员到期后被取消。',
+      hant: '我們嘗試為你的高級會員續費，但銀行卡扣款失敗。你的會員暫時進入寬限期，權益仍可使用幾天。請盡快更新支付方式，避免會員到期後被取消。',
       en: 'We tried to renew your Ultimate membership but the card was declined. Your membership is in a short grace period. Please update your payment method soon to avoid losing access.'
     }),
     ctaText: T(locale, { zh: '更新支付方式', hant: '更新支付方式', en: 'Update payment method' }),

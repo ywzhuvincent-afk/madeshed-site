@@ -17,9 +17,9 @@ const CREDIT_PACK_PRODUCT = {
    monthlyCredits 必须与 _access.js 的 MEMBERSHIP_MONTHLY_CREDITS 一致（发点以那张表为准）。 */
 const MEMBERSHIP_PRODUCTS = {
   ultimate: {
-    label: '最高级会员',
+    label: '高级会员',
     labelEn: 'Ultimate Membership',
-    labelHant: '最高級會員',
+    labelHant: '高級會員',
     price: '¥39.9/月',
     monthlyCredits: 30,
     priceEnv: ['STRIPE_ULTIMATE_PRICE_ID', 'STRIPE_MEMBERSHIP_PRICE_ID'],
@@ -390,7 +390,7 @@ async function createReportCheckout(req, res) {
           ? 'Your Ultimate membership already includes this report — generate it free from the report page. You were not charged.'
           : 'You already own this report and it is still valid — open it from the report page, no need to buy again. You were not charged.')
         : (isMember
-          ? '你的最高级会员已包含此报告，直接在报告页免费生成即可——本次未扣费。'
+          ? '你的高级会员已包含此报告，直接在报告页免费生成即可——本次未扣费。'
           : '你已购买过这份报告且仍在有效期内，直接在报告页生成/查看即可，无需重复购买——本次未扣费。')
     });
   }

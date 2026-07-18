@@ -58,7 +58,7 @@ function jwtRole(k) {
 
 const PRICE_ENVS = [
   { env: 'STRIPE_CREDIT_PRICE_ID', product: '问大师 10 点包', expect: 'one_time' },
-  { env: 'STRIPE_ULTIMATE_PRICE_ID', product: '最高级会员（订阅）', expect: 'recurring', fallback: 'STRIPE_MEMBERSHIP_PRICE_ID' },
+  { env: 'STRIPE_ULTIMATE_PRICE_ID', product: '高级会员（订阅）', expect: 'recurring', fallback: 'STRIPE_MEMBERSHIP_PRICE_ID' },
   { env: 'STRIPE_REPORT_7_PRICE_ID', product: '7 天报告', expect: 'one_time' },
   { env: 'STRIPE_REPORT_30_PRICE_ID', product: '月度报告', expect: 'one_time', fallback: 'STRIPE_REPORT_PRICE_ID' },
   { env: 'STRIPE_REPORT_365_PRICE_ID', product: '年度报告', expect: 'one_time' },

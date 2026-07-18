@@ -121,7 +121,7 @@ async function overview(req, res) {
     const fAt = (x) => x.updated_at, fCents = (x) => x.context && x.context.amount_total;
     const oneTimeTotal = revenueFrom(centsCredit, cCents, cAt) + revenueFrom(centsReport, cCents, cAt) + revenueFrom(centsFortune, fCents, fAt);
     const oneTime30d = revenueFrom(centsCredit, cCents, cAt, d30) + revenueFrom(centsReport, cCents, cAt, d30) + revenueFrom(centsFortune, fCents, fAt, d30);
-    // MRR ≈ 活跃最高级会员数 × 当前会员月价（会员各自锁定价可能不同，此为估算）。取价失败则不报 MRR。
+    // MRR ≈ 活跃高级会员数 × 当前会员月价（会员各自锁定价可能不同，此为估算）。取价失败则不报 MRR。
     let mrrCents = null;
     try {
       const uPrice = await resolveCatalogItem(PRODUCT_NAME_MAP.find((x) => x.key === 'ultimate'));

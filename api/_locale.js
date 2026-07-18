@@ -97,13 +97,13 @@ export const MESSAGES = {
 
   // —— 报告权益 / 付费闸门 ——
   trade_report_paywall: {
-    zh: '这份完整报告需要单次购买，或开通最高级会员后生成。',
-    'zh-Hant': '這份完整報告需要單次購買，或開通最高級會員後生成。',
+    zh: '这份完整报告需要单次购买，或开通高级会员后生成。',
+    'zh-Hant': '這份完整報告需要單次購買，或開通高級會員後生成。',
     en: 'This full report requires a one-time purchase, or an Ultimate membership.'
   },
   fortune_report_paywall: {
-    zh: '这份完整命理报告需要单次购买，或开通最高级会员后生成。',
-    'zh-Hant': '這份完整命理報告需要單次購買，或開通最高級會員後生成。',
+    zh: '这份完整命理报告需要单次购买，或开通高级会员后生成。',
+    'zh-Hant': '這份完整命理報告需要單次購買，或開通高級會員後生成。',
     en: 'This full BaZi reading requires a one-time purchase, or an Ultimate membership.'
   },
   saved_profile_required: {
@@ -280,8 +280,8 @@ export const MESSAGES = {
     en: 'This period logged {total} days with {traded} trades.'
   },
   trade_preview_note: {
-    zh: '完整报告需要登录、已购买本报告或拥有最高级会员，并从云端真实记录生成。',
-    'zh-Hant': '完整報告需要登入、已購買本報告或擁有最高級會員，並從雲端真實記錄生成。',
+    zh: '完整报告需要登录、已购买本报告或拥有高级会员，并从云端真实记录生成。',
+    'zh-Hant': '完整報告需要登入、已購買本報告或擁有高級會員，並從雲端真實記錄生成。',
     en: 'The full report requires sign-in plus a purchase or Ultimate membership, and is generated from your real synced records.'
   },
   trade_preview_list: {

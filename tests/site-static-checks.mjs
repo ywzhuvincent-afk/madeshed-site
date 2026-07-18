@@ -1959,4 +1959,12 @@ assert.ok(index.includes("+(memberActive?('<button class=\"report-btn primary\" 
 assert.equal(/memberActive\?\(en\?'Manage Billing':'管理会员'\)/.test(index), false,
   'VIP 年付按钮不得再在会员态显示「管理会员」——会和月付按钮重复');
 
+/* 档位命名：中间档中文叫「高级会员」，顶档叫「至尊VIP会员」。
+   此前中间档叫「最高级会员」——上面还有一档却自称"最高级"，用户分不清两档区别。
+   繁体同理（高級會員）。英文 Ultimate / VIP 不受影响。 */
+assert.equal(/最高级|最高級/.test(index), false,
+  '不得再出现「最高级/最高級」——中间档已改名为「高级会员/高級會員」（它上面还有至尊VIP，自称最高级会自相矛盾）');
+assert.ok(index.includes('高级会员') && index.includes('至尊VIP会员'),
+  '档位名应为「高级会员」+「至尊VIP会员」');
+
 console.log('Static site checks passed');
