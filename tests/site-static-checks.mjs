@@ -1882,4 +1882,25 @@ assert.equal(
   );
 }
 
+/* 报告页中英混排回归守卫（2026-07 用户反馈"点英文经常中英混在一起"）。
+   根因：renderReport / renderReportCenter 把中文写死，英文靠 localizeEnglishReportWidgets
+   这类"正则嗅探中文再改写"的罐头覆盖层在渲染之后补翻译 —— 重渲染跑在覆盖层之后就露中文，
+   且覆盖层用 /还没有/ 判空态，一旦渲染出英文就永远判错。
+   规矩：谁渲染谁负责按语言出文案；覆盖层不得再碰这些区域。 */
+for (const fn of ['function renderReport()', 'function renderReportCenter()']) {
+  const body = index.slice(index.indexOf(fn), index.indexOf(fn) + 3000);
+  assert.ok(/localeIsEn\(\)/.test(body), `${fn} 必须在渲染时按语言出文案（不能只写中文靠覆盖层补翻译）`);
+}
+{
+  const i = index.indexOf('function localizeEnglishReportWidgets()');
+  assert.ok(i > -1, 'localizeEnglishReportWidgets 应仍存在（只保留 legal-block 标题）');
+  const body = index.slice(i, index.indexOf('\n}', i));
+  for (const gone of ['report-summary', 'report-free-stats', 'report-range-note', 'report-free-table']) {
+    assert.ok(!body.includes(gone),
+      `localizeEnglishReportWidgets 不得再覆盖 #${gone}——该区域已由渲染按语言直出，覆盖层会造成中英混排竞态`);
+  }
+}
+assert.equal(/setLocaleText\('#report-range-note'/.test(index), false,
+  "#report-range-note 由 renderReportCenter 动态渲染（含区间+置信度），不得再用 setLocaleText 覆盖成静态营销语");
+
 console.log('Static site checks passed');
