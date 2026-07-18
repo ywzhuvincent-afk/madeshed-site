@@ -1638,8 +1638,9 @@ function localizeEnglishDailyView(){
   setLocaleText('[data-auth-action="signin"] span:not(.icon)','Sign in with Email');
   setLocaleText('.signup-btn.wechat span:not(.icon):not(.soon)','WeChat Sign-in');
   setLocaleText('.signup-btn.wechat .soon','Planned');
-  /* onboarding 结果区的静态样例值（未生成命盘时可见）。 */
-  setLocaleText('.meta-item .v.strong','Strong · 72.4 / 100');
+  /* 注：onboarding 结果区那个「偏强 · 72.4 / 100」静态样例在 .result-view.hide 里（display:none），
+     用户看不到；生成命盘后由渲染按语言覆盖。不要在这里 setLocaleText —— 选择器一旦匹配上，
+     会把渲染出的真实强弱值冲成样例值。 */
   /* 历史记录面板自成一套控件（data-history-range），此前完全没进 EN_COPY，
      英文站长期显示「近 1 月/全部/自定义/应用/至」。 */
   setLocaleText('[data-history-range="30"]','Last 30 Days');
