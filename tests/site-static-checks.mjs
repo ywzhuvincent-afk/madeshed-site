@@ -486,11 +486,65 @@ includesAll(index, [
 
 includesAll(index, [
   "['.pricing-card.featured .price','Free']",
-  "['.pricing-card:not(.featured) .currency','CN¥']",
-  "['.pricing-card:not(.featured) .price','39.9']",
-  "['.pricing-card:not(.featured) .period','/ mo']",
+  "['.pricing-card.ultimate .currency','CN¥']",
+  "['.pricing-card.ultimate .price','39.9']",
+  "['.pricing-card.ultimate .period','/ mo']",
   "body[data-locale=\"en\"] .pricing-card.featured::before{content:'Recommended'}",
 ], 'landing pricing card amount and recommended badge are localized to English (no ¥/开始/月/推荐 leak)');
+
+/* 落地页三卡：新增至尊VIP 卡（尊享线正式入口）。三卡各用独立 class（featured/ultimate/vip），
+   EN_COPY 选择器不得再用 .pricing-card:not(.featured)——否则会同时命中 Ultimate 与 VIP，把 VIP
+   整张改写成 Ultimate 的英文副本（历史重复卡 bug）。VIP 价必须由 applyLivePriceNodes 按 by.highest
+   单独渲染，不能被 Ultimate 月价冲掉。 */
+assert.equal(/\.pricing-card:not\(\.featured\)/.test(index), false,
+  'EN_COPY 不得再用 .pricing-card:not(.featured)（加了 VIP 卡后会同时命中两张卡，重现重复卡 bug）——改用 .pricing-card.ultimate / .pricing-card.vip 显式定位');
+includesAll(index, [
+  '<div class="pricing-card vip">',
+  'data-membership-tier="highest" data-membership-plan="monthly">开通至尊VIP',
+  "['.pricing-card.vip .pricing-label','VIP · TOP TIER']",
+  "['.pricing-card.vip .price','299']",
+  "['.pricing-card.vip .pricing-list',",
+  'var vipCard=document.querySelector(\'.pricing-card.vip\')',
+  'if(vipCard&&by.highest)',
+], '落地页至尊VIP 卡：独立 class + 正确的 highest/monthly 下单接线 + 三语文案 + applyLivePriceNodes 按 by.highest 单独渲染 VIP 价');
+includesAll(index, [
+  'class="pricing-foot"',
+  "['.pricing-foot a','Prefer to buy a single report? See the full report menu →']",
+], '落地页诚实出口：单买报告菜单入口 + 英文本地化');
+
+/* Phase 2/3：单买卡"会员已含"锚点 + Buy·30-day 文案 + $99 择时全案归入尊享区。
+   目的：让"不如直接订会员"显性化，且 ¥688/$99 旗舰不再夹在 ¥9.9 解读之间。 */
+includesAll(index, [
+  "inclU=en?'Included in Ultimate':'Ultimate 已含'",
+  "inclV=en?'Included in VIP':'至尊VIP 已含'",
+  "incl=en?'Included in Ultimate':'Ultimate 已含'",
+  "<div class=\"report-incl'+(p.vip?' vip':'')+'\">'+(p.vip?inclV:inclU)+'</div>",
+  "<div class=\"report-incl\">'+incl+'</div>",
+], '单买报告卡显性化"会员已含"锚点（命理解读+交易复盘；vip 旗舰显示"至尊VIP 已含"）');
+includesAll(index, [
+  "buy=en?'Buy · 30-day access':'单次购买 · 30天有效'",
+], 'Buy·30-day 文案改为更清楚的 30-day access（消歧"买的是什么"）');
+includesAll(index, [
+  'function fortuneCard(type){',
+  'filter(function(type){return !FORTUNE_PRODUCTS[type].vip;}).map(fortuneCard)',
+  "class=\"fortune-premium-head\"",
+  '+fortuneCard(\'timing\');}',
+], '尊享区：命理解读主网格排除 vip 旗舰，择时全案（timing）单独渲染在 VIP 之后的尊享区，不与 ¥9.9 解读混排');
+assert.equal(/\.report-incl\{/.test(index), true, '.report-incl 锚点样式必须存在（否则锚点无样式）');
+
+/* 交易人格卡默认折叠：用原生 <details>/<summary>，默认无 open（折叠），点 summary 展开。中英文文案随 locale。 */
+includesAll(index, [
+  "'<details class=\"persona-card\"><summary class=\"persona-summary\">",
+  "class=\"persona-expand\"",
+  "(en?'Show details':'展开详情')",
+  "(en?'Hide':'收起')",
+  "</summary>'+",
+  "')+'</div></details>';",
+], '交易人格卡默认折叠为 <details>/<summary>，展开提示三语（Show details/展开详情 · Hide/收起）');
+assert.equal(/personaCardHtml[\s\S]*?<details class="persona-card"(?![^>]*\bopen\b)/.test(index), true,
+  '人格卡 <details> 不能带 open 属性（必须默认折叠）');
+assert.equal(/details\.persona-card\[open\] \.persona-chevron\{transform:rotate\(90deg\)\}/.test(index), true,
+  '展开时箭头旋转样式必须存在');
 
 includesAll(index, [
   'const en=localeIsEn();const dayLabel=en?(st.score!=null?scoreBandEn(st.score):',
