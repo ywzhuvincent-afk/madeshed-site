@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+(function(){try{
+var raw=String(localStorage.getItem('madeshed_locale_v1')||'').toLowerCase();
+if(!raw)return;
+var n = raw.indexOf('en')===0 ? 'en'
+ : (raw==='zh-hant'||raw==='zh-tw'||raw==='zh-hk'||raw==='zh-mo'||raw.indexOf('hant')>=0||raw.indexOf('-tw')>=0||raw.indexOf('-hk')>=0||raw.indexOf('-mo')>=0) ? 'zh-Hant'
+ : 'zh-CN';
+if(n==='en')return;
+var m={'zh-CN':'/for-traders/','zh-Hant':'/for-traders/index.zh-Hant.html','en':'/for-traders/index.en.html'};
+if(m[n])location.replace(m[n]);
+}catch(e){}})();
+</script>
+<title>You Are Not the Same Trader Every Day | Madeshed</title>
+<meta name="description" content="Madeshed tags your trade log with a time dimension drawn from BaZi, then uses your own sample to test whether your win rate actually differs. No forecasts, no tips. One question: is today's version of you fit to trade?">
+<link rel="canonical" href="https://madeshed.com/for-traders/index.en.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://madeshed.com/for-traders/">
+<link rel="alternate" hreflang="zh-Hant" href="https://madeshed.com/for-traders/index.zh-Hant.html">
+<link rel="alternate" hreflang="en" href="https://madeshed.com/for-traders/index.en.html">
+<link rel="alternate" hreflang="x-default" href="https://madeshed.com/for-traders/index.en.html">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://madeshed.com/for-traders/index.en.html">
+<meta property="og:title" content="You Are Not the Same Trader Every Day">
+<meta property="og:description" content="Use your own trade data to find out when you shouldn't be trading.">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://madeshed.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230E1117'/%3E%3Ccircle cx='48' cy='16' r='5' fill='%2300BCD4'/%3E%3Ctext x='13' y='42' font-family='Georgia,serif' font-size='28' font-weight='700' fill='%23D9D9D9'%3EM%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>:root{--sans:'Inter',system-ui,sans-serif;--serif:'Source Serif 4',Georgia,serif;}
+:root{--bg:#0E1117;--card:#161B22;--bd:#2D333B;--tx:#E8E6E3;--t2:#8B949E;--t3:#6E7681;--acc:#00BCD4;--grn:#26A69A;--red:#EF5350;--yel:#F7B731;--mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:16px;line-height:1.85;-webkit-font-smoothing:antialiased}
+a{color:var(--acc)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;position:sticky;top:0;z-index:100;background:rgba(14,17,23,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--bd)}
+.logo{font-family:var(--serif);font-weight:700;font-size:17px;color:var(--tx);text-decoration:none;white-space:nowrap}
+.logo i{color:var(--acc);font-style:normal}
+.navr{display:flex;align-items:center;gap:10px}
+.lang{display:flex;gap:2px;border:1px solid var(--bd);border-radius:7px;overflow:hidden}
+.lang a{padding:5px 9px;font-size:12.5px;color:var(--t3);text-decoration:none;line-height:1.6}
+.lang a.on{background:var(--acc);color:#08262B;font-weight:700}
+.nav-cta{background:var(--acc);color:#08262B;padding:8px 14px;border-radius:6px;font-weight:700;font-size:13.5px;text-decoration:none;white-space:nowrap}
+main{max-width:720px;margin:0 auto;padding:44px 22px 80px}
+h1{font-family:var(--serif);font-size:40px;line-height:1.32;margin-bottom:20px}
+@media(max-width:640px){h1{font-size:29px}.nav-cta{display:none}}
+.lede{font-size:18px;color:var(--t2);line-height:1.9;margin-bottom:16px}
+h2{font-family:var(--serif);font-size:25px;margin:52px 0 16px;line-height:1.45}
+h3{font-size:17px;font-weight:700;margin:26px 0 8px}
+p{margin-bottom:16px}
+strong{color:var(--tx);font-weight:700}
+em{color:var(--acc);font-style:normal;font-weight:700}
+ul{margin:0 0 16px 22px}li{margin-bottom:9px}
+.step{display:flex;gap:16px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:20px;margin-bottom:14px}
+.step .n{flex:0 0 42px;height:42px;border-radius:50%;background:rgba(0,188,212,.14);color:var(--acc);font-family:var(--mono);font-weight:700;font-size:18px;display:flex;align-items:center;justify-content:center}
+.step h3{margin:0 0 4px;font-size:17px}
+.step p{margin:0;color:var(--t2);font-size:15px}
+.demo{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:22px;margin:24px 0}
+.demo .top{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--bd);padding-bottom:14px;margin-bottom:14px}
+.demo .score{font-family:var(--mono);font-size:44px;font-weight:700;color:var(--yel);line-height:1}
+.demo .lbl{font-size:13px;color:var(--t3);letter-spacing:.05em}
+.demo .tag{font-size:12.5px;font-weight:700;color:var(--yel);border:1px solid rgba(247,183,49,.4);border-radius:20px;padding:3px 12px;white-space:nowrap}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:6px 0;border-bottom:1px dashed var(--bd)}
+.kv:last-child{border-bottom:0}
+.kv b{font-family:var(--mono);font-weight:700;color:var(--tx);white-space:nowrap}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px}
+.cal div{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:700}
+.g{background:rgba(38,166,154,.18);color:var(--grn)}
+.y{background:rgba(247,183,49,.16);color:var(--yel)}
+.r{background:rgba(239,83,80,.16);color:var(--red)}
+.nn{background:var(--bg);color:var(--t3);border:1px solid var(--bd)}
+.notbox{border-left:3px solid var(--red);background:rgba(239,83,80,.07);border-radius:8px;padding:16px 18px;margin:24px 0}
+.notbox h3{margin-top:0;color:var(--red)}
+.notbox ul{margin-bottom:0}
+.yesno{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:24px 0}
+@media(max-width:560px){.yesno{grid-template-columns:1fr}}
+.yesno>div{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px}
+.yesno h3{margin-top:0;font-size:15px;letter-spacing:.04em}
+.yesno ul{margin:0 0 0 18px;font-size:14.5px;color:var(--t2)}
+.cta{background:linear-gradient(135deg,rgba(0,188,212,.1),rgba(38,166,154,.05));border:1px solid rgba(0,188,212,.3);border-radius:14px;padding:30px 24px;margin:44px 0 0;text-align:center}
+.cta h2{margin:0 0 10px;font-size:23px}
+.cta p{color:var(--t2);font-size:15px;margin-bottom:18px}
+.btn{display:inline-block;background:var(--acc);color:#08262B;padding:14px 30px;border-radius:9px;font-weight:700;text-decoration:none}
+.fine{display:block;font-size:13px;color:var(--t3);margin-top:12px}
+.disc{border:1px solid var(--bd);background:var(--card);border-radius:10px;padding:18px;margin:34px 0 0;font-size:13.5px;color:var(--t2);line-height:1.9}
+footer{border-top:1px solid var(--bd);padding:26px 22px 40px;text-align:center;font-size:13px;color:var(--t3);line-height:1.9}
+footer a{color:var(--t3);text-decoration:none;margin:0 6px}
+footer a:hover{color:var(--acc)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px}</style>
+</head>
+<body>
+<nav class="nav">
+  <a class="logo" href="/">Madeshed<i>·</i></a>
+  <div class="navr">
+    <div class="lang"><a href="/for-traders/" data-lang="zh-CN">简</a><a href="/for-traders/index.zh-Hant.html" data-lang="zh-Hant">繁</a><a href="/for-traders/index.en.html" data-lang="en" class="on">EN</a></div>
+    <a class="nav-cta" href="/#/onboarding">Free chart</a>
+  </div>
+</nav>
+<main>
+<h1>You are not the same<br>trader every day</h1>
+<p class="lede">Same strategy, same market. On some days you follow the plan. On others you chase, you hold a loser, you add to the position you swore you wouldn't.</p>
+<p class="lede">You already know this. What you can't say is — <strong>which days.</strong></p>
+<h2>How most people handle it</h2>
+<p>By feel. "Not feeling sharp today, I'll keep it small."</p><p>The trouble is that <em>feeling sharp is one of the least reliable signals in trading.</em> A winning streak makes you feel good, and that is precisely when overtrading peaks. Feel lags results. It doesn't lead them.</p><p>The other approach is a trade journal. That's right as far as it goes, but most journals record <strong>what you did</strong> and not <strong>what state you were in</strong>. So at review time you see "this one lost" instead of "I always lose on days like this."</p>
+<h2>What Madeshed does</h2>
+<p>It attaches a <strong>time-dimension tag</strong> to each entry in your log, then uses your own sample to test one thing: sliced along that dimension, does your win rate actually differ?</p><p>The tag comes from BaZi — the relationship between the sexagenary pillars of your birth and those of each day. Why that? Because it gives a periodic index that is <strong>independent of the market and fixed at your birth</strong>. It can't be contaminated by your recent P&amp;L the way a gut feeling can.</p><p><strong>Whether it works for you is decided by your data, not by us.</strong> After 30–90 days the system tells you what it found — including "no significant difference," if that's the answer.</p>
+<h2>Three steps, under a minute a day</h2>
+<div class="step"><div class="n">1</div><div><h3>Generate and save your chart</h3><p>Enter birth date, time and city. True solar time correction is applied automatically (longitude, DST, equation of time) — a step most calculators skip. Generate once, used site-wide.</p></div></div><div class="step"><div class="n">2</div><div><h3>Log honestly, every day</h3><p>Record the real outcome: win / flat / loss, and the size. Mark the days you didn't trade too. <strong>Honesty is the only requirement</strong> — patterns computed from flattered data are worth nothing to you.</p></div></div><div class="step"><div class="n">3</div><div><h3>Read the backtest after 30–90 days</h3><p>Once the sample is large enough, the system groups your own records: win rate, average P&amp;L and max drawdown under each state. If there's a difference, you'll see it. If there isn't, you'll see that too.</p></div></div>
+<h2>What you see each day</h2>
+<p>An <strong>action index</strong> from 5 to 100 — along with how it was derived. Not a black box score.</p>
+<div class="demo">
+  <div class="top">
+    <div><div class="lbl">TODAY'S ACTION INDEX</div><div class="score">49</div></div>
+    <div class="tag">CAUTIOUS</div>
+  </div>
+  <div class="kv"><span>Day pillar</span><b>辛卯</b></div>
+  <div class="kv"><span>Compatibility score</span><b>+34.5</b></div>
+  <div class="kv"><span>Luck pillar factor</span><b>&times;1.08</b></div>
+  <div class="kv"><span>Annual baseline</span><b>+8</b></div>
+  <div class="kv"><span>Suggested style</span><b>Trade the plan</b></div>
+</div>
+<p>Plus the distribution across the next 30 days, so you can <strong>schedule around it</strong> — putting size-up decisions inside windows where your own history has been steadier, rather than hitting them at random.</p>
+<div class="demo">
+  <div class="lbl" style="margin-bottom:4px">NEXT 30 DAYS · ACTION INDEX</div>
+  <div class="cal"><div class="y">49</div><div class="y">46</div><div class="g">70</div><div class="y">44</div><div class="r">40</div><div class="y">57</div><div class="y">46</div><div class="y">46</div><div class="y">47</div><div class="g">70</div><div class="y">65</div><div class="y">52</div><div class="r">38</div><div class="y">44</div><div class="g">68</div><div class="y">55</div><div class="y">49</div><div class="r">41</div><div class="y">58</div><div class="g">72</div><div class="y">50</div><div class="y">47</div><div class="r">39</div><div class="y">53</div><div class="g">66</div><div class="y">48</div><div class="y">44</div><div class="g">69</div><div class="y">51</div><div class="y">45</div><div class="nn">&middot;</div><div class="nn">&middot;</div><div class="nn">&middot;</div><div class="nn">&middot;</div><div class="nn">&middot;</div></div>
+</div>
+<h2>What it explicitly does not do</h2>
+<div class="notbox"><h3>These four are built into the product, not legal boilerplate</h3><ul>
+<li><strong>It does not forecast prices</strong> and recommends no instruments. It holds no view on the market at all.</li><li><strong>Green does not mean size up or add leverage.</strong> Green is a favourable window; position sizing still follows your own risk rules.</li><li><strong>It does not replace stops or money management.</strong> It's an addition, not a safety net.</li><li><strong>No conclusions on a thin sample.</strong> Under 30 days the statistics mean nothing, and the system says so plainly.</li>
+</ul></div>
+<p>If a tool claims it will raise your returns, you should be suspicious of it. <strong>Madeshed claims exactly one thing: it can help you see your own behavioural pattern.</strong> Everything after that still rests on your strategy and your discipline.</p>
+<h2>Who it's for</h2>
+<div class="yesno">
+<div><h3 style="color:var(--grn)">&#10003; A good fit</h3><ul><li>You already have a trading system; execution discipline is the gap</li><li>You know you trade emotionally and want to find the trigger</li><li>You'll spend a minute a day recording honestly</li><li>You can accept "my data doesn't support this"</li></ul></div>
+<div><h3 style="color:var(--red)">&#10007; Not a fit</h3><ul><li>You want entry signals or stock tips</li><li>You expect a higher win rate without changing behaviour</li><li>You'd rather not write down the losses</li><li>You want it instead of risk management and stops</li></ul></div>
+</div>
+<h2>Why it's worth trying</h2>
+<p>The cost is a minute a day and a month or two of patience.</p><p>What you get back is <strong>something nobody else can hand you</strong> — a map of your own trading rhythm. Not general advice, not "trend followers should do X," but a statistical conclusion about you, drawn from your own record.</p><p>And if the answer turns out to be "no significant difference," you still walk away with something worth having: <em>one variable ruled out, and two months of rigorously kept trade logs.</em></p>
+<div class="cta">
+  <h2>Start logging today</h2>
+  <p>The chart is free. The real value shows up after day 30.</p>
+  <a class="btn" href="/#/onboarding">Generate your chart →</a>
+  <span class="fine">No card required · Chart computed locally · Export your log anytime</span>
+</div>
+<div class="disc"><strong>Risk notice:</strong> All scores, backtests and alerts in Madeshed are decision-support tools. They do not constitute investment advice, do not forecast market direction, and recommend no instruments. Past statistics do not indicate future results. All trading decisions and their outcomes rest with the user.</div>
+</main>
+<footer>
+  <a href="/">Home</a>·<a href="/#/guide">Guide</a>·<a href="/bazi/">BaZi basics</a>·<a href="/bazi/true-solar-time/">True solar time</a><br>
+  © 2026 Madeshed · Chart × Data
+</footer>
+<script>
+document.addEventListener('click',function(e){
+var b=e.target.closest('[data-lang]');if(!b)return;e.preventDefault();
+try{localStorage.setItem('madeshed_locale_v1',b.dataset.lang);}catch(err){}
+location.href=b.getAttribute('href');
+});
+</script>
+</body>
+</html>
