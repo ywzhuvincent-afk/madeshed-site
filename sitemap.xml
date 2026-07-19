@@ -29,6 +29,18 @@
     <lastmod>2026-07-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://madeshed.com/bazi/true-solar-time/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://madeshed.com/bazi/true-solar-time/index.zh.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://madeshed.com/bazi/true-solar-time/"/>
+  </url>
+  <url>
+    <loc>https://madeshed.com/bazi/true-solar-time/index.zh.html</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://madeshed.com/bazi/true-solar-time/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://madeshed.com/bazi/true-solar-time/index.zh.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://madeshed.com/bazi/true-solar-time/"/>
   </url>
   <url>
     <loc>https://madeshed.com/guide/trading-persona.html</loc>
