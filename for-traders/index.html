@@ -3,10 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>你不是每天都是同一个交易者 | Madeshed</title>
-<meta name="description" content="Madeshed 把你的交易记录按八字时间维度切开，用你自己的样本算出你在什么状态下胜率最高。不预测行情，不推荐标的，只回答一个问题：今天的你，适不适合下单。">
+<script>
+(function(){try{
+var raw=String(localStorage.getItem('madeshed_locale_v1')||'').toLowerCase();
+if(!raw)return;
+var n = raw.indexOf('en')===0 ? 'en'
+ : (raw==='zh-hant'||raw==='zh-tw'||raw==='zh-hk'||raw==='zh-mo'||raw.indexOf('hant')>=0||raw.indexOf('-tw')>=0||raw.indexOf('-hk')>=0||raw.indexOf('-mo')>=0) ? 'zh-Hant'
+ : 'zh-CN';
+if(n==='zh-CN')return;
+var m={'zh-CN':'/for-traders/','zh-Hant':'/for-traders/index.zh-Hant.html','en':'/for-traders/index.en.html'};
+if(m[n])location.replace(m[n]);
+}catch(e){}})();
+</script>
+<title>你不是每天都是同一个交易者 | Madeshed 知机</title>
+<meta name="description" content="知机把你的交易记录按八字时间维度切开，用你自己的样本算出你在什么状态下胜率最高。不预测行情，不推荐标的，只回答一个问题：今天的你，适不适合下单。">
 <link rel="canonical" href="https://madeshed.com/for-traders/">
-
+<link rel="alternate" hreflang="zh-Hans" href="https://madeshed.com/for-traders/">
+<link rel="alternate" hreflang="zh-Hant" href="https://madeshed.com/for-traders/index.zh-Hant.html">
+<link rel="alternate" hreflang="en" href="https://madeshed.com/for-traders/index.en.html">
+<link rel="alternate" hreflang="x-default" href="https://madeshed.com/for-traders/index.en.html">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://madeshed.com/for-traders/">
 <meta property="og:title" content="你不是每天都是同一个交易者">
@@ -14,27 +29,26 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://madeshed.com/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
-
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230E1117'/%3E%3Ccircle cx='48' cy='16' r='5' fill='%2300BCD4'/%3E%3Ctext x='13' y='42' font-family='Georgia,serif' font-size='28' font-weight='700' fill='%23D9D9D9'%3EM%3C/text%3E%3C/svg%3E">
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@700&display=swap" rel="stylesheet">
-
-<style>
-:root{--bg:#0E1117;--card:#161B22;--bd:#2D333B;--tx:#E8E6E3;--t2:#8B949E;--t3:#6E7681;
---acc:#00BCD4;--grn:#26A69A;--red:#EF5350;--yel:#F7B731;
---sans:'Noto Sans SC',system-ui,sans-serif;--serif:'Noto Serif SC',serif;--mono:'JetBrains Mono',monospace}
+<style>:root{--sans:'Noto Sans SC',system-ui,sans-serif;--serif:'Noto Serif SC',serif;}
+:root{--bg:#0E1117;--card:#161B22;--bd:#2D333B;--tx:#E8E6E3;--t2:#8B949E;--t3:#6E7681;--acc:#00BCD4;--grn:#26A69A;--red:#EF5350;--yel:#F7B731;--mono:'JetBrains Mono',monospace}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:16px;line-height:1.85;-webkit-font-smoothing:antialiased}
 a{color:var(--acc)}
-.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;position:sticky;top:0;z-index:100;background:rgba(14,17,23,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--bd)}
-.logo{font-family:var(--serif);font-weight:700;font-size:18px;color:var(--tx);text-decoration:none}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;position:sticky;top:0;z-index:100;background:rgba(14,17,23,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--bd)}
+.logo{font-family:var(--serif);font-weight:700;font-size:17px;color:var(--tx);text-decoration:none;white-space:nowrap}
 .logo i{color:var(--acc);font-style:normal}
-.nav-cta{background:var(--acc);color:#08262B;padding:8px 16px;border-radius:6px;font-weight:700;font-size:14px;text-decoration:none}
+.navr{display:flex;align-items:center;gap:10px}
+.lang{display:flex;gap:2px;border:1px solid var(--bd);border-radius:7px;overflow:hidden}
+.lang a{padding:5px 9px;font-size:12.5px;color:var(--t3);text-decoration:none;line-height:1.6}
+.lang a.on{background:var(--acc);color:#08262B;font-weight:700}
+.nav-cta{background:var(--acc);color:#08262B;padding:8px 14px;border-radius:6px;font-weight:700;font-size:13.5px;text-decoration:none;white-space:nowrap}
 main{max-width:720px;margin:0 auto;padding:44px 22px 80px}
 h1{font-family:var(--serif);font-size:40px;line-height:1.32;margin-bottom:20px}
-@media(max-width:640px){h1{font-size:30px}}
+@media(max-width:640px){h1{font-size:29px}.nav-cta{display:none}}
 .lede{font-size:18px;color:var(--t2);line-height:1.9;margin-bottom:16px}
 h2{font-family:var(--serif);font-size:25px;margin:52px 0 16px;line-height:1.45}
 h3{font-size:17px;font-weight:700;margin:26px 0 8px}
@@ -50,10 +64,10 @@ ul{margin:0 0 16px 22px}li{margin-bottom:9px}
 .demo .top{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--bd);padding-bottom:14px;margin-bottom:14px}
 .demo .score{font-family:var(--mono);font-size:44px;font-weight:700;color:var(--yel);line-height:1}
 .demo .lbl{font-size:13px;color:var(--t3);letter-spacing:.05em}
-.demo .tag{font-size:13px;font-weight:700;color:var(--yel);border:1px solid rgba(247,183,49,.4);border-radius:20px;padding:3px 12px}
-.kv{display:flex;justify-content:space-between;font-size:14px;padding:6px 0;border-bottom:1px dashed var(--bd)}
+.demo .tag{font-size:12.5px;font-weight:700;color:var(--yel);border:1px solid rgba(247,183,49,.4);border-radius:20px;padding:3px 12px;white-space:nowrap}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:6px 0;border-bottom:1px dashed var(--bd)}
 .kv:last-child{border-bottom:0}
-.kv b{font-family:var(--mono);font-weight:700;color:var(--tx)}
+.kv b{font-family:var(--mono);font-weight:700;color:var(--tx);white-space:nowrap}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px}
 .cal div{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:700}
 .g{background:rgba(38,166,154,.18);color:var(--grn)}
@@ -77,65 +91,32 @@ ul{margin:0 0 16px 22px}li{margin-bottom:9px}
 footer{border-top:1px solid var(--bd);padding:26px 22px 40px;text-align:center;font-size:13px;color:var(--t3);line-height:1.9}
 footer a{color:var(--t3);text-decoration:none;margin:0 6px}
 footer a:hover{color:var(--acc)}
-:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
-</style>
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px}</style>
 </head>
 <body>
-
 <nav class="nav">
-  <a class="logo" href="/">Madeshed<i>·</i></a>
-  <a class="nav-cta" href="/#/onboarding">免费生成命盘</a>
+  <a class="logo" href="/">Madeshed<i>·</i>知机</a>
+  <div class="navr">
+    <div class="lang"><a href="/for-traders/" data-lang="zh-CN" class="on">简</a><a href="/for-traders/index.zh-Hant.html" data-lang="zh-Hant">繁</a><a href="/for-traders/index.en.html" data-lang="en">EN</a></div>
+    <a class="nav-cta" href="/#/onboarding">免费生成命盘</a>
+  </div>
 </nav>
-
 <main>
-
 <h1>你不是每天都是<br>同一个交易者</h1>
-
 <p class="lede">同一套策略，同一个市场，有些日子你严格执行，有些日子你追单、扛单、把说好不加的仓加了。</p>
-
 <p class="lede">你知道这件事。你说不清的是——<strong>到底是哪些日子。</strong></p>
-
 <h2>大多数人怎么处理这个问题</h2>
-
-<p>凭感觉。「今天状态不好，少做点。」</p>
-
-<p>问题在于，<em>「感觉状态好」是最不可靠的交易信号之一。</em>连续盈利之后人会感觉良好，而那恰恰是最容易过度交易的时候。感觉是结果的滞后反应，不是前瞻指标。</p>
-
-<p>另一种做法是记交易日志。这是对的，但大多数日志只记录了<strong>你做了什么</strong>，没记录<strong>你当时处在什么状态</strong>。于是复盘时只能看到「这笔亏了」，看不到「我在这类日子里总是亏」。</p>
-
-<h2>Madeshed 做的事</h2>
-
-<p>它给你的交易记录加了一个<strong>时间维度的标签</strong>，然后用你自己的样本去检验：在这个维度上切开，你的胜率有没有稳定的差异。</p>
-
-<p>这个标签来自八字——你的出生时间对应的干支，与每一天的干支之间的关系。为什么用它？因为它提供了一套<strong>与市场无关、且在你出生时就已固定</strong>的周期性索引。它不受你近期盈亏影响，所以不会像「感觉」那样被结果污染。</p>
-
-<p><strong>它是不是真的对你有效，由你的数据说了算，不由我们说了算。</strong>用满 30-90 天，系统会告诉你结果——包括「没有显著差异」这个结果。</p>
-
+<p>凭感觉。「今天状态不好，少做点。」</p><p>问题在于，<em>「感觉状态好」是最不可靠的交易信号之一。</em>连续盈利之后人会感觉良好，而那恰恰是最容易过度交易的时候。感觉是结果的滞后反应，不是前瞻指标。</p><p>另一种做法是记交易日志。这是对的，但大多数日志只记录了<strong>你做了什么</strong>，没记录<strong>你当时处在什么状态</strong>。于是复盘时只能看到「这笔亏了」，看不到「我在这类日子里总是亏」。</p>
+<h2>知机做的事</h2>
+<p>它给你的交易记录加了一个<strong>时间维度的标签</strong>，然后用你自己的样本去检验：在这个维度上切开，你的胜率有没有稳定的差异。</p><p>这个标签来自八字——你的出生时间对应的干支，与每一天的干支之间的关系。为什么用它？因为它提供了一套<strong>与市场无关、且在你出生时就已固定</strong>的周期性索引。它不受你近期盈亏影响，所以不会像「感觉」那样被结果污染。</p><p><strong>它是不是真的对你有效，由你的数据说了算，不由我们说了算。</strong>用满 30-90 天，系统会告诉你结果——包括「没有显著差异」这个结果。</p>
 <h2>三步，每天不到一分钟</h2>
-
-<div class="step"><div class="n">1</div><div>
-<h3>生成并保存命盘</h3>
-<p>填出生日期、时间、城市。系统自动做真太阳时校正（经度、夏令时、均时差），这一步很多工具是跳过的。命盘生成一次，全站通用。</p>
-</div></div>
-
-<div class="step"><div class="n">2</div><div>
-<h3>每天诚实打卡</h3>
-<p>记录今天真实的结果：赢 / 平 / 亏，以及幅度。没交易也标注一下。<strong>诚实是唯一的要求</strong>——美化过的数据算出来的规律，对你没有任何用。</p>
-</div></div>
-
-<div class="step"><div class="n">3</div><div>
-<h3>30-90 天后看回测</h3>
-<p>样本够了，系统用你自己的记录做分组统计：在不同状态下，你的胜率、平均盈亏、最大回撤分别是多少。有差异就是有，没有就是没有。</p>
-</div></div>
-
+<div class="step"><div class="n">1</div><div><h3>生成并保存命盘</h3><p>填出生日期、时间、城市。系统自动做真太阳时校正（经度、夏令时、均时差），这一步很多工具是跳过的。命盘生成一次，全站通用。</p></div></div><div class="step"><div class="n">2</div><div><h3>每天诚实打卡</h3><p>记录今天真实的结果：赢 / 平 / 亏，以及幅度。没交易也标注一下。<strong>诚实是唯一的要求</strong>——美化过的数据算出来的规律，对你没有任何用。</p></div></div><div class="step"><div class="n">3</div><div><h3>30-90 天后看回测</h3><p>样本够了，系统用你自己的记录做分组统计：在不同状态下，你的胜率、平均盈亏、最大回撤分别是多少。有差异就是有，没有就是没有。</p></div></div>
 <h2>每天你会看到什么</h2>
-
 <p>一个 5-100 的<strong>行动指数</strong>，以及它是怎么算出来的——不是一个黑箱分数。</p>
-
 <div class="demo">
   <div class="top">
     <div><div class="lbl">今日行动指数</div><div class="score">49</div></div>
-    <div class="tag">CAUTIOUS 谨慎</div>
+    <div class="tag">谨慎 CAUTIOUS</div>
   </div>
   <div class="kv"><span>流日干支</span><b>辛卯</b></div>
   <div class="kv"><span>相性总分</span><b>+34.5</b></div>
@@ -143,82 +124,41 @@ footer a:hover{color:var(--acc)}
   <div class="kv"><span>流年基线</span><b>+8</b></div>
   <div class="kv"><span>建议操作风格</span><b>按计划交易</b></div>
 </div>
-
 <p>以及未来 30 天的分布，让你能<strong>提前安排</strong>——把重仓决策放在自己历史上表现更稳的窗口，而不是随机撞上。</p>
-
 <div class="demo">
   <div class="lbl" style="margin-bottom:4px">未来 30 天 · 行动指数分布</div>
-  <div class="cal">
-    <div class="y">49</div><div class="y">46</div><div class="g">70</div><div class="y">44</div><div class="r">40</div><div class="y">57</div><div class="y">46</div>
-    <div class="y">46</div><div class="y">47</div><div class="g">70</div><div class="y">65</div><div class="y">52</div><div class="r">38</div><div class="y">44</div>
-    <div class="g">68</div><div class="y">55</div><div class="y">49</div><div class="r">41</div><div class="y">58</div><div class="g">72</div><div class="y">50</div>
-    <div class="y">47</div><div class="r">39</div><div class="y">53</div><div class="g">66</div><div class="y">48</div><div class="y">44</div><div class="g">69</div>
-    <div class="y">51</div><div class="y">45</div><div class="nn">&middot;</div><div class="nn">&middot;</div><div class="nn">&middot;</div><div class="nn">&middot;</div><div class="nn">&middot;</div>
-  </div>
+  <div class="cal"><div class="y">49</div><div class="y">46</div><div class="g">70</div><div class="y">44</div><div class="r">40</div><div class="y">57</div><div class="y">46</div><div class="y">46</div><div class="y">47</div><div class="g">70</div><div class="y">65</div><div class="y">52</div><div class="r">38</div><div class="y">44</div><div class="g">68</div><div class="y">55</div><div class="y">49</div><div class="r">41</div><div class="y">58</div><div class="g">72</div><div class="y">50</div><div class="y">47</div><div class="r">39</div><div class="y">53</div><div class="g">66</div><div class="y">48</div><div class="y">44</div><div class="g">69</div><div class="y">51</div><div class="y">45</div><div class="nn">&middot;</div><div class="nn">&middot;</div><div class="nn">&middot;</div><div class="nn">&middot;</div><div class="nn">&middot;</div></div>
 </div>
-
 <h2>它明确不做什么</h2>
-
-<div class="notbox">
-<h3>这四条写在产品里，不是免责话术</h3>
-<ul>
-<li><strong>不预测涨跌</strong>，不推荐任何标的。它对市场没有任何看法。</li>
-<li><strong>绿灯不等于满仓或加杠杆。</strong>绿灯只是顺势窗口，仓位仍然按你自己的风控走。</li>
-<li><strong>不替代止损和资金管理。</strong>它是加分项，不是安全网。</li>
-<li><strong>样本不足时不下结论。</strong>不到 30 天的统计没有参考价值，系统会明确告诉你还不够。</li>
-</ul>
-</div>
-
-<p>如果一个工具声称能提高你的投资收益率，你应该怀疑它。<strong>Madeshed 声称的只有一件事：它能帮你看清自己的行为模式。</strong>剩下的事情，仍然要靠你的策略和纪律。</p>
-
+<div class="notbox"><h3>这四条写在产品里，不是免责话术</h3><ul>
+<li><strong>不预测涨跌</strong>，不推荐任何标的。它对市场没有任何看法。</li><li><strong>绿灯不等于满仓或加杠杆。</strong>绿灯只是顺势窗口，仓位仍然按你自己的风控走。</li><li><strong>不替代止损和资金管理。</strong>它是加分项，不是安全网。</li><li><strong>样本不足时不下结论。</strong>不到 30 天的统计没有参考价值，系统会明确告诉你还不够。</li>
+</ul></div>
+<p>如果一个工具声称能提高你的投资收益率，你应该怀疑它。<strong>知机声称的只有一件事：它能帮你看清自己的行为模式。</strong>剩下的事情，仍然要靠你的策略和纪律。</p>
 <h2>适合谁</h2>
-
 <div class="yesno">
-<div>
-<h3 style="color:var(--grn)">&#10003; 适合</h3>
-<ul>
-<li>已经有自己的交易系统，缺的是执行纪律</li>
-<li>知道自己会情绪化操作，想找出触发条件</li>
-<li>愿意每天花一分钟如实记录</li>
-<li>能接受「我的数据不支持这个结论」</li>
-</ul>
+<div><h3 style="color:var(--grn)">&#10003; 适合</h3><ul><li>已经有自己的交易系统，缺的是执行纪律</li><li>知道自己会情绪化操作，想找出触发条件</li><li>愿意每天花一分钟如实记录</li><li>能接受「我的数据不支持这个结论」</li></ul></div>
+<div><h3 style="color:var(--red)">&#10007; 不适合</h3><ul><li>想要买卖信号或荐股</li><li>指望它提高胜率而不改变行为</li><li>不愿意如实记录亏损</li><li>想用它替代风控和止损</li></ul></div>
 </div>
-<div>
-<h3 style="color:var(--red)">&#10007; 不适合</h3>
-<ul>
-<li>想要买卖信号或荐股</li>
-<li>指望它提高胜率而不改变行为</li>
-<li>不愿意如实记录亏损</li>
-<li>想用它替代风控和止损</li>
-</ul>
-</div>
-</div>
-
 <h2>为什么值得试</h2>
-
-<p>成本是每天一分钟，和一两个月的耐心。</p>
-
-<p>回报是一份<strong>别人给不了的东西</strong>——一张属于你自己的交易节奏地图。不是通用建议，不是「趋势交易者应该如何如何」，而是基于你这一个人的真实记录得出的、关于你自己的统计结论。</p>
-
-<p>即使最终结果是「没有显著差异」，你也得到了一件有价值的东西：<em>一个被排除掉的变量，和两个月严格记录的交易日志。</em></p>
-
+<p>成本是每天一分钟，和一两个月的耐心。</p><p>回报是一份<strong>别人给不了的东西</strong>——一张属于你自己的交易节奏地图。不是通用建议，不是「趋势交易者应该如何如何」，而是基于你这一个人的真实记录得出的、关于你自己的统计结论。</p><p>即使最终结果是「没有显著差异」，你也得到了一件有价值的东西：<em>一个被排除掉的变量，和两个月严格记录的交易日志。</em></p>
 <div class="cta">
   <h2>从今天开始记</h2>
   <p>生成命盘免费。真正的价值在第 30 天之后出现。</p>
   <a class="btn" href="/#/onboarding">免费生成命盘 →</a>
   <span class="fine">无需信用卡 · 命盘本地计算 · 随时导出你的记录</span>
 </div>
-
-<div class="disc">
-  <strong>风险提示：</strong>Madeshed 的所有评分、回测与提醒均为决策辅助工具，不构成任何投资建议，不预测市场走势，不推荐任何标的。历史统计不代表未来表现。任何交易决策与盈亏均由用户自行承担。投资有风险，入市需谨慎。
-</div>
-
+<div class="disc"><strong>风险提示：</strong>知机的所有评分、回测与提醒均为决策辅助工具，不构成任何投资建议，不预测市场走势，不推荐任何标的。历史统计不代表未来表现。任何交易决策与盈亏均由用户自行承担。投资有风险，入市需谨慎。</div>
 </main>
-
 <footer>
   <a href="/">首页</a>·<a href="/#/guide">使用指南</a>·<a href="/bazi/">八字知识</a>·<a href="/tools/solar-time/">真太阳时换算</a><br>
-  © 2026 Madeshed · 命盘 × 数据
+  © 2026 Madeshed 知机 · 命盘 × 数据
 </footer>
-
+<script>
+document.addEventListener('click',function(e){
+var b=e.target.closest('[data-lang]');if(!b)return;e.preventDefault();
+try{localStorage.setItem('madeshed_locale_v1',b.dataset.lang);}catch(err){}
+location.href=b.getAttribute('href');
+});
+</script>
 </body>
 </html>
