@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>真太阳时换算器 — 出生时刻的经度与均时差校正 | Madeshed</title>
+<meta name="description" content="输入出生日期、时间和城市，换算真太阳时。自动处理经度差、均时差与夏令时，并给出对应的十二时辰与干支。浏览器本地计算，不上传。">
+<link rel="canonical" href="https://madeshed.com/tools/solar-time/">
+<meta name="robots" content="index,follow">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://madeshed.com/tools/solar-time/">
+<meta property="og:title" content="真太阳时换算器">
+<meta property="og:description" content="经度差、均时差、夏令时三重校正，给出对应的十二时辰与干支。本地计算，不上传。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://madeshed.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230E1117'/%3E%3Ccircle cx='48' cy='16' r='5' fill='%2300BCD4'/%3E%3Ctext x='13' y='42' font-family='Georgia,serif' font-size='28' font-weight='700' fill='%23D9D9D9'%3EM%3C/text%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@700&display=swap" rel="stylesheet">
+
+<style>
+:root{--bg:#0E1117;--card:#161B22;--input:#1C2128;--border:#2D333B;--text:#E8E6E3;--t2:#8B949E;--t3:#6E7681;--acc:#00BCD4;--grn:#26A69A;--red:#EF5350;--yel:#F7B731;
+--sans:'Noto Sans SC',system-ui,sans-serif;--serif:'Noto Serif SC',serif;--mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.8;-webkit-font-smoothing:antialiased}
+a{color:var(--acc)}
+.wrap{max-width:640px;margin:0 auto;padding:34px 20px 64px}
+.brand{font-family:var(--serif);font-size:17px;color:var(--text);text-decoration:none;display:inline-block;margin-bottom:26px}
+.brand i{color:var(--acc);font-style:normal}
+h1{font-family:var(--serif);font-size:31px;line-height:1.4;margin-bottom:10px}
+.sub{color:var(--t2);font-size:15px;margin-bottom:26px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px}
+label{display:block;font-size:13px;color:var(--t3);margin:0 0 6px;letter-spacing:.03em}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+@media(max-width:480px){.row{grid-template-columns:1fr}}
+input,select{width:100%;background:var(--input);border:1px solid var(--border);border-radius:9px;padding:11px 12px;color:var(--text);font-family:var(--sans);font-size:15px}
+input:focus,select:focus{outline:none;border-color:var(--acc)}
+input[type=number]{font-family:var(--mono)}
+.check{display:flex;align-items:flex-start;gap:9px;margin:4px 0 18px;font-size:14px;color:var(--t2);cursor:pointer}
+.check input{width:auto;margin-top:5px;accent-color:var(--acc)}
+button{width:100%;background:var(--acc);color:#08262B;border:0;border-radius:10px;padding:14px;font-family:var(--sans);font-size:16px;font-weight:700;cursor:pointer}
+button:hover{filter:brightness(1.08)}
+.hint{font-size:12.5px;color:var(--t3);margin-top:7px;line-height:1.65}
+#out{display:none;margin-top:20px}
+.big{background:var(--card);border:1px solid rgba(0,188,212,.35);border-radius:14px;padding:24px;text-align:center;margin-bottom:14px}
+.big .lbl{font-size:13px;color:var(--t3);letter-spacing:.05em}
+.big .val{font-family:var(--mono);font-size:44px;font-weight:700;color:var(--acc);line-height:1.25;margin:6px 0}
+.big .orig{font-size:14px;color:var(--t2)}
+.delta{display:inline-block;font-family:var(--mono);font-size:15px;font-weight:700;padding:4px 12px;border-radius:20px;margin-top:10px}
+.steps{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;font-size:14px}
+.steps h3{font-size:13px;color:var(--t3);font-weight:700;letter-spacing:.05em;margin-bottom:12px}
+.st{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed var(--border)}
+.st:last-child{border-bottom:0}
+.st b{font-family:var(--mono);font-weight:700;white-space:nowrap}
+.gzrow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.gz{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center}
+.gz .lbl{font-size:13px;color:var(--t3)}
+.gz .ch{font-family:var(--serif);font-size:40px;font-weight:700;letter-spacing:6px;margin-top:4px}
+.gz .note{font-size:12.5px;color:var(--t3);margin-top:4px}
+.warn{border-left:3px solid var(--yel);background:rgba(247,183,49,.08);border-radius:8px;padding:13px 15px;font-size:14px;color:var(--t2);margin-bottom:14px}
+.warn b{color:var(--text)}
+h2{font-family:var(--serif);font-size:20px;margin:38px 0 12px}
+p{margin-bottom:14px;color:var(--t2);font-size:15px}
+.foot{margin-top:44px;padding-top:22px;border-top:1px solid var(--border);font-size:13px;color:var(--t3);line-height:1.85}
+.foot a{color:var(--t3);text-decoration:none}
+.foot a:hover{color:var(--acc)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="brand" href="/">Madeshed<i>·</i></a>
+
+<h1>真太阳时换算器</h1>
+<p class="sub">钟表时间是行政约定，太阳时才是天文事实。输入出生信息，自动完成经度差、均时差与夏令时三重校正。</p>
+
+<div class="card">
+  <div class="row">
+    <div><label for="date">出生日期（公历）</label><input type="date" id="date" value="1990-06-15"></div>
+    <div><label for="time">出生时间（当地钟表）</label><input type="time" id="time" value="08:00"></div>
+  </div>
+
+  <label for="city">出生城市</label>
+  <select id="city"></select>
+  <div class="hint">找不到城市就选「手动输入经度」。经度决定校正量，时区只是行政划分。</div>
+
+  <div id="manual" style="display:none;margin-top:14px">
+    <div class="row">
+      <div><label for="lon">经度（东经为正，西经为负）</label><input type="number" id="lon" step="0.1" value="116.4" placeholder="例：116.4"></div>
+      <div><label for="tz">时区（UTC 偏移小时）</label><input type="number" id="tz" step="0.5" value="8" placeholder="例：8"></div>
+    </div>
+  </div>
+
+  <label class="check" style="margin-top:16px">
+    <input type="checkbox" id="dst">
+    <span>出生时当地正在实行夏令时（中国 1986–1991 年夏季适用；欧美多数国家夏季适用）</span>
+  </label>
+
+  <button id="go">换算</button>
+</div>
+
+<div id="out"></div>
+
+<h2>这个换算在算什么</h2>
+<p><b style="color:var(--text)">一、夏令时</b>：若出生时实行夏令时，钟表比标准时快一小时，需先减掉。中国在 1986 至 1991 年实行过夏令时。</p>
+<p><b style="color:var(--text)">二、经度差</b>：太阳过中天的时刻每差 1 度经度移动 4 分钟。中国全境统一东八区（基准东经 120 度），而国土横跨东经 73 至 135 度，西部偏差可超过两小时。</p>
+<p><b style="color:var(--text)">三、均时差</b>：地球轨道是椭圆的、自转轴是倾斜的，太阳相对均匀走动的钟表时快时慢，全年在约 −14 到 +16 分钟之间浮动，叠加在经度差之上。</p>
+<p>传统历法的十二时辰按太阳位置划分，每个时辰跨两小时。因此偏差超过一小时的地区，时辰可能整格不同。</p>
+
+<h2>关于日界</h2>
+<p>公历的一天在午夜零点更替，而干支的一天从子时起点开始。本工具采用「晚子时进日」的通行处理：真太阳时 23 时之后计入次日日柱。出生在午夜前后的，两种取法都值得看一看。</p>
+
+<div class="foot">
+  本工具仅提供历法与天文换算结果，属传统文化与民俗知识范畴，仅供参考。<br>
+  全部计算在你的浏览器本地完成，不上传、不存储任何出生信息。<br><br>
+  © 2026 Madeshed<a href="/" style="margin-left:8px">首页</a>
+</div>
+
+</div>
+
+<script>
+const CITIES=[
+["北京",116.4,8],["上海",121.5,8],["广州",113.3,8],["深圳",114.1,8],["成都",104.1,8],
+["重庆",106.5,8],["杭州",120.2,8],["南京",118.8,8],["武汉",114.3,8],["西安",108.9,8],
+["天津",117.2,8],["苏州",120.6,8],["长沙",112.9,8],["郑州",113.6,8],["青岛",120.4,8],
+["沈阳",123.4,8],["哈尔滨",126.6,8],["昆明",102.7,8],["贵阳",106.6,8],["南宁",108.4,8],
+["福州",119.3,8],["厦门",118.1,8],["兰州",103.8,8],["西宁",101.8,8],["银川",106.2,8],
+["呼和浩特",111.7,8],["太原",112.5,8],["济南",117.0,8],["合肥",117.3,8],["南昌",115.9,8],
+["石家庄",114.5,8],["长春",125.3,8],["海口",110.3,8],["拉萨",91.1,8],["乌鲁木齐",87.6,8],
+["喀什",75.99,8],["香港",114.2,8],["澳门",113.5,8],["台北",121.6,8],["高雄",120.3,8],
+["新加坡",103.8,8],["吉隆坡",101.7,8],["雅加达",106.8,7],["曼谷",100.5,7],["马尼拉",121.0,8],
+["胡志明市",106.7,7],["东京",139.7,9],["首尔",127.0,9],["温哥华",-123.1,-8],["多伦多",-79.4,-5],
+["蒙特利尔",-73.6,-5],["卡尔加里",-114.1,-7],["旧金山",-122.4,-8],["洛杉矶",-118.2,-8],
+["西雅图",-122.3,-8],["纽约",-74.0,-5],["波士顿",-71.1,-5],["芝加哥",-87.6,-6],
+["休斯顿",-95.4,-6],["伦敦",-0.13,0],["巴黎",2.35,1],["柏林",13.4,1],["阿姆斯特丹",4.9,1],
+["悉尼",151.2,10],["墨尔本",145.0,10],["布里斯班",153.0,10],["珀斯",115.9,8],
+["奥克兰",174.8,12],["迪拜",55.3,4]
+];
+const STEM="甲乙丙丁戊己庚辛壬癸", BR="子丑寅卯辰巳午未申酉戌亥";
+const SHICHEN=["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+const RANGE=["23:00–00:59","01:00–02:59","03:00–04:59","05:00–06:59","07:00–08:59","09:00–10:59","11:00–12:59","13:00–14:59","15:00–16:59","17:00–18:59","19:00–20:59","21:00–22:59"];
+
+const sel=document.getElementById('city');
+CITIES.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c[0];sel.appendChild(o);});
+const mo=document.createElement('option');mo.value='m';mo.textContent='— 手动输入经度 —';sel.appendChild(mo);
+sel.value=0;
+sel.addEventListener('change',()=>{document.getElementById('manual').style.display=sel.value==='m'?'block':'none';});
+
+function jdn(y,m,d){const a=Math.floor((14-m)/12),y2=y+4800-a,m2=m+12*a-3;
+  return d+Math.floor((153*m2+2)/5)+365*y2+Math.floor(y2/4)-Math.floor(y2/100)+Math.floor(y2/400)-32045;}
+function dayOfYear(y,m,d){return jdn(y,m,d)-jdn(y,1,1)+1;}
+function eot(n){const B=2*Math.PI*(n-81)/364;
+  return 9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B);}
+function pad(n){return String(n).padStart(2,'0');}
+
+document.getElementById('go').addEventListener('click',()=>{
+  const dv=document.getElementById('date').value, tv=document.getElementById('time').value;
+  if(!dv||!tv){alert('请填写出生日期和时间');return;}
+  const [Y,M,D]=dv.split('-').map(Number);
+  const [hh,mm]=tv.split(':').map(Number);
+
+  let lon,tz,cityName;
+  if(sel.value==='m'){
+    lon=parseFloat(document.getElementById('lon').value);
+    tz=parseFloat(document.getElementById('tz').value);
+    cityName='手动输入';
+    if(isNaN(lon)||isNaN(tz)){alert('请填写经度和时区');return;}
+  } else {
+    const c=CITIES[+sel.value]; cityName=c[0]; lon=c[1]; tz=c[2];
+  }
+
+  const dstOn=document.getElementById('dst').checked;
+  let mins=hh*60+mm;
+  const dstAdj=dstOn?-60:0;
+  mins+=dstAdj;
+
+  const lonAdj=(lon-tz*15)*4;
+  const eotAdj=eot(dayOfYear(Y,M,D));
+  mins+=lonAdj+eotAdj;
+
+  // 跨日处理
+  let dayShift=0;
+  while(mins<0){mins+=1440;dayShift--;}
+  while(mins>=1440){mins-=1440;dayShift++;}
+
+  const th=Math.floor(mins/60), tm=Math.round(mins%60);
+  const total=Math.round(lonAdj+eotAdj+dstAdj);
+
+  // 干支：晚子时进日
+  let j=jdn(Y,M,D)+dayShift;
+  const lateZi = th>=23;
+  if(lateZi) j+=1;
+  const idx=((j+49)%60+60)%60;
+  const ds=idx%10;
+  const dayGZ=STEM[ds]+BR[idx%12];
+  const hb=Math.floor((((th+tm/60)+1)%24)/2);
+  const hourGZ=STEM[(ds*2+hb)%10]+BR[hb];
+
+  const nearBoundary = Math.abs(((th*60+tm)+60)%120-0)<10 || Math.abs(((th*60+tm)+60)%120-120)<10;
+  const nearMidnight = (th>=22)||(th<1);
+
+  const col = total<0?'var(--red)':(total>0?'var(--grn)':'var(--t2)');
+  const sign = total>0?'+':'';
+  let shiftNote='';
+  if(dayShift<0) shiftNote='（校正后落在前一天）';
+  if(dayShift>0) shiftNote='（校正后落在次日）';
+
+  var html='';
+  html+='<div class="big">';
+  html+='<div class="lbl">真太阳时</div>';
+  html+='<div class="val">'+pad(th)+':'+pad(tm)+'</div>';
+  html+='<div class="orig">你输入的是 '+pad(hh)+':'+pad(mm)+'（'+cityName+'）'+shiftNote+'</div>';
+  html+='<div class="delta" style="background:rgba(0,188,212,.12);color:'+col+'">'+sign+total+' 分钟</div>';
+  html+='</div>';
+
+  html+='<div class="steps"><h3>校正明细</h3>';
+  html+='<div class="st"><span>夏令时</span><b>'+(dstOn?'\u221260 分钟':'不适用')+'</b></div>';
+  html+='<div class="st"><span>经度差（'+(lon>=0?'东经':'西经')+' '+Math.abs(lon).toFixed(1)+'° vs 基准 '+Math.abs(tz*15)+'°）</span><b>'+(lonAdj>=0?'+':'')+lonAdj.toFixed(1)+' 分钟</b></div>';
+  html+='<div class="st"><span>均时差（年内第 '+dayOfYear(Y,M,D)+' 天）</span><b>'+(eotAdj>=0?'+':'')+eotAdj.toFixed(1)+' 分钟</b></div>';
+  html+='<div class="st"><span>合计</span><b style="color:'+col+'">'+sign+total+' 分钟</b></div>';
+  html+='</div>';
+
+  html+='<div class="gzrow">';
+  html+='<div class="gz"><div class="lbl">时辰</div><div class="ch">'+SHICHEN[hb]+'时</div><div class="note">'+RANGE[hb]+' 太阳时</div></div>';
+  html+='<div class="gz"><div class="lbl">日柱 · 时柱</div><div class="ch" style="font-size:30px;letter-spacing:2px">'+dayGZ+' '+hourGZ+'</div><div class="note">'+(lateZi?'晚子时，已进次日':'\u00a0')+'</div></div>';
+  html+='</div>';
+
+  if(nearMidnight){
+    html+='<div class="warn"><b>你的出生时刻靠近日界。</b>公历的一天在午夜换，干支的一天在子时换，两者不重合。这种情况下日柱存在不同取法，建议把相邻两天都看一看。</div>';
+  } else if(nearBoundary){
+    html+='<div class="warn"><b>校正后的时间靠近时辰边界（10 分钟内）。</b>出生记录常被取整，建议把相邻的时辰也对照一下。</div>';
+  }
+
+  const o=document.getElementById('out');
+  o.innerHTML=html; o.style.display='block';
+  o.scrollIntoView({behavior:'smooth',block:'start'});
+});
+</script>
+</body>
+</html>
