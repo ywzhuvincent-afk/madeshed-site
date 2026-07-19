@@ -23,6 +23,18 @@
     <lastmod>2026-07-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://madeshed.com/bazi/day-master/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://madeshed.com/bazi/day-master/index.zh.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://madeshed.com/bazi/day-master/"/>
+  </url>
+  <url>
+    <loc>https://madeshed.com/bazi/day-master/index.zh.html</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://madeshed.com/bazi/day-master/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://madeshed.com/bazi/day-master/index.zh.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://madeshed.com/bazi/day-master/"/>
   </url>
   <url>
     <loc>https://madeshed.com/bazi/true-solar-time/</loc>
