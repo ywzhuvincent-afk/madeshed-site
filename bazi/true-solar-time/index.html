@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>True Solar Time: Why Your BaZi Chart Is Probably Wrong | Madeshed</title>
+<meta name="description" content="Most BaZi calculators use clock time. Clock time is a political convention, not an astronomical one. Here's how far off your chart can be — and how to fix it.">
+<link rel="canonical" href="https://madeshed.com/bazi/true-solar-time/">
+
+<link rel="alternate" hreflang="en" href="https://madeshed.com/bazi/true-solar-time/">
+<link rel="alternate" hreflang="x-default" href="https://madeshed.com/bazi/true-solar-time/">
+<!-- 中文版上线后取消注释：
+<link rel="alternate" hreflang="zh-Hans" href="https://madeshed.com/bazi/true-solar-time/index.zh.html">
+-->
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://madeshed.com/bazi/true-solar-time/">
+<meta property="og:title" content="True Solar Time: Why Your BaZi Chart Is Probably Wrong">
+<meta property="og:description" content="Clock time is a political convention, not an astronomical one. Born in Urumqi? Your chart is off by more than two hours.">
+<meta property="og:site_name" content="Madeshed">
+<meta property="og:image" content="https://madeshed.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="True Solar Time: Why Your BaZi Chart Is Probably Wrong">
+<meta name="twitter:description" content="Clock time is a political convention, not an astronomical one.">
+<meta name="twitter:image" content="https://madeshed.com/og-image.png">
+
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230E1117'/%3E%3Ccircle cx='48' cy='16' r='5' fill='%2300BCD4'/%3E%3Ctext x='13' y='42' font-family='Georgia,serif' font-size='28' font-weight='700' fill='%23D9D9D9'%3EM%3C/text%3E%3C/svg%3E">
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+{
+ "@type":"Article",
+ "headline":"True Solar Time: Why Your BaZi Chart Is Probably Wrong",
+ "description":"Most BaZi calculators use clock time. Clock time is a political convention, not an astronomical one. How far off your chart can be, and how to correct it.",
+ "datePublished":"2026-07-18",
+ "dateModified":"2026-07-18",
+ "inLanguage":"en",
+ "author":{"@type":"Organization","name":"Madeshed"},
+ "publisher":{"@type":"Organization","name":"Madeshed","url":"https://madeshed.com/","logo":{"@type":"ImageObject","url":"https://madeshed.com/apple-touch-icon.png"}},
+ "mainEntityOfPage":"https://madeshed.com/bazi/true-solar-time/"
+},
+{
+ "@type":"BreadcrumbList",
+ "itemListElement":[
+  {"@type":"ListItem","position":1,"name":"Madeshed","item":"https://madeshed.com/"},
+  {"@type":"ListItem","position":2,"name":"BaZi","item":"https://madeshed.com/bazi/"},
+  {"@type":"ListItem","position":3,"name":"True Solar Time","item":"https://madeshed.com/bazi/true-solar-time/"}
+ ]
+},
+{
+ "@type":"FAQPage",
+ "mainEntity":[
+  {"@type":"Question","name":"What is true solar time in BaZi?",
+   "acceptedAnswer":{"@type":"Answer","text":"True solar time is time measured by the actual position of the sun at your birth location, where noon is the moment the sun crosses your local meridian. BaZi hour pillars are defined against solar time, not against the clock time on a wall or phone."}},
+  {"@type":"Question","name":"How much can true solar time shift my chart?",
+   "acceptedAnswer":{"@type":"Answer","text":"Longitude alone can shift it by more than two hours in extreme cases, such as western China. In most locations the correction is between fifteen and sixty minutes. Since each BaZi hour pillar covers two hours, a correction of even thirty minutes can move you into a different hour pillar."}},
+  {"@type":"Question","name":"Does daylight saving time affect a BaZi chart?",
+   "acceptedAnswer":{"@type":"Answer","text":"Yes. If daylight saving was in effect at your birth, the recorded clock time is one hour ahead of standard time and must be reversed before any longitude correction is applied. China observed daylight saving from 1986 to 1991, which affects many charts from that period."}},
+  {"@type":"Question","name":"Do I need true solar time if I only want my day master?",
+   "acceptedAnswer":{"@type":"Answer","text":"Usually no, because the day master comes from the day pillar rather than the hour pillar. The exception is births within roughly two hours of midnight, where the correction can move the chart into a different day entirely and change the day master."}},
+  {"@type":"Question","name":"What is the equation of time?",
+   "acceptedAnswer":{"@type":"Answer","text":"The equation of time is the difference between mean solar time and apparent solar time, caused by the earth's elliptical orbit and axial tilt. It ranges from roughly fourteen minutes behind to sixteen minutes ahead across the year, and is applied on top of the longitude correction."}}
+ ]
+}
+]}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+:root{--bg:#0E1117;--bg-card:#161B22;--bg-input:#1C2128;--border:#2D333B;--text:#D9D9D9;--text-2:#8B949E;--text-3:#6E7681;--accent:#00BCD4;--green:#26A69A;--red:#EF5350;--yellow:#F7B731;--font-sans:'Inter',system-ui,sans-serif;--font-cn:'Noto Serif SC',serif;--font-mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;position:sticky;top:0;z-index:100;background:rgba(14,17,23,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+.logo{font-family:var(--font-cn);font-weight:700;font-size:18px;color:var(--text);text-decoration:none}
+.logo .dot{color:var(--accent)}
+.nav-cta{background:var(--accent);color:var(--bg);padding:8px 16px;border-radius:6px;font-weight:700;font-size:14px;text-decoration:none}
+main{max-width:760px;margin:0 auto;padding:32px 24px 72px}
+.crumbs{font-size:13px;color:var(--text-3);margin-bottom:20px}
+.crumbs a{color:var(--text-3);text-decoration:none}
+.crumbs a:hover{color:var(--accent)}
+h1{font-family:var(--font-cn);font-size:40px;line-height:1.2;font-weight:700;letter-spacing:-.5px;margin-bottom:18px}
+@media(max-width:640px){h1{font-size:29px}}
+h2{font-family:var(--font-cn);font-size:26px;font-weight:700;margin:44px 0 14px;line-height:1.3}
+h3{font-size:18px;font-weight:700;margin:26px 0 8px}
+p{margin-bottom:16px}
+.lede{font-size:18px;color:var(--text-2);line-height:1.75;margin-bottom:26px}
+ul,ol{margin:0 0 16px 22px}
+li{margin-bottom:8px}
+strong{color:var(--text);font-weight:700}
+.han{font-family:var(--font-cn)}
+.mono{font-family:var(--font-mono);font-size:14px;color:var(--accent)}
+.cta-box{background:linear-gradient(135deg,rgba(0,188,212,.08),rgba(38,166,154,.04));border:1px solid rgba(0,188,212,.28);border-radius:12px;padding:24px;margin:32px 0;text-align:center}
+.cta-box h3{margin-top:0;font-size:20px}
+.cta-btn{display:inline-block;background:var(--accent);color:var(--bg);padding:13px 26px;border-radius:8px;font-weight:700;text-decoration:none;margin-top:10px}
+.cta-fine{display:block;font-size:13px;color:var(--text-3);margin-top:10px}
+.tbl{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;display:block;overflow-x:auto}
+.tbl th,.tbl td{border-bottom:1px solid var(--border);padding:11px 10px;text-align:left;vertical-align:top}
+.tbl th{color:var(--text-3);font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;white-space:nowrap}
+.tbl td.num{font-family:var(--font-mono);white-space:nowrap}
+.tbl td.warn{color:var(--red);font-weight:700}
+.tbl td.ok{color:var(--green);font-weight:700}
+.callout{border-left:3px solid var(--yellow);background:rgba(247,183,49,.07);padding:14px 16px;border-radius:6px;margin:22px 0;font-size:15px;color:var(--text-2)}
+.callout strong{color:var(--text)}
+.calc{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin:22px 0;font-family:var(--font-mono);font-size:14px;line-height:2;color:var(--text-2)}
+.calc b{color:var(--accent);font-weight:700}
+.disclaim{border:1px solid var(--border);background:var(--bg-card);border-radius:10px;padding:18px;margin:34px 0;font-size:14px;color:var(--text-2);line-height:1.75}
+.faq-q{font-size:17px;font-weight:700;margin:24px 0 6px;color:var(--text)}
+.related{border-top:1px solid var(--border);margin-top:44px;padding-top:24px}
+.related h2{margin-top:0;font-size:20px}
+.related ul{list-style:none;margin-left:0}
+.related a{text-decoration:none;font-weight:600}
+.related a:hover{text-decoration:underline}
+.related span{display:block;font-size:13px;color:var(--text-3);font-weight:400}
+footer{border-top:1px solid var(--border);padding:26px 24px 40px;text-align:center;font-size:13px;color:var(--text-3);line-height:1.8}
+footer a{color:var(--text-3);text-decoration:none;margin:0 6px}
+footer a:hover{color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="logo" href="/">Madeshed<span class="dot">·</span></a>
+  <a class="nav-cta" href="/#/onboarding">Get my free chart</a>
+</nav>
+
+<main>
+  <div class="crumbs"><a href="/">Madeshed</a> / <a href="/bazi/">BaZi</a> / True Solar Time</div>
+
+  <article>
+    <h1>True Solar Time: Why Your BaZi Chart Is Probably Wrong</h1>
+
+    <p class="lede">Almost every free BaZi calculator asks for your birth time and quietly assumes the number on the clock is the number the sun agrees with. It usually isn't. For a large share of charts — and for nearly everyone born outside a time zone's central meridian — that assumption puts the hour pillar in the wrong place.</p>
+
+    <h2>Clock time is a political convention</h2>
+
+    <p>Standard time zones were invented for railways, not astronomy. A zone is a band of longitude that agrees, by law, to pretend the sun is doing the same thing everywhere inside it. The sun did not sign the agreement.</p>
+
+    <p>Solar noon — the moment the sun crosses your local meridian — moves by <strong>four minutes for every degree of longitude</strong>. One hour per fifteen degrees. Unless you were born almost exactly on your zone's reference meridian, the clock and the sun disagreed at the moment you were born.</p>
+
+    <p>BaZi hour pillars are defined against the sun. Each of the twelve earthly branches covers a two-hour block of <em>solar</em> time, with the <span class="han">子</span> (Zi) hour centered on solar midnight. Feed clock time into that system and you are answering the right question with the wrong input.</p>
+
+    <h2>How far off can it be?</h2>
+
+    <p>Further than most people expect. China is the extreme case: the entire country runs on a single clock, UTC+8, referenced to 120°E — while the territory itself spans roughly 73°E to 135°E.</p>
+
+    <table class="tbl">
+      <thead>
+        <tr><th>Birth city</th><th>Longitude</th><th>Zone meridian</th><th>Longitude correction</th><th>Risk of wrong hour pillar</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Shanghai</td><td class="num">121.5°E</td><td class="num">120°E</td><td class="num">+6 min</td><td class="ok">Low</td></tr>
+        <tr><td>Beijing</td><td class="num">116.4°E</td><td class="num">120°E</td><td class="num">−14 min</td><td class="ok">Low</td></tr>
+        <tr><td>Chengdu</td><td class="num">104.1°E</td><td class="num">120°E</td><td class="num">−64 min</td><td class="warn">High</td></tr>
+        <tr><td>Ürümqi</td><td class="num">87.6°E</td><td class="num">120°E</td><td class="num">−130 min</td><td class="warn">Certain</td></tr>
+        <tr><td>Los Angeles</td><td class="num">118.2°W</td><td class="num">120°W</td><td class="num">+7 min</td><td class="ok">Low</td></tr>
+        <tr><td>Vancouver</td><td class="num">123.1°W</td><td class="num">120°W</td><td class="num">−12 min</td><td class="ok">Low</td></tr>
+        <tr><td>Toronto</td><td class="num">79.4°W</td><td class="num">75°W</td><td class="num">−18 min</td><td>Moderate</td></tr>
+        <tr><td>Singapore</td><td class="num">103.8°E</td><td class="num">120°E</td><td class="num">−65 min</td><td class="warn">High</td></tr>
+        <tr><td>Kuala Lumpur</td><td class="num">101.7°E</td><td class="num">120°E</td><td class="num">−73 min</td><td class="warn">High</td></tr>
+        <tr><td>Sydney</td><td class="num">151.2°E</td><td class="num">150°E</td><td class="num">+5 min</td><td class="ok">Low</td></tr>
+      </tbody>
+    </table>
+
+    <p>Someone born in Ürümqi at 8:00 AM by the clock was born at roughly <strong>5:50 AM</strong> by the sun. That is not a rounding difference. It is the <span class="han">卯</span> (Mao) hour instead of the <span class="han">辰</span> (Chen) hour — a different hour pillar, a different heavenly stem, a different reading.</p>
+
+    <div class="callout">
+      <strong>Southeast Asian charts are systematically off.</strong> Singapore and Malaysia both run on UTC+8 despite sitting near 103°E — over an hour west of the reference meridian. Every chart from the region calculated on raw clock time is shifted by more than an hour, and a large fraction land in the wrong hour pillar.
+    </div>
+
+    <h2>Three corrections, in order</h2>
+
+    <p>Getting from a birth certificate to a usable chart takes three steps, and the order matters.</p>
+
+    <h3>1. Undo daylight saving</h3>
+
+    <p>If DST was in effect where and when you were born, the recorded time is one hour ahead of standard time. Subtract it first, before anything else.</p>
+
+    <p>This catches people out constantly, because DST history is messy and local. <strong>China observed daylight saving from 1986 to 1991</strong> — a fact almost no calculator accounts for, and one that silently corrupts a whole generation of charts. Before 1949 China was divided into five time zones, so pre-Liberation charts need their own handling.</p>
+
+    <h3>2. Correct for longitude</h3>
+
+    <p>Take the difference between your birth longitude and your time zone's reference meridian, then multiply by four minutes per degree.</p>
+
+    <div class="calc">
+      correction = (<b>birth longitude</b> − <b>zone meridian</b>) × 4 minutes<br>
+      Chengdu: (104.1 − 120) × 4 = <b>−63.6 minutes</b>
+    </div>
+
+    <p>East of the meridian, add. West of it, subtract.</p>
+
+    <h3>3. Apply the equation of time</h3>
+
+    <p>The earth's orbit is elliptical and its axis is tilted, so the sun runs slightly fast or slow against a uniform clock depending on the date. This is the <strong>equation of time</strong>, and it ranges from roughly <span class="mono">−14 minutes</span> in mid-February to <span class="mono">+16 minutes</span> in early November.</p>
+
+    <p>Fifteen minutes sounds negligible until you notice it lands on top of the longitude correction. A Chengdu birth in early November carries a −64 minute longitude shift plus a +16 minute equation-of-time shift; a February birth carries −64 and −14. That is a thirty-minute swing between two people born in the same city at the same clock time in different months — and hour pillars are only two hours wide.</p>
+
+    <h2>Does this change your day master?</h2>
+
+    <p>Usually not. The day master comes from the <em>day</em> pillar, and these corrections shift you within a day, not across days.</p>
+
+    <p>The exception is real and worth checking: if you were born <strong>within about two hours of midnight</strong>, a correction can push you into the previous or following day. That changes the day pillar, and therefore the day master, and therefore everything.</p>
+
+    <p>Two boundaries are involved and they are not the same thing. The calendar day rolls at midnight. The BaZi day rolls at the start of the <span class="han">子</span> hour in true solar time. If your birth sits near either, the chart deserves a careful look rather than a default.</p>
+
+    <div class="cta-box">
+      <h3>Check your chart with the correction applied</h3>
+      <p style="color:var(--text-2);font-size:15px;margin-bottom:0">Enter your birth city, not just a time zone. Longitude and equation of time are handled for you.</p>
+      <a class="cta-btn" href="/#/onboarding">Generate my free chart →</a>
+      <span class="cta-fine">Free · calculated in your browser · nothing uploaded · no signup</span>
+    </div>
+
+    <h2>How to tell if a calculator is doing this properly</h2>
+
+    <p>One question settles it: <strong>does it ask for your birth city, or only your time zone?</strong></p>
+
+    <p>A time zone is a band up to fifteen degrees wide, and in China's case far wider. A calculator that only takes a zone cannot know your longitude and therefore cannot compute the correction. It is not being approximate — it is not doing the calculation at all.</p>
+
+    <p>Signs of a tool that handles it:</p>
+
+    <ul>
+      <li>Asks for a city or coordinates, and shows the longitude it resolved</li>
+      <li>Displays the corrected time alongside the time you entered, so you can see the shift</li>
+      <li>Handles historical DST rather than applying today's rules to a 1988 birth</li>
+      <li>Flags births near the day boundary instead of silently picking one side</li>
+    </ul>
+
+    <p>If a chart has ever felt subtly wrong to you — the hour pillar describing someone you don't recognize — this is the first thing to rule out, before questioning the system itself.</p>
+
+    <div class="disclaim">
+      <strong>Not investment advice.</strong> Madeshed's charts, scores, and readings are decision-support and self-review tools. They describe temperament and timing, not expected returns. They do not predict markets or recommend specific assets. Every decision and outcome is your own responsibility.
+    </div>
+
+    <h2>Frequently asked questions</h2>
+
+    <p class="faq-q">I don't know my exact birth time. Does this still matter?</p>
+    <p>Less so. Without a reliable birth time the hour pillar is uncertain regardless, and the correction cannot rescue it. The other three pillars remain usable, and the day master is unaffected unless the birth was near midnight.</p>
+
+    <p class="faq-q">My hospital record shows a time. Is that reliable?</p>
+    <p>Treat it as approximate. Recorded times are often rounded to the nearest five or ten minutes, and are sometimes the time of paperwork rather than of birth. If your corrected time lands within ten minutes of an hour-pillar boundary, read both and see which one you recognize.</p>
+
+    <p class="faq-q">Does true solar time apply to Western astrology too?</p>
+    <p>Not in the same way. Western natal astrology uses the exact moment in universal time together with geographic coordinates, and the software resolves the rest. BaZi needs the explicit conversion because its hour system is defined directly against apparent solar position.</p>
+
+    <p class="faq-q">Is Local Mean Time the same as true solar time?</p>
+    <p>No, though they are often conflated. Local Mean Time applies only the longitude correction. True solar time — apparent solar time — also applies the equation of time. LMT gets you most of the way; the remaining difference can still reach a quarter of an hour.</p>
+
+    <div class="related">
+      <h2>Keep reading</h2>
+      <ul>
+        <li><a href="/bazi/day-master/">What is a day master in BaZi?</a><span>The single character every other part of the chart is read against</span></li>
+        <li><a href="/guide/trading-persona.html">Your BaZi trading persona</a><span>What each day master element looks like as a trading temperament</span></li>
+        <li><a href="/chart-full.html">Full chart view — luck pillars and annual cycles</a><span>See the corrected chart across ten-year periods</span></li>
+      </ul>
+    </div>
+
+  </article>
+</main>
+
+<footer>
+  Madeshed is a bilingual trading-discipline dashboard built on BaZi timing and your own behavior data.<br>
+  © 2026 Madeshed<a href="/">Home</a>·<a href="/#/terms">Terms</a>·<a href="/#/privacy">Privacy</a>·<a href="/#/waiver">Risk disclaimer</a>
+</footer>
+
+</body>
+</html>
