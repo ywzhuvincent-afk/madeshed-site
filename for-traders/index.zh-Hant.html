@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+(function(){try{
+var raw=String(localStorage.getItem('madeshed_locale_v1')||'').toLowerCase();
+if(!raw)return;
+var n = raw.indexOf('en')===0 ? 'en'
+ : (raw==='zh-hant'||raw==='zh-tw'||raw==='zh-hk'||raw==='zh-mo'||raw.indexOf('hant')>=0||raw.indexOf('-tw')>=0||raw.indexOf('-hk')>=0||raw.indexOf('-mo')>=0) ? 'zh-Hant'
+ : 'zh-CN';
+if(n==='zh-Hant')return;
+var m={'zh-CN':'/for-traders/','zh-Hant':'/for-traders/index.zh-Hant.html','en':'/for-traders/index.en.html'};
+if(m[n])location.replace(m[n]);
+}catch(e){}})();
+</script>
+<title>你不是每天都是同一個交易者 | Madeshed 知機</title>
+<meta name="description" content="知機把你的交易紀錄按八字時間維度切開，用你自己的樣本算出你在什麼狀態下勝率最高。不預測行情，不推薦標的，只回答一個問題：今天的你，適不適合下單。">
+<link rel="canonical" href="https://madeshed.com/for-traders/index.zh-Hant.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://madeshed.com/for-traders/">
+<link rel="alternate" hreflang="zh-Hant" href="https://madeshed.com/for-traders/index.zh-Hant.html">
+<link rel="alternate" hreflang="en" href="https://madeshed.com/for-traders/index.en.html">
+<link rel="alternate" hreflang="x-default" href="https://madeshed.com/for-traders/index.en.html">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://madeshed.com/for-traders/index.zh-Hant.html">
+<meta property="og:title" content="你不是每天都是同一個交易者">
+<meta property="og:description" content="用你自己的交易數據，找出你什麼時候不該下單。">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:image" content="https://madeshed.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230E1117'/%3E%3Ccircle cx='48' cy='16' r='5' fill='%2300BCD4'/%3E%3Ctext x='13' y='42' font-family='Georgia,serif' font-size='28' font-weight='700' fill='%23D9D9D9'%3EM%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700&display=swap" rel="stylesheet">
+<style>:root{--sans:'Noto Sans TC',system-ui,sans-serif;--serif:'Noto Serif TC',serif;}
+:root{--bg:#0E1117;--card:#161B22;--bd:#2D333B;--tx:#E8E6E3;--t2:#8B949E;--t3:#6E7681;--acc:#00BCD4;--grn:#26A69A;--red:#EF5350;--yel:#F7B731;--mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:16px;line-height:1.85;-webkit-font-smoothing:antialiased}
+a{color:var(--acc)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;position:sticky;top:0;z-index:100;background:rgba(14,17,23,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--bd)}
+.logo{font-family:var(--serif);font-weight:700;font-size:17px;color:var(--tx);text-decoration:none;white-space:nowrap}
+.logo i{color:var(--acc);font-style:normal}
+.navr{display:flex;align-items:center;gap:10px}
+.lang{display:flex;gap:2px;border:1px solid var(--bd);border-radius:7px;overflow:hidden}
+.lang a{padding:5px 9px;font-size:12.5px;color:var(--t3);text-decoration:none;line-height:1.6}
+.lang a.on{background:var(--acc);color:#08262B;font-weight:700}
+.nav-cta{background:var(--acc);color:#08262B;padding:8px 14px;border-radius:6px;font-weight:700;font-size:13.5px;text-decoration:none;white-space:nowrap}
+main{max-width:720px;margin:0 auto;padding:44px 22px 80px}
+h1{font-family:var(--serif);font-size:40px;line-height:1.32;margin-bottom:20px}
+@media(max-width:640px){h1{font-size:29px}.nav-cta{display:none}}
+.lede{font-size:18px;color:var(--t2);line-height:1.9;margin-bottom:16px}
+h2{font-family:var(--serif);font-size:25px;margin:52px 0 16px;line-height:1.45}
+h3{font-size:17px;font-weight:700;margin:26px 0 8px}
+p{margin-bottom:16px}
+strong{color:var(--tx);font-weight:700}
+em{color:var(--acc);font-style:normal;font-weight:700}
+ul{margin:0 0 16px 22px}li{margin-bottom:9px}
+.step{display:flex;gap:16px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:20px;margin-bottom:14px}
+.step .n{flex:0 0 42px;height:42px;border-radius:50%;background:rgba(0,188,212,.14);color:var(--acc);font-family:var(--mono);font-weight:700;font-size:18px;display:flex;align-items:center;justify-content:center}
+.step h3{margin:0 0 4px;font-size:17px}
+.step p{margin:0;color:var(--t2);font-size:15px}
+.demo{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:22px;margin:24px 0}
+.demo .top{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--bd);padding-bottom:14px;margin-bottom:14px}
+.demo .score{font-family:var(--mono);font-size:44px;font-weight:700;color:var(--yel);line-height:1}
+.demo .lbl{font-size:13px;color:var(--t3);letter-spacing:.05em}
+.demo .tag{font-size:12.5px;font-weight:700;color:var(--yel);border:1px solid rgba(247,183,49,.4);border-radius:20px;padding:3px 12px;white-space:nowrap}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:6px 0;border-bottom:1px dashed var(--bd)}
+.kv:last-child{border-bottom:0}
+.kv b{font-family:var(--mono);font-weight:700;color:var(--tx);white-space:nowrap}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px}
+.cal div{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:700}
+.g{background:rgba(38,166,154,.18);color:var(--grn)}
+.y{background:rgba(247,183,49,.16);color:var(--yel)}
+.r{background:rgba(239,83,80,.16);color:var(--red)}
+.nn{background:var(--bg);color:var(--t3);border:1px solid var(--bd)}
+.notbox{border-left:3px solid var(--red);background:rgba(239,83,80,.07);border-radius:8px;padding:16px 18px;margin:24px 0}
+.notbox h3{margin-top:0;color:var(--red)}
+.notbox ul{margin-bottom:0}
+.yesno{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:24px 0}
+@media(max-width:560px){.yesno{grid-template-columns:1fr}}
+.yesno>div{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px}
+.yesno h3{margin-top:0;font-size:15px;letter-spacing:.04em}
+.yesno ul{margin:0 0 0 18px;font-size:14.5px;color:var(--t2)}
+.cta{background:linear-gradient(135deg,rgba(0,188,212,.1),rgba(38,166,154,.05));border:1px solid rgba(0,188,212,.3);border-radius:14px;padding:30px 24px;margin:44px 0 0;text-align:center}
+.cta h2{margin:0 0 10px;font-size:23px}
+.cta p{color:var(--t2);font-size:15px;margin-bottom:18px}
+.btn{display:inline-block;background:var(--acc);color:#08262B;padding:14px 30px;border-radius:9px;font-weight:700;text-decoration:none}
+.fine{display:block;font-size:13px;color:var(--t3);margin-top:12px}
+.disc{border:1px solid var(--bd);background:var(--card);border-radius:10px;padding:18px;margin:34px 0 0;font-size:13.5px;color:var(--t2);line-height:1.9}
+footer{border-top:1px solid var(--bd);padding:26px 22px 40px;text-align:center;font-size:13px;color:var(--t3);line-height:1.9}
+footer a{color:var(--t3);text-decoration:none;margin:0 6px}
+footer a:hover{color:var(--acc)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px}</style>
+</head>
+<body>
+<nav class="nav">
+  <a class="logo" href="/">Madeshed<i>·</i>知機</a>
+  <div class="navr">
+    <div class="lang"><a href="/for-traders/" data-lang="zh-CN">简</a><a href="/for-traders/index.zh-Hant.html" data-lang="zh-Hant" class="on">繁</a><a href="/for-traders/index.en.html" data-lang="en">EN</a></div>
+    <a class="nav-cta" href="/#/onboarding">免費生成命盤</a>
+  </div>
+</nav>
+<main>
+<h1>你不是每天都是<br>同一個交易者</h1>
+<p class="lede">同一套策略，同一個市場，有些日子你嚴格執行，有些日子你追單、扛單、把說好不加的倉加了。</p>
+<p class="lede">你知道這件事。你說不清的是——<strong>到底是哪些日子。</strong></p>
+<h2>大多數人怎麼處理這個問題</h2>
+<p>憑感覺。「今天狀態不好，少做點。」</p><p>問題在於，<em>「感覺狀態好」是最不可靠的交易訊號之一。</em>連續獲利之後人會感覺良好，而那恰恰是最容易過度交易的時候。感覺是結果的滯後反應，不是前瞻指標。</p><p>另一種做法是記交易日誌。這是對的，但大多數日誌只記錄了<strong>你做了什麼</strong>，沒記錄<strong>你當時處在什麼狀態</strong>。於是複盤時只能看到「這筆虧了」，看不到「我在這類日子裡總是虧」。</p>
+<h2>知機做的事</h2>
+<p>它給你的交易紀錄加了一個<strong>時間維度的標籤</strong>，然後用你自己的樣本去檢驗：在這個維度上切開，你的勝率有沒有穩定的差異。</p><p>這個標籤來自八字——你的出生時間對應的干支，與每一天的干支之間的關係。為什麼用它？因為它提供了一套<strong>與市場無關、且在你出生時就已固定</strong>的週期性索引。它不受你近期盈虧影響，所以不會像「感覺」那樣被結果污染。</p><p><strong>它是不是真的對你有效，由你的數據說了算，不由我們說了算。</strong>用滿 30-90 天，系統會告訴你結果——包括「沒有顯著差異」這個結果。</p>
+<h2>三步，每天不到一分鐘</h2>
+<div class="step"><div class="n">1</div><div><h3>生成並儲存命盤</h3><p>填出生日期、時間、城市。系統自動做真太陽時校正（經度、日光節約時間、均時差），這一步很多工具是跳過的。命盤生成一次，全站通用。</p></div></div><div class="step"><div class="n">2</div><div><h3>每天誠實打卡</h3><p>記錄今天真實的結果：贏 / 平 / 虧，以及幅度。沒交易也標註一下。<strong>誠實是唯一的要求</strong>——美化過的數據算出來的規律，對你沒有任何用。</p></div></div><div class="step"><div class="n">3</div><div><h3>30-90 天後看回測</h3><p>樣本夠了，系統用你自己的紀錄做分組統計：在不同狀態下，你的勝率、平均盈虧、最大回撤分別是多少。有差異就是有，沒有就是沒有。</p></div></div>
+<h2>每天你會看到什麼</h2>
+<p>一個 5-100 的<strong>行動指數</strong>，以及它是怎麼算出來的——不是一個黑箱分數。</p>
+<div class="demo">
+  <div class="top">
+    <div><div class="lbl">今日行動指數</div><div class="score">49</div></div>
+    <div class="tag">謹慎 CAUTIOUS</div>
+  </div>
+  <div class="kv"><span>流日干支</span><b>辛卯</b></div>
+  <div class="kv"><span>相性總分</span><b>+34.5</b></div>
+  <div class="kv"><span>大運係數</span><b>&times;1.08</b></div>
+  <div class="kv"><span>流年基線</span><b>+8</b></div>
+  <div class="kv"><span>建議操作風格</span><b>按計畫交易</b></div>
+</div>
+<p>以及未來 30 天的分布，讓你能<strong>提前安排</strong>——把重倉決策放在自己歷史上表現更穩的窗口，而不是隨機撞上。</p>
+<div class="demo">
+  <div class="lbl" style="margin-bottom:4px">未來 30 天 · 行動指數分布</div>
+  <div class="cal"><div class="y">49</div><div class="y">46</div><div class="g">70</div><div class="y">44</div><div class="r">40</div><div class="y">57</div><div class="y">46</div><div class="y">46</div><div class="y">47</div><div class="g">70</div><div class="y">65</div><div class="y">52</div><div class="r">38</div><div class="y">44</div><div class="g">68</div><div class="y">55</div><div class="y">49</div><div class="r">41</div><div class="y">58</div><div class="g">72</div><div class="y">50</div><div class="y">47</div><div class="r">39</div><div class="y">53</div><div class="g">66</div><div class="y">48</div><div class="y">44</div><div class="g">69</div><div class="y">51</div><div class="y">45</div><div class="nn">&middot;</div><div class="nn">&middot;</div><div class="nn">&middot;</div><div class="nn">&middot;</div><div class="nn">&middot;</div></div>
+</div>
+<h2>它明確不做什麼</h2>
+<div class="notbox"><h3>這四條寫在產品裡，不是免責話術</h3><ul>
+<li><strong>不預測漲跌</strong>，不推薦任何標的。它對市場沒有任何看法。</li><li><strong>綠燈不等於滿倉或加槓桿。</strong>綠燈只是順勢窗口，倉位仍然按你自己的風控走。</li><li><strong>不替代停損和資金管理。</strong>它是加分項，不是安全網。</li><li><strong>樣本不足時不下結論。</strong>不到 30 天的統計沒有參考價值，系統會明確告訴你還不夠。</li>
+</ul></div>
+<p>如果一個工具聲稱能提高你的投資報酬率，你應該懷疑它。<strong>知機聲稱的只有一件事：它能幫你看清自己的行為模式。</strong>剩下的事情，仍然要靠你的策略和紀律。</p>
+<h2>適合誰</h2>
+<div class="yesno">
+<div><h3 style="color:var(--grn)">&#10003; 適合</h3><ul><li>已經有自己的交易系統，缺的是執行紀律</li><li>知道自己會情緒化操作，想找出觸發條件</li><li>願意每天花一分鐘如實記錄</li><li>能接受「我的數據不支持這個結論」</li></ul></div>
+<div><h3 style="color:var(--red)">&#10007; 不適合</h3><ul><li>想要買賣訊號或推薦個股</li><li>指望它提高勝率而不改變行為</li><li>不願意如實記錄虧損</li><li>想用它替代風控和停損</li></ul></div>
+</div>
+<h2>為什麼值得試</h2>
+<p>成本是每天一分鐘，和一兩個月的耐心。</p><p>回報是一份<strong>別人給不了的東西</strong>——一張屬於你自己的交易節奏地圖。不是通用建議，不是「趨勢交易者應該如何如何」，而是基於你這一個人的真實紀錄得出的、關於你自己的統計結論。</p><p>即使最終結果是「沒有顯著差異」，你也得到了一件有價值的東西：<em>一個被排除掉的變數，和兩個月嚴格記錄的交易日誌。</em></p>
+<div class="cta">
+  <h2>從今天開始記</h2>
+  <p>生成命盤免費。真正的價值在第 30 天之後出現。</p>
+  <a class="btn" href="/#/onboarding">免費生成命盤 →</a>
+  <span class="fine">無需信用卡 · 命盤本地計算 · 隨時匯出你的紀錄</span>
+</div>
+<div class="disc"><strong>風險提示：</strong>知機的所有評分、回測與提醒均為決策輔助工具，不構成任何投資建議，不預測市場走勢，不推薦任何標的。歷史統計不代表未來表現。任何交易決策與盈虧均由使用者自行承擔。投資有風險，入市需謹慎。</div>
+</main>
+<footer>
+  <a href="/">首頁</a>·<a href="/#/guide">使用指南</a>·<a href="/bazi/">八字知識</a>·<a href="/tools/solar-time/">真太陽時換算</a><br>
+  © 2026 Madeshed 知機 · 命盤 × 數據
+</footer>
+<script>
+document.addEventListener('click',function(e){
+var b=e.target.closest('[data-lang]');if(!b)return;e.preventDefault();
+try{localStorage.setItem('madeshed_locale_v1',b.dataset.lang);}catch(err){}
+location.href=b.getAttribute('href');
+});
+</script>
+</body>
+</html>
