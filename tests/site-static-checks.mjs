@@ -1981,4 +1981,22 @@ assert.equal((index.match(/function openSavedFortuneReport\(type\)/g)||[]).lengt
 /* 单次购买有效期：三处口径必须一致（_access 判定、webhook 盖章、admin 补发默认值）。 */
 assert.ok(/REPORT_VALIDITY_DAYS = 365/.test(stripeWebhookApi), 'webhook 盖章有效期须与 _access 一致（一年）');
 
+/* 帮家人/朋友算命（至尊VIP 专属）的服务端护栏：
+   1) 非 self 必须是 highest(VIP)，否则 403 —— 这是 VIP 的核心卖点，不能被绕过；
+   2) 人物命盘只做形状校验（它决定"给谁算"，不决定"能不能算"，权限仍由 gate 判）；
+   3) personId 必须进缓存键，否则给家人生成会覆盖自己的同类型报告（type/period/locale 完全相同）。 */
+{
+  const fr = readFileSync('api/fortune-report.js', utf8);
+  assert.ok(/gate\.tier !== 'highest'/.test(fr) && fr.includes("error: 'vip_required_for_other_person'"),
+    '为他人生成报告必须校验 VIP 档位（非 VIP 返回 403，不静默降级给本人算）');
+  assert.ok(/function validPersonProfile\(p\)/.test(fr) && fr.includes("error: 'invalid_person_profile'"),
+    '客户端传入的人物命盘必须做形状校验');
+  assert.ok(/const subject = forOther \? body\.personProfile : gate\.profile;/.test(fr),
+    '生成报告的对象必须按 personId 选择（本人取 gate.profile，他人取传入命盘）');
+  assert.ok(/reportKey\(reportType, body\.targetPeriod, locale, personId\)/.test(fr),
+    'reportKey 必须带 personId');
+  const ac = readFileSync('api/_access.js', utf8);
+  assert.ok(/tier: entitlement\.tier \|\| null/.test(ac), 'gate 必须透传会员档位，否则无法判 VIP 专属功能');
+}
+
 console.log('Static site checks passed');

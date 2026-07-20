@@ -88,8 +88,8 @@ const HANT_SAME_OK = new Set(['period_this_month', 'trade_period_to']);
 {
   const fr = read('api/fortune-report.js');
   assert.ok(
-    /function reportKey\(type, targetPeriod, locale\)/.test(fr) && /\$\{normalizeLocale\(locale\)\}/.test(fr),
-    'fortune-report 缓存键必须包含 locale，否则英文用户会命中别人缓存的中文报告',
+    /function reportKey\(type, targetPeriod, locale, personId\)/.test(fr) && /\$\{normalizeLocale\(locale\)\}/.test(fr) && /\$\{who\}/.test(fr),
+    'fortune-report 缓存键必须同时包含 locale 与 personId：缺 locale 英文用户会命中中文缓存；缺 personId 给家人生成会覆盖自己的同类型报告',
   );
   const rp = read('api/report.js');
   assert.ok(

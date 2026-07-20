@@ -329,9 +329,16 @@ function buildFortunePreview(type, profile, targetPeriod, locale) {
 /* 缓存键必须包含 locale：报告正文是按语言生成的，若不隔离，英文用户会命中别人缓存的
    中文报告（反之亦然），而且用户切换语言后永远拿不到新语言的版本。v3 = 加入 locale 后的新代次，
    顺带让此前生成的所有单语缓存自然失效。 */
-function reportKey(type, targetPeriod, locale) {
+/* personId 进缓存键：给家人生成的报告不能覆盖自己的同类型报告（两者 type/period/locale 完全相同）。
+   自己固定用 'self'，与旧键区分开，故版本升到 v4。 */
+function reportKey(type, targetPeriod, locale, personId) {
   const p = cleanText(targetPeriod).replace(/\s+/g, '-') || 'default';
-  return `${type}:${p}:${normalizeLocale(locale)}:v3`;
+  const who = cleanText(personId).replace(/[^A-Za-z0-9_-]/g, '') || 'self';
+  return `${type}:${who}:${p}:${normalizeLocale(locale)}:v4`;
+}
+/* 客户端传来的人物命盘只做形状校验：它只决定"给谁算"，不影响权限（权限由 gate 判）。 */
+function validPersonProfile(p) {
+  return !!(p && typeof p === 'object' && p.dayStem && p.pillarsStr && typeof p.pillarsStr === 'object');
 }
 
 export default async function handler(req, res) {
@@ -369,7 +376,23 @@ export default async function handler(req, res) {
   // 用户注册时选的语言（gate 已按 account_profiles.locale 解析），全程以它为准。
   const locale = gate.locale || (await resolveUserLocale(req, gate.user && gate.user.id));
   const period = cleanText(body.targetPeriod) || (reportType === 'month' ? '本月' : '当前周期');
-  const key = reportKey(reportType, body.targetPeriod, locale);
+  /* 帮家人/朋友算：至尊VIP 专属。personId 非 self 时必须是 VIP，且命盘由客户端传入
+     （客户端本就用同一套引擎算命盘，服务端只校验形状）。非 VIP 一律落回本人，绝不静默给别人算。 */
+  const personId = cleanText(body.personId || 'self') || 'self';
+  const forOther = personId !== 'self';
+  if (forOther && gate.tier !== 'highest') {
+    return send(res, 403, {
+      error: 'vip_required_for_other_person',
+      message: t(locale, 'vip_required_for_other_person'),
+      locale,
+      reportType
+    });
+  }
+  if (forOther && !validPersonProfile(body.personProfile)) {
+    return send(res, 400, { error: 'invalid_person_profile', message: t(locale, 'invalid_person_profile'), locale });
+  }
+  const subject = forOther ? body.personProfile : gate.profile;
+  const key = reportKey(reportType, body.targetPeriod, locale, personId);
   const existing = await supabaseSelect('fortune_reports', `user_id=eq.${encodeURIComponent(gate.user.id)}&report_key=eq.${encodeURIComponent(key)}&access_level=in.(paid,membership)&select=report_type,title,report_html,access_level,updated_at&limit=1`);
   if (existing.length && existing[0].report_html && !body.forceRefresh) {
     return send(res, 200, {
@@ -394,12 +417,12 @@ export default async function handler(req, res) {
         // timing 是尊享旗舰（¥688），给更大的 token 预算以撑起"五千字级"的深度。
         const parts = reportType === 'timing' ? ['timingA', 'timingB', 'timingC'] : ['fullA', 'fullB', 'fullC'];
         const mtPart = reportType === 'timing' ? 3600 : 2800;
-        const [a, b, c] = await Promise.all(parts.map((p) => callLlm(buildUserPrompt(p, gate.profile, body.targetPeriod, locale), mtPart, locale)));
+        const [a, b, c] = await Promise.all(parts.map((p) => callLlm(buildUserPrompt(p, subject, body.targetPeriod, locale), mtPart, locale)));
         aiText = [a.text, b.text, c.text].filter(Boolean).join('\n\n');
         llmError = a.error || b.error || c.error || '';
       } else {
         const mt = reportType === 'month' ? 1600 : (reportType === 'wealth' ? 2800 : 2000);
-        const llm = await callLlm(buildUserPrompt(reportType, gate.profile, body.targetPeriod, locale), mt, locale);
+        const llm = await callLlm(buildUserPrompt(reportType, subject, body.targetPeriod, locale), mt, locale);
         aiText = llm.text || '';
         llmError = llm.error || '';
       }
@@ -414,7 +437,7 @@ export default async function handler(req, res) {
     return send(res, 200, {
       reportType,
       title: productLabelFor(reportType, locale),
-      reportHtml: buildFallback(reportType, gate.profile, period, gate.accessLevel, locale),
+      reportHtml: buildFallback(reportType, subject, period, gate.accessLevel, locale),
       accessLevel: gate.accessLevel,
       expiresAt: gate.expiresAt || null,
       source: 'fallback',

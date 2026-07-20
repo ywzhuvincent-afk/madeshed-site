@@ -101,6 +101,16 @@ export const MESSAGES = {
     'zh-Hant': '這份完整報告需要單次購買，或開通高級會員後生成。',
     en: 'This full report requires a one-time purchase, or an Ultimate membership.'
   },
+  vip_required_for_other_person: {
+    zh: '为家人或朋友生成报告是至尊VIP专属功能。开通至尊VIP后即可添加他人命盘。',
+    'zh-Hant': '為家人或朋友生成報告是至尊VIP專屬功能。開通至尊VIP後即可添加他人命盤。',
+    en: 'Generating readings for family or friends is a VIP-only feature. Upgrade to VIP to add other people.'
+  },
+  invalid_person_profile: {
+    zh: '这个人的命盘信息不完整，请重新填写出生日期和时辰。',
+    'zh-Hant': '這個人的命盤資訊不完整，請重新填寫出生日期和時辰。',
+    en: 'This person’s chart data is incomplete. Please re-enter their birth date and time.'
+  },
   fortune_report_paywall: {
     zh: '这份完整命理报告需要单次购买，或开通高级会员后生成。',
     'zh-Hant': '這份完整命理報告需要單次購買，或開通高級會員後生成。',

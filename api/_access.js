@@ -75,7 +75,7 @@ export async function hasFortuneReportEntitlement(userId, reportType) {
   const membership = await activeMembership(userId);
   // 尊享报告（择时全案）只有至尊VIP免费；基础会员在此不放行，落到下面的单次购买校验。
   if (membership && (VIP_ONLY_FORTUNE_REPORTS.indexOf(reportType) < 0 || membership.tier === 'highest')) {
-    return { ok: true, accessLevel: 'membership' };
+    return { ok: true, accessLevel: 'membership', tier: membership.tier || null };
   }
   // 只认权威的“<type>-entitlement”权益行（唯一带 expires_at），且必须 access_level='paid'。
   // 不再匹配任何 membership 内容行——会员访问已由上面的 activeMembership 独立判定，
@@ -162,7 +162,7 @@ export async function authorizeFortuneReportAccess(req, reportType, mode = 'full
   }
   // locale 一路带给报告生成器：AI 提示词、报告标题/免责声明、缓存键都必须按它走。
   // expiresAt 透传给前端：卡片徽章要能诚实显示到期日，不能只靠本地猜。
-  return { ok: true, user: userResult.user, profile, accessLevel: entitlement.accessLevel, expiresAt: entitlement.expiresAt || null, locale };
+  return { ok: true, user: userResult.user, profile, accessLevel: entitlement.accessLevel, tier: entitlement.tier || null, expiresAt: entitlement.expiresAt || null, locale };
 }
 
 export async function loadCloudCheckins(userId) {
