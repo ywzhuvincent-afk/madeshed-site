@@ -2035,4 +2035,18 @@ assert.ok(index.includes("escapeHtml(en?(c.en||c.name):(c.name+' - '+(c.country|
 assert.ok(index.includes('renderPersonSwitcher();renderFortuneProducts();renderMasterForm();'),
   '人物切换器必须随命理中心一起渲染');
 
+/* 后台档位白名单必须覆盖权益侧的所有档位。曾漏掉 highest：VIP 加进产品后没同步这份
+   白名单，后台既发不了也修不了 VIP 会员（400 invalid_tier），客服无法兜底。 */
+{
+  const adminSrc = readFileSync('api/admin.js', utf8);
+  const accessSrc = readFileSync('api/_access.js', utf8);
+  const credits = accessSrc.match(/MEMBERSHIP_MONTHLY_CREDITS = \{([^}]*)\}/);
+  assert.ok(credits, '未找到 MEMBERSHIP_MONTHLY_CREDITS');
+  const tiers = [...credits[1].matchAll(/([a-z_]+)\s*:/g)].map((m) => m[1]);
+  for (const t of tiers) {
+    assert.ok(adminSrc.includes("'" + t + "'"),
+      `后台 MEMBERSHIP_TIERS 缺少档位「${t}」——权益侧有、后台没有，客服就发不了/修不了该档会员`);
+  }
+}
+
 console.log('Static site checks passed');

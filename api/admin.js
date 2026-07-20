@@ -308,7 +308,10 @@ async function grantCredits(req, res) {
   }
 }
 
-const MEMBERSHIP_TIERS = new Set(['free', 'pro', 'ultimate']);
+/* 必须覆盖 _access.js 的 MEMBERSHIP_TIERS（ultimate/highest）加上后台专用的 free/pro。
+   曾漏掉 highest：VIP 档位加进产品后没同步这份白名单，后台既发不了也修不了 VIP 会员
+   （返回 400 invalid_tier），客服无法兜底。 */
+const MEMBERSHIP_TIERS = new Set(['free', 'pro', 'ultimate', 'highest']);
 const MEMBERSHIP_STATUSES = new Set(['inactive', 'active', 'trialing', 'past_due', 'canceled']);
 
 async function setMembership(req, res) {
@@ -325,7 +328,7 @@ async function setMembership(req, res) {
   const periodEnd = String(body.periodEnd || '').trim();
   const note = String(body.note || '').slice(0, 300);
   if (!userId) return send(res, 400, { error: 'missing_user_id', message: '缺少 userId。' });
-  if (!MEMBERSHIP_TIERS.has(tier)) return send(res, 400, { error: 'invalid_tier', message: 'tier 必须是 free / pro / ultimate。' });
+  if (!MEMBERSHIP_TIERS.has(tier)) return send(res, 400, { error: 'invalid_tier', message: 'tier 必须是 free / pro / ultimate / highest。' });
   if (!MEMBERSHIP_STATUSES.has(status)) return send(res, 400, { error: 'invalid_status', message: 'status 无效。' });
   let currentPeriodEnd = null;
   if (periodEnd) {
