@@ -2465,6 +2465,87 @@ const REPORT_PRODUCTS={
 const FORTUNE_CREDITS_KEY='madeshed_fortune_credits_v1';
 const MASTER_HISTORY_KEY='madeshed_master_history_v1';
 const FORTUNE_REPORTS_KEY='madeshed_fortune_reports_v1';
+/* ── 人物档案（帮家人/朋友算命，至尊VIP 专属）────────────────────────────────
+   本人固定为 'self'（不进这份名单、不可删）；这里只存"其他人"。
+   person_key 由客户端生成，同时作为 fortune_reports 缓存键里的 personId，
+   所以一旦建立就不能变——变了等于换了一个人，已生成的报告会全部找不到。
+   云端表 public.people 有 RLS（只能读写自己的行）；VIP 校验在服务端做，
+   这里的数量上限只是界面防呆，不是安全边界。 */
+const PEOPLE_KEY='madeshed_people_v1';
+const CLOUD_PEOPLE_TABLE='people';
+const MAX_PEOPLE=10;
+function loadPeople(){try{const x=JSON.parse(localStorage.getItem(PEOPLE_KEY)||'[]');return Array.isArray(x)?x.filter(function(p){return p&&p.personKey;}):[];}catch(e){return [];}}
+function savePeople(list){try{localStorage.setItem(PEOPLE_KEY,JSON.stringify(Array.isArray(list)?list:[]));}catch(e){}}
+function findPerson(key){if(!key||key==='self')return null;return loadPeople().find(function(p){return p.personKey===key;})||null;}
+function newPersonKey(){return 'p'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36);}
+/* 由生日算命盘。直接调全局引擎 calcBaziCore，不走 onboarding 的 calcBazi()——
+   后者内部读的是 onboarding 表单里的历法/城市状态，给别人算时会错误套用你自己的设置。
+   这里把该人物自己的历法/城市显式传进去（缺省公历、不做城市经度校正）。 */
+function buildPersonProfile(birth,time,gender,timeKnown,opts){
+  if(typeof Solar==='undefined'||!window.MadeshedBazi)return null;
+  const o=opts||{};
+  return window.MadeshedBazi.calcBaziCore({
+    date:birth,time:time||'12:00',gender:gender==='M'?'M':'F',timeKnown:timeKnown!==false,
+    calendar:o.calendar==='lunar'?'lunar':'solar',city:o.city||null,ziPolicy:'late-zi-next-day'
+  });
+}
+function upsertPerson(person){
+  if(!person||!person.personKey)return null;
+  const list=loadPeople(),i=list.findIndex(function(p){return p.personKey===person.personKey;});
+  const now=new Date().toISOString();
+  const next=Object.assign({},i>=0?list[i]:{createdAt:now},person,{updatedAt:now});
+  if(i>=0)list[i]=next;else list.push(next);
+  savePeople(list);
+  syncPersonToCloud(next);
+  return next;
+}
+function removePerson(key){
+  savePeople(loadPeople().filter(function(p){return p.personKey!==key;}));
+  try{const r=loadFortuneReports();let dirty=false;Object.keys(r).forEach(function(k){if(k.indexOf(key+'::')===0){delete r[k];dirty=true;}});if(dirty)saveFortuneReports(r);}catch(e){}
+  removePersonFromCloud(key);
+}
+/* 云端读写：表有 RLS，用户只能碰自己的行。任何失败都不阻断本地使用（离线也能算）。 */
+async function syncPersonToCloud(person){
+  try{
+    if(!window.supa||!window.__cloudUser||!person)return;
+    await window.supa.from(CLOUD_PEOPLE_TABLE).upsert({
+      user_id:window.__cloudUser.id,person_key:person.personKey,display_name:person.name||'',
+      relation:person.relation||null,birth:person.birth||null,birth_time:person.time||null,
+      time_known:person.timeKnown!==false,gender:person.gender==='M'?'M':'F',
+      profile:person.profile||{},updated_at:new Date().toISOString()
+    },{onConflict:'user_id,person_key'});
+  }catch(e){}
+}
+async function removePersonFromCloud(key){
+  try{
+    if(!window.supa||!window.__cloudUser||!key)return;
+    await window.supa.from(CLOUD_PEOPLE_TABLE).delete().eq('user_id',window.__cloudUser.id).eq('person_key',key);
+  }catch(e){}
+}
+/* 登录/换设备后把云端名单拉回本地（云端为准：本地只是缓存）。 */
+/* 当前正在看谁的报告。'self'=本人。本地报告缓存必须按人物分键，否则给家人生成会覆盖自己的。 */
+const CURRENT_PERSON_KEY='madeshed_current_person_v1';
+function currentPersonKey(){try{const k=localStorage.getItem(CURRENT_PERSON_KEY)||'self';return (k==='self'||findPerson(k))?k:'self';}catch(e){return 'self';}}
+function setCurrentPersonKey(k){try{localStorage.setItem(CURRENT_PERSON_KEY,(k&&k!=='self'&&findPerson(k))?k:'self');}catch(e){}}
+function currentPersonProfile(){const k=currentPersonKey();if(k==='self')return (typeof getReportProfile==='function')?getReportProfile():null;const p=findPerson(k);return (p&&p.profile)?p.profile:null;}
+function localReportKey(type){return currentPersonKey()+'::'+type;}
+async function syncPeopleFromCloud(){
+  try{
+    if(!window.supa||!window.__cloudUser)return loadPeople();
+    const r=await window.supa.from(CLOUD_PEOPLE_TABLE)
+      .select('person_key,display_name,relation,birth,birth_time,time_known,gender,profile,created_at,updated_at')
+      .eq('user_id',window.__cloudUser.id).order('updated_at',{ascending:false});
+    if(r.error||!Array.isArray(r.data))return loadPeople();
+    const list=r.data.map(function(x){return{
+      personKey:x.person_key,name:x.display_name||'',relation:x.relation||'',
+      birth:x.birth||'',time:x.birth_time||'',timeKnown:x.time_known!==false,
+      gender:x.gender==='M'?'M':'F',profile:x.profile&&typeof x.profile==='object'?x.profile:null,
+      createdAt:x.created_at,updatedAt:x.updated_at};});
+    savePeople(list);
+    return list;
+  }catch(e){return loadPeople();}
+}
+
 const FORTUNE_REPORT_ENDPOINT='/api/fortune-report';
 const MASTER_QUESTION_ENDPOINT='/api/master-question';
 const CREDIT_CHECKOUT_ENDPOINT='/api/checkout?action=credit';
@@ -2717,11 +2798,12 @@ function fortuneAccessLevel(type){if(memberFreeFortune(type))return'membership';
 function hasFortuneReportAccess(type){return fortuneAccessLevel(type)!=='preview';}
 async function cloudJsonHeaders(){const headers={'Content-Type':'application/json'};try{if(window.supa){const r=await window.supa.auth.getSession();const token=r&&r.data&&r.data.session&&r.data.session.access_token;if(token)headers.Authorization='Bearer '+token;}}catch(e){}return headers;}
 function buildLocalFortuneReport(type,profile){const ctx=buildFortuneContext(profile),p=FORTUNE_PRODUCTS[type]||FORTUNE_PRODUCTS.full,title=p.label+' · 命理报告',fav=(ctx.favorable||[]).join('、')||'待计算',unfav=(ctx.unfavorable||[]).join('、')||'待计算',period=type==='month'?'本月/指定月份':(type==='dayun'?'当前大运与未来三年':'全盘长期格局');let focus;if(type==='full')focus='全盘先看日主强弱、月令气势、用神喜忌和四柱互动，再把婚姻、事业、财运、健康倾向拆成长期主题。';else if(type==='dayun')focus='流年大运重点看当前大运是否扶身或泄耗、今年流年对财官食伤的触发，以及未来三年的高低节奏。';else focus='每月运程重点看流月五行、流日节奏、财星与风险扣分，给出本月适合推进、观望和避险的窗口。';return '<div class="report-generated"><h2>'+title+'</h2><span class="report-badge">'+period+'</span><span class="report-badge">统一命盘：'+escapeHtml(ctx.pillars)+'</span><h3>结论</h3><p>'+focus+' 当前喜用倾向为 '+escapeHtml(fav)+'，忌神/压力倾向为 '+escapeHtml(unfav)+'；行动建议以稳健、可验证、不过度承诺为原则。</p><h3>命理依据</h3><ul><li>日主：'+escapeHtml(ctx.dayMaster||'未生成')+'；强弱：'+escapeHtml(ctx.strength||'未生成')+'。</li><li>月令：'+escapeHtml(ctx.monthBranch||'未生成')+' · '+escapeHtml(ctx.monthRelation||'')+'；当前大运：'+escapeHtml(ctx.currentDayun||'尚未起运/未生成')+'。</li><li>今日参考：'+escapeHtml(ctx.today.date)+' · 行动指数 '+escapeHtml(ctx.today.actionScore||'—')+' · 财运 '+escapeHtml(ctx.today.wealth||'—')+'。</li></ul><h3>关键时间窗口</h3><p>顺势窗口优先选择喜用五行、财星可承载、风险扣分低的日期；忌神强、冲刑害明显、亏损后情绪未稳的窗口应减仓或不做重大决定。</p><h3>风险点</h3><p>命理报告只能做节奏和风险管理参考，不承诺必然发生；财运只讨论收入机会、花费压力、破财风险与事业财星，不提供具体投资标的建议。</p><h3>建议行动</h3><p>把报告用于计划、复盘和择时：重大决定先看大运/流年背景，再看流月/流日触发，最后用个人真实记录验证。</p><div class="report-warning">本内容不构成投资、医疗或法律建议；如涉及疾病、法律纠纷或极端风险，请寻求持牌专业人士帮助。</div></div>';}
-async function openFortuneReport(type,mode){const out=document.getElementById('fortune-report-output');if(!out)return;const profile=getFortuneProfile(),product=FORTUNE_PRODUCTS[type]||FORTUNE_PRODUCTS.full;if(!profile){out.innerHTML='<div class="report-paywall">'+T('need_profile_saved')+'</div>';return;}const locked=mode==='buy'||(!hasFortuneReportAccess(type)&&mode!=='preview');if(mode==='buy'){beginFortuneReportCheckout(type);return;}out.innerHTML='<div class="report-paywall">正在生成 '+product.label+'...</div>';let html=null;try{const r=await fetch(FORTUNE_REPORT_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify({locale:checkoutLocaleValue(),reportType:type,profile:profile,targetPeriod:document.getElementById('master-target-month')?.value||null,context:buildFortuneContext(profile)})});const j=await r.json();if(j&&j.reportHtml)html=j.reportHtml;}catch(e){}if(!html)html=buildLocalFortuneReport(type,profile);out.innerHTML=html+(locked?'<div class="report-paywall"><strong>完整报告已锁定。</strong> 当前展示为结构预览；单次购买或高级会员可解锁完整报告。</div>':'');const reports=loadFortuneReports();reports[type]={reportType:type,reportHtml:html,accessLevel:fortuneAccessLevel(type),updatedAt:new Date().toISOString()};saveFortuneReports(reports);out.scrollIntoView({behavior:'smooth',block:'start'});}
+/* 已删除 openFortuneReport 的重复旧定义：它被下方同名定义覆盖、从不执行，
+   却在改代码时反复吃掉补丁（openSavedFortuneReport 也曾被复制成两份）。 */
 function renderFortuneProducts(){const box=document.getElementById('fortune-products');if(!box)return;const en=typeof localeIsEn==='function'&&localeIsEn(),copy={full:{label:'Full Chart Reading',desc:'Day Master, favorable elements, long-term themes, relationship, career, wealth rhythm, and health tendencies.'},dayun:{label:'Luck Pillar Reading',desc:'Current 10-year cycle, annual rhythm, and key planning windows for the next three years.'},month:{label:'Monthly Timing Reading',desc:'Month-level timing, relationship, career, cash-flow pressure, social energy, and risk reminders.'},wealth:{label:'Windfall Wealth Reading',desc:'Whether you have an indirect-wealth (windfall) chart, its strength, the luck-pillar and year rhythm of windfall luck, active windows for opportunity income, plus rational risk reminders.'},timing:{label:'Investment Timing Master Plan',desc:'Our deepest one-off study: full wealth-structure and favorable-element analysis, your behavioural risk profile, a year-by-year outlook for the next three years with a month-by-month timing calendar, plus a key-window checklist and money discipline.'}},memberActive=isUltimateMember(),memberAction=memberActive?'portal':'subscribe',memberText=en?(memberActive?'Manage Billing':'Start Ultimate'):(memberActive?'管理会员':'开通高级会员'),preview=en?'Preview':'预览',buy=en?'Buy · 1-year access':'单次购买 · 一年有效',generate=en?'Generate Report':'生成报告',inclU=en?'Included in Ultimate':'Ultimate 已含',inclV=en?'Included in VIP':'至尊VIP 已含';
   /* 单份命理解读卡（含"会员已含"锚点，让"不如直接订会员"显性化）。timing=择时全案是尊享线旗舰，
      基础会员不含、只有至尊VIP免费 → 锚点显示"VIP 已含"，并单独归入下方尊享区，不与 ¥9.9 解读混排。 */
-  function fortuneCard(type){const p=FORTUNE_PRODUCTS[type],access=fortuneAccessLevel(type),c=en?copy[type]:null,badge=en?'Single unlock':(access==='membership'?'高级会员免费':(access==='paid'?'已解锁':'单次解锁'));return '<div class="report-product '+(p.featured?'featured':'')+'"><div class="t">'+(en?(p.nameEnLive||c.label):(p.nameZhLive||p.label))+'</div><div class="p">'+priceDisplayHTML(p)+'</div><div class="report-incl'+(p.vip?' vip':'')+'">'+(p.vip?inclV:inclU)+'</div><div class="d">'+(c?c.desc:p.desc)+'</div><div class="report-badge">'+badge+'</div><div class="report-actions"><button class="report-btn" type="button" data-fortune-action="preview-report" data-fortune-report-type="'+type+'">'+preview+'</button><button class="report-btn primary" type="button" data-fortune-action="buy-report" data-fortune-report-type="'+type+'">'+buy+'</button><button class="report-btn" type="button" data-fortune-action="generate-report" data-fortune-report-type="'+type+'">'+generate+'</button>'+((loadFortuneReports()[type]&&loadFortuneReports()[type].reportHtml)?('<button class="report-btn" type="button" data-fortune-action="open-saved" data-fortune-report-type="'+type+'">'+(en?'View saved report':'查看已生成')+'</button>'):'')+'</div></div>';}
+  function fortuneCard(type){const p=FORTUNE_PRODUCTS[type],access=fortuneAccessLevel(type),c=en?copy[type]:null,badge=en?'Single unlock':(access==='membership'?'高级会员免费':(access==='paid'?'已解锁':'单次解锁'));return '<div class="report-product '+(p.featured?'featured':'')+'"><div class="t">'+(en?(p.nameEnLive||c.label):(p.nameZhLive||p.label))+'</div><div class="p">'+priceDisplayHTML(p)+'</div><div class="report-incl'+(p.vip?' vip':'')+'">'+(p.vip?inclV:inclU)+'</div><div class="d">'+(c?c.desc:p.desc)+'</div><div class="report-badge">'+badge+'</div><div class="report-actions"><button class="report-btn" type="button" data-fortune-action="preview-report" data-fortune-report-type="'+type+'">'+preview+'</button><button class="report-btn primary" type="button" data-fortune-action="buy-report" data-fortune-report-type="'+type+'">'+buy+'</button><button class="report-btn" type="button" data-fortune-action="generate-report" data-fortune-report-type="'+type+'">'+generate+'</button>'+((loadFortuneReports()[localReportKey(type)]&&loadFortuneReports()[localReportKey(type)].reportHtml)?('<button class="report-btn" type="button" data-fortune-action="open-saved" data-fortune-report-type="'+type+'">'+(en?'View saved report':'查看已生成')+'</button>'):'')+'</div></div>';}
   const readingCards=Object.keys(FORTUNE_PRODUCTS).filter(function(type){return !FORTUNE_PRODUCTS[type].vip;}).map(fortuneCard).join('');
   const ultimateCard='<div class="report-product featured"><div class="t">'+(en?'Ultimate Membership':'高级会员')+'</div><div class="p">'+priceDisplayHTML(ULTIMATE_MEMBERSHIP_PRODUCT)+'</div><div class="d">'+(en?'Generate fixed reports and receive monthly advisor credits for repeated review.':'固定报告免费生成；问大师每月赠送 30 点，适合高频咨询和长期复盘。')+'</div><div class="report-badge">'+(en?'Membership':'会员')+'</div><div class="report-actions"><button class="report-btn primary" type="button" data-membership-action="'+memberAction+'" data-membership-tier="ultimate" data-membership-plan="monthly">'+memberText+'</button></div></div>';
   const premiumHead='<div class="fortune-premium-head">'+(en?'Premium · Deep timing':'尊享 · 深度择时')+'<span>'+(en?'For high-net-worth users — VIP membership or a one-off master plan.':'面向高净值用户 —— 至尊VIP 会员或一次性择时全案。')+'</span></div>';
@@ -2744,8 +2826,8 @@ async function renderDetailedReport(type,locked){const out=document.getElementBy
 function openGeneratedReport(key){const out=document.getElementById('premium-report-output');if(!out)return;const report=loadGeneratedReports().find(r=>r&&r.reportKey===key);if(!report){out.innerHTML='<div class="report-paywall">'+((typeof localeIsEn==='function'&&localeIsEn())?'Auto-report not found.':'没有找到这份自动报告。')+'</div>';return;}if(hasReportAccess(report.reportType)&&report.accessLevel!=='preview'){renderDetailedReport(report.reportType,false);return;}out.innerHTML=generatedReportPreview(report);out.scrollIntoView({behavior:'smooth',block:'start'});}
 /* 查看已生成：直接渲染本地缓存的报告 HTML。此前报告已存在 localStorage 却没有任何入口能打开，
    用户只能再点「生成报告」，误以为要重新生成/重新付费。 */
-function openSavedFortuneReport(type){var out=document.getElementById('fortune-report-output');if(!out)return;var en=typeof localeIsEn==='function'&&localeIsEn();var r=loadFortuneReports()[type];if(!r||!r.reportHtml){out.innerHTML='<div class="report-paywall">'+(en?'No saved report yet — generate it first.':'还没有已生成的报告，请先点生成。')+'</div>';return;}var when=r.updatedAt?new Date(r.updatedAt).toLocaleString(en?'en-US':'zh-CN'):'';var exp=r.expiresAt?new Date(r.expiresAt).toLocaleDateString(en?'en-US':'zh-CN'):'';out.innerHTML='<div class="report-paywall">'+(en?'Saved report':'已生成的报告')+(when?(' · '+when):'')+(exp?(' · '+(en?'access until ':'权益有效至 ')+exp):'')+'</div>'+r.reportHtml;out.scrollIntoView({behavior:'smooth',block:'start'});}
-async function openFortuneReport(type,mode){const out=document.getElementById('fortune-report-output');if(!out)return;const en=typeof localeIsEn==='function'&&localeIsEn();const profile=getFortuneProfile(),product=FORTUNE_PRODUCTS[type]||FORTUNE_PRODUCTS.full,pname=en?(product.labelEn||product.label):product.label;if(!profile){out.innerHTML='<div class="report-paywall">'+(en?'Generate and save your BaZi chart first — fixed reports and Ask-Master both use the same saved chart.':'请先生成并保存八字命盘，固定报告和问大师都会默认使用同一份命盘。')+'</div>';return;}if(mode==='buy'){beginFortuneReportCheckout(type);return;}const requestMode=mode==='preview'?'preview':'full';if(requestMode==='full'&&!(await ensurePaidActionAllowed(out)))return;out.innerHTML='<div class="report-paywall">'+(en?('The AI master is preparing your full '+pname+' (about 20-40s), please wait…'):('AI 命理师正在结合你的命盘为你逐项批命，约需 20-40 秒，请稍候…'))+'</div>';try{const r=await fetch(FORTUNE_REPORT_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify({locale:checkoutLocaleValue(),reportType:type,mode:requestMode,profile:profile,targetPeriod:document.getElementById('master-target-month')?.value||null,context:buildFortuneContext(profile)})});const j=await r.json();if(!r.ok){out.innerHTML=serverReportErrorHtml(j,en?'The full BaZi reading requires a purchase or Ultimate membership.':'完整命理报告需要先购买或开通高级会员。');return;}const html=j.reportHtml||buildLocalFortuneReport(type,profile);out.innerHTML=html+(j.accessLevel==='preview'?('<div class="report-paywall"><strong>'+(en?'Full report locked.</strong> This is a structure preview; a single purchase or Ultimate membership unlocks the full report.':'完整报告已锁定。</strong> 当前展示为结构预览；单次购买或高级会员可解锁完整报告。')+'</div>'):'');if(j.accessLevel&&j.accessLevel!=='preview'){const reports=loadFortuneReports();reports[type]={reportType:type,reportHtml:html,accessLevel:j.accessLevel,expiresAt:j.expiresAt||null,updatedAt:new Date().toISOString()};saveFortuneReports(reports);renderFortuneProducts();}}catch(e){out.innerHTML=requestMode==='preview'?(buildLocalFortuneReport(type,profile)+'<div class="report-paywall"><strong>'+(en?'Full report locked.</strong> Server unavailable; showing local structure preview.':'完整报告已锁定。</strong> 服务端暂不可用，当前展示本地结构预览。')+'</div>'):('<div class="report-paywall">'+(en?'BaZi report service is temporarily unavailable; you were not charged.':'命理报告服务端接口暂不可用，当前不会扣费。')+'</div>');}out.scrollIntoView({behavior:'smooth',block:'start'});}
+function openSavedFortuneReport(type){var out=document.getElementById('fortune-report-output');if(!out)return;var en=typeof localeIsEn==='function'&&localeIsEn();var r=loadFortuneReports()[localReportKey(type)];if(!r||!r.reportHtml){out.innerHTML='<div class="report-paywall">'+(en?'No saved report yet — generate it first.':'还没有已生成的报告，请先点生成。')+'</div>';return;}var when=r.updatedAt?new Date(r.updatedAt).toLocaleString(en?'en-US':'zh-CN'):'';var exp=r.expiresAt?new Date(r.expiresAt).toLocaleDateString(en?'en-US':'zh-CN'):'';out.innerHTML='<div class="report-paywall">'+(en?'Saved report':'已生成的报告')+(when?(' · '+when):'')+(exp?(' · '+(en?'access until ':'权益有效至 ')+exp):'')+'</div>'+r.reportHtml;out.scrollIntoView({behavior:'smooth',block:'start'});}
+async function openFortuneReport(type,mode){const out=document.getElementById('fortune-report-output');if(!out)return;const en=typeof localeIsEn==='function'&&localeIsEn();const profile=getFortuneProfile(),product=FORTUNE_PRODUCTS[type]||FORTUNE_PRODUCTS.full,pname=en?(product.labelEn||product.label):product.label;if(!profile){out.innerHTML='<div class="report-paywall">'+(en?'Generate and save your BaZi chart first — fixed reports and Ask-Master both use the same saved chart.':'请先生成并保存八字命盘，固定报告和问大师都会默认使用同一份命盘。')+'</div>';return;}if(mode==='buy'){beginFortuneReportCheckout(type);return;}const requestMode=mode==='preview'?'preview':'full';if(requestMode==='full'&&!(await ensurePaidActionAllowed(out)))return;out.innerHTML='<div class="report-paywall">'+(en?('The AI master is preparing your full '+pname+' (about 20-40s), please wait…'):('AI 命理师正在结合你的命盘为你逐项批命，约需 20-40 秒，请稍候…'))+'</div>';try{const r=await fetch(FORTUNE_REPORT_ENDPOINT,{method:'POST',headers:await cloudJsonHeaders(),body:JSON.stringify({locale:checkoutLocaleValue(),reportType:type,mode:requestMode,profile:profile,personId:currentPersonKey(),personProfile:(currentPersonKey()==='self'?null:currentPersonProfile()),targetPeriod:document.getElementById('master-target-month')?.value||null,context:buildFortuneContext(profile)})});const j=await r.json();if(!r.ok){out.innerHTML=serverReportErrorHtml(j,en?'The full BaZi reading requires a purchase or Ultimate membership.':'完整命理报告需要先购买或开通高级会员。');return;}const html=j.reportHtml||buildLocalFortuneReport(type,profile);out.innerHTML=html+(j.accessLevel==='preview'?('<div class="report-paywall"><strong>'+(en?'Full report locked.</strong> This is a structure preview; a single purchase or Ultimate membership unlocks the full report.':'完整报告已锁定。</strong> 当前展示为结构预览；单次购买或高级会员可解锁完整报告。')+'</div>'):'');if(j.accessLevel&&j.accessLevel!=='preview'){const reports=loadFortuneReports();reports[localReportKey(type)]={reportType:type,personKey:currentPersonKey(),reportHtml:html,accessLevel:j.accessLevel,expiresAt:j.expiresAt||null,updatedAt:new Date().toISOString()};saveFortuneReports(reports);renderFortuneProducts();}}catch(e){out.innerHTML=requestMode==='preview'?(buildLocalFortuneReport(type,profile)+'<div class="report-paywall"><strong>'+(en?'Full report locked.</strong> Server unavailable; showing local structure preview.':'完整报告已锁定。</strong> 服务端暂不可用，当前展示本地结构预览。')+'</div>'):('<div class="report-paywall">'+(en?'BaZi report service is temporarily unavailable; you were not charged.':'命理报告服务端接口暂不可用，当前不会扣费。')+'</div>');}out.scrollIntoView({behavior:'smooth',block:'start'});}
 function tradedCount(entries){return entries.filter(e=>isTradeOutcome(e.outcome)).length;}
 function syncRangeButtons(){document.querySelectorAll('#stats-range-controls [data-range]').forEach(b=>b.classList.toggle('active',b.dataset.range===statsRange.type));const cr=document.getElementById('stats-custom-range');if(cr)cr.classList.toggle('show',statsRange.type==='custom');document.querySelectorAll('#history-range-controls [data-history-range]').forEach(b=>b.classList.toggle('active',b.dataset.historyRange===historyRange.type));const hr=document.getElementById('history-custom-range');if(hr)hr.classList.toggle('show',historyRange.type==='custom');}
 function setStatsRange(type){statsRange={type:type,start:statsRange.start,end:statsRange.end};syncRangeButtons();renderDailyStats();}
