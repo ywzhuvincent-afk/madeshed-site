@@ -1699,6 +1699,8 @@ assert.ok(/action === 'purchases'/.test(accountApi) && /function purchaseHistory
 includesAll(index, ['function renderPurchaseHistory', "fetch('/api/account?action=purchases'", 'id="purchase-history"'], '账号页展示购买记录/点数流水/已解锁权益');
 // 6) 数据库硬化脚本存在（需在 Supabase SQL Editor 执行）
 assert.ok(existsSync('supabase/2026-07-10-purchase-hardening.sql'), '购买硬化 SQL（封付费绕过+账本唯一约束）');
+// 人物档案表（帮家人朋友算命，VIP 专属）——需在 Supabase SQL Editor 执行
+assert.ok(existsSync('supabase/2026-07-18-people.sql'), '人物档案表 SQL（people + RLS 四条策略）');
 // 7) 单次报告 30 天有效期：webhook 盖 expires_at + _access 到期判定 + 结账过期可续买 + CTA 标注
 assert.ok(/REPORT_VALIDITY_DAYS = 365/.test(accessApi) && /function purchaseStillValid/.test(accessApi) && /accessLevel: 'expired'/.test(accessApi), '_access：报告权益 30 天有效期判定（会员不受限）');
 assert.ok(/reportExpiryFromNow\(\)/.test(stripeWebhookApi) && /expires_at: reportExpiryFromNow/.test(stripeWebhookApi), 'webhook：报告购买盖 30 天有效期');
