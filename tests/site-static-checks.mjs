@@ -2018,4 +2018,21 @@ assert.equal(/function buildPersonProfile\([^)]*\)\{\s*if\(typeof calcBazi/.test
 assert.equal((index.match(/async function openFortuneReport\(type,mode\)\{/g) || []).length, 1,
   'openFortuneReport 必须唯一（历史重复定义会吃掉补丁：personId 曾只进了其中一份）');
 
+/* 人物切换器（VIP 专属）：
+   - 非 VIP 不隐藏功能，显示升级引导（藏起来用户永远不知道 VIP 值这个价）；
+   - 人物表单不得复用 onboarding 的城市选择器：它读写全局 selectedCity 单例，
+     给别人选城市会连你自己的表单一起改掉；
+   - 英文城市下拉不得拼 c.country（CITIES 的 country 只有中文，会在英文界面漏中文）。 */
+includesAll(index, [
+  'function renderPersonSwitcher()',
+  'function savePersonFromForm()',
+  'data-person-action="add"',
+  'class="person-upsell"',
+  'buildPersonProfile(birth,time,gender,!unknown,{calendar:calendar,city:city})',
+], '人物切换器 + 添加表单 + 非 VIP 升级引导');
+assert.ok(index.includes("escapeHtml(en?(c.en||c.name):(c.name+' - '+(c.country||'')))"),
+  '英文城市下拉只能显示 c.en，不得拼中文 country（中文分支才拼）');
+assert.ok(index.includes('renderPersonSwitcher();renderFortuneProducts();renderMasterForm();'),
+  '人物切换器必须随命理中心一起渲染');
+
 console.log('Static site checks passed');
