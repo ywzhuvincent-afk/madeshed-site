@@ -89,7 +89,7 @@ create table if not exists public.account_delete_requests (
 
 create table if not exists public.memberships (
   user_id uuid primary key references auth.users(id) on delete cascade,
-  tier text not null default 'free' check (tier in ('free', 'pro', 'ultimate')),
+  tier text not null default 'free' check (tier in ('free', 'pro', 'ultimate', 'highest')),
   status text not null default 'inactive' check (status in ('inactive', 'active', 'trialing', 'past_due', 'canceled')),
   stripe_customer_id text,
   stripe_subscription_id text,
@@ -593,7 +593,7 @@ begin
     from grouped g
     left join public.memberships m
       on m.user_id = g.user_id
-      and m.tier = 'ultimate'
+      and m.tier in ('ultimate', 'highest')
       and m.status in ('active', 'trialing')
     left join public.report_entitlements e
       on e.user_id = g.user_id

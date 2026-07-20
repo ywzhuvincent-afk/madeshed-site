@@ -2053,4 +2053,23 @@ assert.ok(index.includes('renderPersonSwitcher();renderFortuneProducts();renderM
   }
 }
 
+/* 付费档位必须走完整条链路。VIP(highest) 曾只加了代码没加数据库约束：
+   用户付 ¥299 → Stripe 扣款成功 → webhook 写 tier=highest 被 CHECK 拒绝 → 会员开不出来。
+   这里从 _access.js 的档位表读出所有档位，逐个断言 schema 的 CHECK 约束里都有。 */
+{
+  const schemaSql = readFileSync('supabase/schema.sql', utf8);
+  const accessSrc2 = readFileSync('api/_access.js', utf8);
+  const m2 = accessSrc2.match(/MEMBERSHIP_MONTHLY_CREDITS = \{([^}]*)\}/);
+  const tiers2 = [...m2[1].matchAll(/([a-z_]+)\s*:/g)].map((x) => x[1]);
+  const check = schemaSql.match(/tier text not null default 'free' check \(tier in \(([^)]*)\)\)/);
+  assert.ok(check, '未找到 memberships.tier 的 CHECK 约束');
+  for (const t of tiers2) {
+    assert.ok(check[1].includes("'" + t + "'"),
+      `schema.sql 的 memberships.tier CHECK 缺少「${t}」——付费成功但 webhook 写库会被拒绝，用户付了钱开不出会员`);
+  }
+  assert.ok(!/and m\.tier = 'ultimate'/.test(schemaSql),
+    '自动生成报告的函数不得只认 ultimate（VIP 会员会拿不到自动报告）');
+  assert.ok(existsSync('supabase/2026-07-20-vip-tier.sql'), 'VIP 档位约束迁移 SQL');
+}
+
 console.log('Static site checks passed');
