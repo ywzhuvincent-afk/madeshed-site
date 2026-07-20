@@ -1337,8 +1337,8 @@ includesAll(supabaseSchema, [
   'fortune_reports_select_own',
   'master_questions_select_own',
   "check (entry_type in ('purchase', 'membership_grant', 'spend', 'refund', 'admin'))",
-  "check (report_type in ('full', 'dayun', 'month'))",
-  "check (category in ('marriage', 'career', 'wealth', 'family', 'health', 'timing', 'life', 'custom'))",
+  "check (report_type in ('full', 'dayun', 'month', 'wealth', 'timing'))",
+  "check (category in ('marriage', 'career', 'wealth', 'windfall', 'family', 'health', 'timing', 'life', 'custom'))",
   'unique (user_id, report_key)',
 ], 'fortune schema and RLS');
 
@@ -2070,6 +2070,46 @@ assert.ok(index.includes('renderPersonSwitcher();renderFortuneProducts();renderM
   assert.ok(!/and m\.tier = 'ultimate'/.test(schemaSql),
     '自动生成报告的函数不得只认 ultimate（VIP 会员会拿不到自动报告）');
   assert.ok(existsSync('supabase/2026-07-20-vip-tier.sql'), 'VIP 档位约束迁移 SQL');
+}
+
+/* ── 约束漂移守卫：代码里会写的值，数据库 CHECK 必须都认 ──────────────────
+   2026-07-20 一口气发现三处漂移，共同后果都是「扣款成功但写库被拒 → 用户付了钱拿不到东西」：
+     memberships.tier            缺 highest  → VIP ¥299 会员开不出来
+     fortune_reports.report_type 缺 wealth/timing → 偏财运 ¥19、择时全案 ¥688 报告存不进库
+     master_questions.category   缺 windfall → 扣了点数但问答记录存不下
+   都是「加了商品/档位却没同步数据库约束」。这里自动比对，不再靠人记。 */
+{
+  const schemaSql2 = readFileSync('supabase/schema.sql', utf8);
+  function schemaAllows(table, column, values, label) {
+    /* 按【表】定位约束：report_type 在 report_entitlements（交易复盘 7/30/365/all）与
+       fortune_reports（命理 full/dayun/...）都有，两者语义不同，不能混着比。 */
+    const tStart = schemaSql2.indexOf("create table if not exists public." + table);
+    assert.ok(tStart >= 0, `schema.sql 未找到表 ${table}`);
+    const tEnd = schemaSql2.indexOf(");", tStart);
+    const block = schemaSql2.slice(tStart, tEnd);
+    const needle = column + " in (";
+    const i = block.indexOf(needle);
+    assert.ok(i >= 0, `${table}.${column} 未找到 CHECK 约束`);
+    const seg = block.slice(i + needle.length, block.indexOf(")", i + needle.length));
+    for (const v of values) {
+      assert.ok(seg.includes("'" + v + "'"),
+        `${label}：${table}.${column} 的 CHECK 缺少「${v}」——代码会写这个值，数据库会拒绝，用户付款后拿不到东西`);
+    }
+  }
+  // 命理报告类型：以 api/fortune-report.js 的 FORTUNE_REPORT_TYPES 为准
+  const frSrc = readFileSync('api/fortune-report.js', utf8);
+  const frBlock = frSrc.match(/FORTUNE_REPORT_TYPES = \{([\s\S]*?)\n\};/);
+  assert.ok(frBlock, '未找到 FORTUNE_REPORT_TYPES');
+  const frTypes = [...frBlock[1].matchAll(/^\s{2}([a-z_]+):\s*\{/gm)].map((m) => m[1]);
+  assert.ok(frTypes.length >= 5, `FORTUNE_REPORT_TYPES 解析异常，只解出 ${frTypes.length} 个`);
+  schemaAllows('fortune_reports', 'report_type', frTypes, '命理报告');
+  // 问大师分类：以 api/master-question.js 的 CATEGORIES 为准
+  const mqSrc = readFileSync('api/master-question.js', utf8);
+  const mqBlock = mqSrc.match(/CATEGORIES = \[([^\]]*)\]/);
+  assert.ok(mqBlock, '未找到 CATEGORIES');
+  const mqCats = [...mqBlock[1].matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
+  schemaAllows('master_questions', 'category', mqCats, '问大师分类');
+  assert.ok(existsSync('supabase/2026-07-20-constraint-drift.sql'), '约束漂移修复 SQL');
 }
 
 console.log('Static site checks passed');

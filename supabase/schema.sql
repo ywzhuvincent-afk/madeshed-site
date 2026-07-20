@@ -156,7 +156,7 @@ create table if not exists public.fortune_reports (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   report_key text not null,
-  report_type text not null check (report_type in ('full', 'dayun', 'month')),
+  report_type text not null check (report_type in ('full', 'dayun', 'month', 'wealth', 'timing')),
   target_period text,
   title text not null,
   context jsonb not null default '{}'::jsonb,
@@ -170,7 +170,7 @@ create table if not exists public.fortune_reports (
 create table if not exists public.master_questions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  category text not null check (category in ('marriage', 'career', 'wealth', 'family', 'health', 'timing', 'life', 'custom')),
+  category text not null check (category in ('marriage', 'career', 'wealth', 'windfall', 'family', 'health', 'timing', 'life', 'custom')),
   horizon text not null check (horizon in ('short', 'month', 'year', 'dayun', 'lifetime')),
   depth text not null default 'normal' check (depth in ('normal', 'deep')),
   target_date text,
