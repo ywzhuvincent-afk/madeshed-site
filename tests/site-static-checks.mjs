@@ -2043,7 +2043,11 @@ assert.ok(index.includes('renderPersonSwitcher();renderFortuneProducts();renderM
   const credits = accessSrc.match(/MEMBERSHIP_MONTHLY_CREDITS = \{([^}]*)\}/);
   assert.ok(credits, '未找到 MEMBERSHIP_MONTHLY_CREDITS');
   const tiers = [...credits[1].matchAll(/([a-z_]+)\s*:/g)].map((m) => m[1]);
+  const adminHtml = readFileSync('admin.html', utf8);
   for (const t of tiers) {
+    // 后台下拉选项是与 API 白名单分开的第二处硬编码，同样会漏（highest 就漏了）
+    assert.ok(adminHtml.includes("'" + t + "'"),
+      `admin.html 档位下拉缺少「${t}」——API 放行了但界面选不到，等于还是发不了`);
     assert.ok(adminSrc.includes("'" + t + "'"),
       `后台 MEMBERSHIP_TIERS 缺少档位「${t}」——权益侧有、后台没有，客服就发不了/修不了该档会员`);
   }

@@ -618,7 +618,7 @@ td.email{max-width:240px;overflow:hidden;text-overflow:ellipsis}
         +'<div class="dsec"><h3>会员管理</h3><div class="grant">'
           +'<div class="row" style="flex-wrap:wrap;gap:8px">'
             +'<select id="mm-tier" style="background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:9px 10px;font-size:13px;font-family:inherit">'
-              +['free','pro','ultimate'].map(function(t){return '<option value="'+t+'"'+((m.tier||'free')===t?' selected':'')+'>'+t+'</option>';}).join('')
+              +['free','pro','ultimate','highest'].map(function(t){return '<option value="'+t+'"'+((m.tier||'free')===t?' selected':'')+'>'+t+'</option>';}).join('')
             +'</select>'
             +'<select id="mm-status" style="background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:9px 10px;font-size:13px;font-family:inherit">'
               +['inactive','active','trialing','past_due','canceled'].map(function(s){return '<option value="'+s+'"'+((m.status||'inactive')===s?' selected':'')+'>'+s+'</option>';}).join('')
