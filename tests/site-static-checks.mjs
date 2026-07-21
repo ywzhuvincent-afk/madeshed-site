@@ -2112,4 +2112,14 @@ assert.ok(index.includes('renderPersonSwitcher();renderFortuneProducts();renderM
   assert.ok(existsSync('supabase/2026-07-20-constraint-drift.sql'), '约束漂移修复 SQL');
 }
 
+/* 会员权益必须校验到期（带宽限）：只看 status 会在取消/删除订阅的 webhook 漏送时，
+   让已过期用户无限使用。current_period_end 为空时不按到期判（后台手发/遗留订阅）。 */
+{
+  const ac2 = readFileSync('api/_access.js', utf8);
+  assert.ok(/function membershipNotExpired\(m\)/.test(ac2), '_access 必须有 membershipNotExpired 到期判定');
+  assert.ok(/ACTIVE_MEMBERSHIP_STATUSES\.has\(membership\.status\) && membershipNotExpired\(membership\)/.test(ac2),
+    'activeMembership 必须同时校验 status 与到期（否则 webhook 漏送时过期用户仍有权益）');
+  assert.ok(/if \(!raw\) return true;/.test(ac2), '到期日为空时不能判为过期（会误伤后台手发/遗留订阅）');
+}
+
 console.log('Static site checks passed');

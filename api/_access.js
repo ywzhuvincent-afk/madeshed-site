@@ -4,6 +4,17 @@ import { resolveUserLocale, t } from './_locale.js';
 // past_due=扣款失败宽限期：Stripe 智能重试期间不立刻断权（前端 isMembershipActive 同口径），
 // 界面另行提示"更新支付方式"；重试全部失败后订阅转 canceled 自然降级。
 const ACTIVE_MEMBERSHIP_STATUSES = new Set(['active', 'trialing', 'past_due']);
+// 到期宽限：只靠 status 判会员，会在"取消/删除订阅的 webhook 漏送"时让已过期用户无限使用。
+// 加到期校验兜底；但续费 webhook 若延迟到账，current_period_end 还是旧值，硬判会误锁付费用户，
+// 故留 3 天宽限。current_period_end 为空（后台手发会员/早期遗留订阅）时不按到期判，只认 status。
+const MEMBERSHIP_GRACE_MS = 3 * 86400000;
+function membershipNotExpired(m) {
+  const raw = m && m.current_period_end;
+  if (!raw) return true;
+  const end = new Date(raw).getTime();
+  if (!Number.isFinite(end)) return true;
+  return end + MEMBERSHIP_GRACE_MS > Date.now();
+}
 
 export function escapeHtml(value) {
   return String(value || '').replace(/[&<>"']/g, (char) => ({
@@ -42,7 +53,7 @@ export async function activeMembership(userId) {
   if (!hasSupabaseService() || !userId) return null;
   const rows = await supabaseSelect('memberships', `user_id=eq.${encodeURIComponent(userId)}&select=tier,status,current_period_end&limit=1`);
   const membership = rows[0] || null;
-  if (membership && MEMBERSHIP_TIERS.indexOf(membership.tier) >= 0 && ACTIVE_MEMBERSHIP_STATUSES.has(membership.status)) return membership;
+  if (membership && MEMBERSHIP_TIERS.indexOf(membership.tier) >= 0 && ACTIVE_MEMBERSHIP_STATUSES.has(membership.status) && membershipNotExpired(membership)) return membership;
   return null;
 }
 
